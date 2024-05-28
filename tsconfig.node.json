@@ -1,0 +1,10 @@
+{
+	"compilerOptions": {
+		"composite": true,
+		"skipLibCheck": true,
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"strict": true
+	},
+	"include": ["vite.ext.config.ts", "vite.script.config.ts", "src/manifest.config.ts", "package.json"]
+}
