@@ -7,6 +7,7 @@ interface BooksDbData {
 	title: string;
 	elementHtml: string;
 	lastBookModified: number;
+	storageSource?: string;
 	htmlBackup?: string;
 }
 

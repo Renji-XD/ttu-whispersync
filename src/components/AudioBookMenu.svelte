@@ -352,8 +352,10 @@
 
 			const book = await $booksDB$.get('data', currentBookId);
 
-			if (!book || !book.title || !book.elementHtml) {
+			if (!book || !book.title || (!book.elementHtml && !book.storageSource)) {
 				throw new Error(`required data for id ${currentBookId} not found`);
+			} else if (!book.elementHtml && book.storageSource) {
+				throw new Error(`books from external storage sources are currently not supported`);
 			}
 
 			body = parseHTML(new DOMParser(), book.elementHtml);
