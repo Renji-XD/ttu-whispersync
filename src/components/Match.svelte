@@ -196,6 +196,8 @@
 							const matchedTextLength = [...matchedText].length;
 							const remainingCharacters = nodeTextContentLength - matchedTextLength;
 
+							let replacedInParent = false;
+
 							if (charactersToProcess) {
 								const subtitle = subtitles[currentSubLineIndex];
 
@@ -203,6 +205,8 @@
 
 								matchedContainer.appendChild(matchedTextNode);
 								parentElement.replaceChild(matchedContainer, nodeToProcess);
+
+								replacedInParent = true;
 
 								if (!allIgnoredElements.has(parentElementTag)) {
 									textInScope += matchedText;
@@ -229,7 +233,12 @@
 										throw new Error('charactersToProcess without remaining text found');
 									}
 
-									parentElement.appendChild(remainingTextNode);
+									if (replacedInParent) {
+										matchedContainer.after(remainingTextNode);
+									} else {
+										parentElement.appendChild(remainingTextNode);
+									}
+
 									leftOverTextNodes.push(remainingTextNode);
 
 									index += 1;
