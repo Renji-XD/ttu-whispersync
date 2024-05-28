@@ -132,6 +132,10 @@ Note: iOS may block the ability to select certain files. For subtitles you there
 
 -   The playback position and persisted subtitles can be synced via default "Auto Import/Export" functionality. Matched book content can be synced via manual "Book Data" export - other data is currently not syncable
 
+### Is it possible to read/load books from an external storage source like gdrive?
+
+-   Currently only books loaded via browser storage source / local browser db are supported - otherwise you will get an error like 'required data for id x not found'. You can still sync the progress etc. to those sources
+
 ### Limitation for autoscroll in pagination mode
 
 -   In pagination mode it can happen that a subtitle line extends multiple pages in which case the autoscroll behavior is not working properly. This probably can't be fixed but you can try to minimize those occurrences by enabling the "Avoid Page Break" option of ttu
