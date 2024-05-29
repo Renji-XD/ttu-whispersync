@@ -190,8 +190,11 @@
 							const parentElementTag = parentElement.tagName.toLowerCase();
 							const nodeTextContent = getAdjustedValue(nodeToProcess.textContent);
 							const nodeTextContentLength = [...nodeTextContent].length;
+							const isIgnoredParent = ignoredTags.has(parentElementTag);
 							const matchedContainer = document.createElement('span');
-							const matchedText = nodeTextContent.slice(0, charactersToProcess);
+							const matchedText = isIgnoredParent
+								? nodeTextContent.slice(0)
+								: nodeTextContent.slice(0, charactersToProcess);
 							const matchedTextNode = document.createTextNode(matchedText);
 							const matchedTextLength = [...matchedText].length;
 							const remainingCharacters = nodeTextContentLength - matchedTextLength;
@@ -213,7 +216,7 @@
 								}
 							}
 
-							charactersProcessed += ignoredTags.has(parentElementTag) ? 0 : matchedTextLength;
+							charactersProcessed += isIgnoredParent ? 0 : matchedTextLength;
 							charactersToProcess = bestLineSimiliarityLength - charactersProcessed;
 
 							if (!charactersToProcess && remainingCharacters) {
