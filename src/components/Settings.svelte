@@ -13,6 +13,8 @@
 		ExportFieldMode,
 		ReaderMenuOpenMode,
 		ReaderMenuPauseMode,
+		ReaderScrollBehavior,
+		ReaderScrollMode,
 		SettingsMenu,
 		SubtitleActionsVisibility,
 	} from '../lib/settings';
@@ -57,6 +59,12 @@
 		Action.EDIT_SUBTITLE,
 		Action.RESTORE_SUBTITLE,
 	];
+	const readerScrollModes = [ReaderScrollMode.ALWAYS, ReaderScrollMode.PAGE];
+	const readerScrollBehaviors = [
+		ReaderScrollBehavior.AUTO,
+		ReaderScrollBehavior.INSTANT,
+		ReaderScrollBehavior.SMOOTH,
+	];
 	const readerMenuOpenModes = [ReaderMenuOpenMode.DISABLED, ReaderMenuOpenMode.CLICK, ReaderMenuOpenMode.HOLD];
 	const readerMenuPauseModes = [ReaderMenuPauseMode.DISABLED, ReaderMenuPauseMode.PAUSE];
 	const subtitleActionVisbilityModes = [
@@ -79,6 +87,7 @@
 		readerLineTextHighlightColor$,
 		readerEnableLineHighlight$,
 		readerEnableAutoScroll$,
+		readerScrollMode$,
 		readerClickAction$,
 		readerMenuOpenMode$,
 		subtitlesEnablePersist$,
@@ -112,6 +121,11 @@
 	let ankiDecks: string[] = [];
 	let ankiModels: string[] = [];
 	let ankiFields: string[] = [];
+
+	$: readerScrollModeHelpText =
+		$readerScrollMode$ === ReaderScrollMode.ALWAYS
+			? 'The reader scrolls on every subtitle change'
+			: 'The reader will only scroll if the subtitle is not fully visibile on the page';
 
 	$: audioProcessorHelpText =
 		$exportAudioProcessor$ === AudioProcessor.RECORDER
@@ -463,6 +477,20 @@
 				label="Prevent action on selection"
 				helpText="If enabled click/hold will not execute any action / open the reader menu in case any text is selected"
 				targetStore$={settings$.readerPreventActionOnSelection$}
+			/>
+		{/if}
+		{#if $readerEnableAutoScroll$}
+			<SettingsSelect
+				label="Continuous scroll"
+				helpText={readerScrollModeHelpText}
+				targetStore$={readerScrollMode$}
+				options={readerScrollModes}
+			/>
+			<SettingsSelect
+				label="Scroll behavior"
+				helpText="Determines the used scroll animation"
+				targetStore$={settings$.readerScrollBehavior$}
+				options={readerScrollBehaviors}
 			/>
 		{/if}
 		{#if $readerMenuOpenMode$ !== ReaderMenuOpenMode.CLICK}

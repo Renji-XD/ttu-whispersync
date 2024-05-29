@@ -123,6 +123,8 @@ export const settings$ = {
 	readerEnableAutoScroll$: writableBooleanStore()('ttu-whispersync-reader-enable-auto-scroll'),
 	readerEnableTrackerAutoPause$: writableBooleanStore()('ttu-whispersync-reader-enable-tracker-auto-pause'),
 	readerPreventActionOnSelection$: writableBooleanStore()('ttu-whispersync-reader-prevent-action-on-selection'),
+	readerScrollMode$: writableStringStore()('ttu-whispersync-reader-scroll-mode'),
+	readerScrollBehavior$: writableStringStore()('ttu-whispersync-reader-scroll-behavior'),
 	readerClickAction$: writableStringStore()('ttu-whispersync-reader-click-action'),
 	readerMenuOpenMode$: writableStringStore()('ttu-whispersync-reader-menu-open-mode'),
 	readerMenuPauseMode$: writableStringStore()('ttu-whispersync-reader-menu-pause-mode'),

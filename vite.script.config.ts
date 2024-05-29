@@ -15,7 +15,7 @@ const header = `// ==UserScript==
 // @namespace   https://github.com/Renji-XD
 // @match       https://reader.ttsu.app/*
 // @match       http://localhost:5173/*
-// @version     1.0.0
+// @version     1.0.1
 // @description Listen to audiobooks with ttu ebook-reader
 // @icon https://raw.githubusercontent.com/Renji-XD/ttu-whispersync/main/src/assets/icons/icon64.png
 // @run-at      document-idle

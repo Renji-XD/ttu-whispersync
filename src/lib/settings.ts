@@ -23,6 +23,8 @@ export type Settings = {
 	'ttu-whispersync-reader-enable-auto-scroll': boolean;
 	'ttu-whispersync-reader-enable-tracker-auto-pause': boolean;
 	'ttu-whispersync-reader-prevent-action-on-selection': boolean;
+	'ttu-whispersync-reader-scroll-mode': ReaderScrollMode;
+	'ttu-whispersync-reader-scroll-behavior': ReaderScrollBehavior;
 	'ttu-whispersync-reader-click-action': Action;
 	'ttu-whispersync-reader-menu-open-mode': ReaderMenuOpenMode;
 	'ttu-whispersync-reader-menu-pause-mode': ReaderMenuPauseMode;
@@ -82,15 +84,26 @@ export enum SettingsMenu {
 	KEYBINDINGS = 'Keybindings',
 }
 
-export enum ReaderMenuPauseMode {
-	DISABLED = 'Disabled',
-	PAUSE = 'Pause on open',
+export enum ReaderScrollMode {
+	ALWAYS = 'Always',
+	PAGE = 'Page',
+}
+
+export enum ReaderScrollBehavior {
+	AUTO = 'auto',
+	INSTANT = 'instant',
+	SMOOTH = 'smooth',
 }
 
 export enum ReaderMenuOpenMode {
 	DISABLED = 'Disabled',
 	CLICK = 'On click',
 	HOLD = 'On hold',
+}
+
+export enum ReaderMenuPauseMode {
+	DISABLED = 'Disabled',
+	PAUSE = 'Pause on open',
 }
 
 export enum SubtitleActionsVisibility {
@@ -145,6 +158,8 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-reader-enable-auto-scroll': true,
 		'ttu-whispersync-reader-enable-tracker-auto-pause': true,
 		'ttu-whispersync-reader-prevent-action-on-selection': true,
+		'ttu-whispersync-reader-scroll-mode': ReaderScrollMode.ALWAYS,
+		'ttu-whispersync-reader-scroll-behavior': ReaderScrollBehavior.INSTANT,
 		'ttu-whispersync-reader-click-action': Action.NONE,
 		'ttu-whispersync-reader-menu-open-mode': ReaderMenuOpenMode.CLICK,
 		'ttu-whispersync-reader-menu-pause-mode': ReaderMenuPauseMode.PAUSE,

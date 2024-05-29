@@ -65,6 +65,8 @@
 	const {
 		readerEnableAutoScroll$,
 		readerEnableTrackerAutoPause$,
+		readerScrollMode$,
+		readerScrollBehavior$,
 		playerEnableDictionaryDetection$,
 		playerEnableWakeLock$,
 		playerAutoPauseMode$,
@@ -548,7 +550,12 @@
 			if (nextSubtitle && nextSubtitle.id !== $activeSubtitle$.current) {
 				document.dispatchEvent(
 					new CustomEvent('ttu-action', {
-						detail: { type: 'pauseTracker', selector: getLineCSSSelectorForId(nextSubtitle.id) },
+						detail: {
+							type: 'pauseTracker',
+							scrollMode: $readerScrollMode$,
+							scrollBehavior: $readerScrollBehavior$,
+							selector: getLineCSSSelectorForId(nextSubtitle.id),
+						},
 					}),
 				);
 			}
@@ -648,6 +655,8 @@
 				new CustomEvent('ttu-action', {
 					detail: {
 						type: 'cue',
+						scrollMode: $readerScrollMode$,
+						scrollBehavior: $readerScrollBehavior$,
 						selector: getLineCSSSelectorForId(id),
 					},
 				}),
