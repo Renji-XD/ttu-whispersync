@@ -17,6 +17,7 @@
 	import { createVirtualizer, type SvelteVirtualizer } from '@tanstack/svelte-virtual';
 
 	export let subtitles: Subtitle[];
+	export let skipUpdates = false;
 
 	export async function onResetList(..._args: any) {
 		if (!virtualListElement) {
@@ -272,7 +273,7 @@
 							class:show={$subtitlesActionsVisibility$ === SubtitleActionsVisibility.ALWAYS}
 							class:hidden={$subtitlesActionsVisibility$ === SubtitleActionsVisibility.HIDDEN}
 						>
-							<ActionButtonList subtitle={subtitles[displayedSubtitle.index]} />
+							<ActionButtonList subtitle={subtitles[displayedSubtitle.index]} {skipUpdates} />
 						</div>
 					</div>
 				{/each}

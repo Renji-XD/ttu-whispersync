@@ -38,7 +38,8 @@
 	import { getContext } from 'svelte';
 
 	export let subtitle: Subtitle | undefined;
-	export let isReaderMenu: boolean = false;
+	export let isReaderMenu = false;
+	export let skipUpdates = false;
 
 	const { isVertical } = getContext<Context>('context');
 	const { subtitlesGlobalStartPadding$, subtitlesGlobalEndPadding$ } = settings$;
@@ -150,6 +151,7 @@
 			title={getFinalTitle($restartPlaybackTitle$, $currentSubtitles$, subtitle)}
 			action={Action.RESTART_PLAYBACK}
 			path={mdiPlaylistPlay}
+			{skipUpdates}
 			{subtitle}
 		/>
 		<ActionButton
@@ -157,6 +159,7 @@
 			title={getFinalTitle($togglePlayPauseTitle$, $currentSubtitles$, subtitle)}
 			action={Action.TOGGLE_PLAY_PAUSE}
 			path={mdiPlayPause}
+			{skipUpdates}
 			{subtitle}
 		/>
 		<ActionButton
@@ -164,6 +167,7 @@
 			title={getFinalTitle($togglePlaybackLoopTitle$, $currentSubtitles$, subtitle)}
 			action={Action.TOGGLE_PLAYBACK_LOOP}
 			path={mdiRefresh}
+			{skipUpdates}
 			{subtitle}
 		/>
 	</div>

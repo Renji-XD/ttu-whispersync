@@ -1111,7 +1111,11 @@
 					<Icon path={mdiCancel} />
 				</button>
 			</div>
-			<Subtitles {subtitles} bind:this={subtitleListElement} />
+			<Subtitles
+				skipUpdates={showBookmarkedSubtitlesOnly || showSubtitlesForMergeOnly}
+				{subtitles}
+				bind:this={subtitleListElement}
+			/>
 		{/if}
 	</div>
 	{#if $currentAudioSourceUrl$}
