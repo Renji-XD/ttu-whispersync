@@ -188,7 +188,7 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-anki-sentence-field': '',
 		'ttu-whispersync-anki-sound-field': '',
 		'ttu-whispersync-match-line-ignore-rp': false,
-		'ttu-whispersync-match-line-space-mode': MatchSpaceMode.ALL,
+		'ttu-whispersync-match-line-space-mode': MatchSpaceMode.ORIGINAL,
 		'ttu-whispersync-match-line-lookahead': 5,
 		'ttu-whispersync-match-line-similarity-threshold': 0.6,
 		'ttu-whispersync-match-line-max-attempts': 30,
