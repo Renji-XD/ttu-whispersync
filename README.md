@@ -7,7 +7,7 @@ A [Violentmonkey](https://violentmonkey.github.io/get-it/) script / Chrome exten
 1. Install [Anki](https://apps.ankiweb.net/) and configure deck and note type
 2. Install [AnkiConnect](https://ankiweb.net/shared/info/2055492159)
 3. Add https://reader.ttsu.app (and http://localhost:5173 for local development) to the webCorsOriginList of AnkiConnect
-4. You can install the extension as Violentmonkey script via this [url](https://github.com/Renji-XD/ttu-whispersync/releases/latest/download/ttu-whispersync.user.js) / manual install it via this [url](https://raw.githubusercontent.com/Renji-XD/ttu-whispersync/main/violent_monkey/ttu-whispersync.iife.js) or as [unpackaged](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked) extension in a chromium browser by downloading the latest major version from releases or by [building](#development--building) the current version by yourself
+4. You can install the extension as Violentmonkey script by clicking on this [url](https://github.com/Renji-XD/ttu-whispersync/releases/latest/download/ttu-whispersync.user.js) or as [unpackaged](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked) extension in a chromium browser by downloading the latest major version from releases or by [building](#development--building) the current version by yourself
 5. Open the reader / reload the tab and click on the icon in the bottom left corner to open the menu and load subtitle/audio files
 6. Configure your experience to your preferences by going to the settings tab
 

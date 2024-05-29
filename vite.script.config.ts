@@ -8,7 +8,7 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 import { writeFileSync } from 'fs';
 
 const outDir = 'violent_monkey';
-const outName = 'ttu-whispersync.iife.js';
+const outName = 'ttu-whispersync.user.js';
 const header = `// ==UserScript==
 // @author      Renji-xD
 // @name        ttu-whispersync
@@ -21,7 +21,7 @@ const header = `// ==UserScript==
 // @run-at      document-idle
 // @noframes
 // @grant       none
-// @downloadURL https://raw.githubusercontent.com/Renji-XD/ttu-whispersync/main/violent_monkey/ttu-whispersync.iife.js
+// @downloadURL https://github.com/Renji-XD/ttu-whispersync/releases/latest/download/ttu-whispersync.user.js
 // @supportURL  https://github.com/Renji-XD/ttu-whispersync/issues
 // @homepageURL https://github.com/Renji-XD/ttu-whispersync
 // ==/UserScript==`;
@@ -35,7 +35,12 @@ export default defineConfig((config) => {
 		build: {
 			outDir,
 			emptyOutDir: true,
-			lib: { name: 'ttuWhispersync', entry: './src/content/content.ts', formats: ['iife'] },
+			lib: {
+				name: 'ttuWhispersync',
+				entry: './src/content/content.ts',
+				formats: ['iife'],
+				fileName: () => 'ttu-whispersync.user.js',
+			},
 			minify: config.mode === 'production',
 		},
 		plugins: [

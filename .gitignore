@@ -26,4 +26,4 @@ dist-ssr
 dist.crx
 dist.pem
 
-violent_monkey/worker-*
+violent_monkey/*
