@@ -77,63 +77,63 @@
 		title={getFinalTitle($restartPlaybackTitle$, $currentSubtitles$, subtitle)}
 		action={Action.RESTART_PLAYBACK}
 		path={mdiPlaylistPlay}
-		buttonClasses={isVertical ? 'm-y-xs' : 'm-x-xs'}
+		buttonClasses={isVertical ? 'p-t-xs p-b-s' : 'p-l-xs p-r-s'}
 		{subtitle}
 	/>
 	<ActionButton
 		title={getFinalTitle($togglePlayPauseTitle$, $currentSubtitles$, subtitle)}
 		action={Action.TOGGLE_PLAY_PAUSE}
 		path={mdiPlayPause}
-		buttonClasses={isVertical ? 'm-y-xs' : 'm-x-xs'}
+		buttonClasses={isVertical ? 'p-b-xs separator-y' : 'p-r-xs separator-x'}
 		{subtitle}
 	/>
 	<ActionButton
 		title={getFinalTitle($togglePlaybackLoopTitle$, $currentSubtitles$, subtitle)}
 		action={Action.TOGGLE_PLAYBACK_LOOP}
 		path={mdiRefresh}
-		buttonClasses={isVertical ? 'm-y-xs' : 'm-x-xs'}
+		buttonClasses={isVertical ? 'p-t-xs p-b-s' : 'p-l-xs p-r-s'}
 		{subtitle}
 	/>
 	<ActionButton
 		title={getFinalTitle($toggleBookmarkTitle$, $currentSubtitles$, subtitle)}
 		action={Action.TOGGLE_BOOKMARK}
 		path={bookmarkPath}
-		buttonClasses={isVertical ? 'm-y-xs' : 'm-x-xs'}
+		buttonClasses={isVertical ? 'p-b-xs separator-y' : 'p-r-xs separator-x'}
 		{subtitle}
 	/>
 	<ActionButton
 		title={getFinalTitle($toggleMergeTitle$, $currentSubtitles$, subtitle)}
 		action={Action.TOGGLE_MERGE}
 		path={mergePath}
-		buttonClasses={isVertical ? 'm-y-xs' : 'm-x-xs'}
+		buttonClasses={isVertical ? 'p-t-xs p-b-s' : 'p-l-xs p-r-s'}
 		{subtitle}
 	/>
 	<ActionButton
 		title={getFinalTitle($editSubtitleTitle$, $currentSubtitles$, subtitle)}
 		action={Action.EDIT_SUBTITLE}
 		path={mdiClockEdit}
-		buttonClasses={isVertical ? 'm-y-xs' : 'm-x-xs'}
+		buttonClasses={isVertical ? 'p-b-xs separator-y' : 'p-r-xs separator-x'}
 		{subtitle}
 	/>
 	<ActionButton
 		title={getFinalTitle($restoreSubtitleTitle$, $currentSubtitles$, subtitle)}
 		action={Action.RESTORE_SUBTITLE}
 		path={mdiRestore}
-		buttonClasses={isVertical ? 'm-y-xs' : 'm-x-xs'}
+		buttonClasses={isVertical ? 'p-t-xs p-b-s' : 'p-l-xs p-r-s'}
 		{subtitle}
 	/>
 	<ActionButton
 		title={getFinalTitle($exportNewTitle$, $currentSubtitles$, subtitle)}
 		action={Action.EXPORT_NEW}
 		path={mdiDatabasePlus}
-		buttonClasses={isVertical ? 'm-y-xs' : 'm-x-xs'}
+		buttonClasses={isVertical ? 'p-b-xs separator-y' : 'p-r-xs separator-x'}
 		{subtitle}
 	/>
 	<ActionButton
 		title={getFinalTitle($exportUpdateTitle$, $currentSubtitles$, subtitle)}
 		action={Action.EXPORT_UPDATE}
 		path={mdiDatabaseSync}
-		buttonClasses={isVertical ? 'm-y-xs' : 'm-x-xs'}
+		buttonClasses={isVertical ? 'p-t-xs p-b-s' : 'p-l-xs p-r-s'}
 		{subtitle}
 	/>
 	{#if $exportCancelController$}
@@ -141,7 +141,7 @@
 			title={$exportCancelTitle$}
 			action={Action.CANCEL_EXPORT}
 			path={mdiCancel}
-			buttonClasses={isVertical ? 'm-y-xs' : 'm-x-xs'}
+			buttonClasses={isVertical ? 'p-t-xs p-b-s' : 'p-l-xs p-r-s'}
 			{subtitle}
 		/>
 	{/if}
