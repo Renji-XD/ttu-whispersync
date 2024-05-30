@@ -140,9 +140,20 @@
 	bind:this={popoverElement}
 >
 	<button
+		title="Close menu"
 		class:p-y-xs={isVertical}
 		class:p-r-xs={!isVertical}
 		class:p-l-xs={!isVertical}
+		on:click={() => dispatch('close')}
+	>
+		<Icon path={mdiClose} />
+	</button>
+	<button
+		class:p-y-xs={isVertical}
+		class:separator-y={isVertical}
+		class:p-r-xs={!isVertical}
+		class:p-l-xs={!isVertical}
+		class:separator-x={!isVertical}
 		title={togglePlaybackTitle}
 		disabled={togglePlaybackTitle !== 'Toggle playback'}
 		on:click={() => ($paused$ = !$paused$)}
@@ -150,15 +161,4 @@
 		<Icon path={$paused$ ? mdiPlay : mdiPause} />
 	</button>
 	<ActionButtonList isReaderMenu {subtitle} />
-	<button
-		title="Close menu"
-		class:p-y-xs={isVertical}
-		class:separator-y={isVertical}
-		class:p-r-xs={!isVertical}
-		class:p-l-xs={!isVertical}
-		class:separator-x={!isVertical}
-		on:click={() => dispatch('close')}
-	>
-		<Icon path={mdiClose} />
-	</button>
 </div>
