@@ -67,6 +67,7 @@
 
 	async function onMatchSubtitles() {
 		$isLoading$ = true;
+		$lastError$ = '';
 		lineMatchRate = 'n/a';
 		bookSubtitleDiffRate = 'n/a';
 		bookSubtitleDiffLines = 0;
@@ -82,6 +83,8 @@
 			let currentNodes: Node[] = [];
 			let currentText = '';
 			let textInScope = '';
+			let bookText = '';
+			let matchedBookText = '';
 			let currentSubLineIndex = 0;
 			let currentSubLine = subtitles[currentSubLineIndex].text;
 			let currentSubLineLength = [...currentSubLine].length;
@@ -97,6 +100,8 @@
 					if (textContent) {
 						textNodes.push(node);
 					}
+
+					bookText += (node.textContent || '').replace(/\s/g, '').trim();
 
 					return NodeFilter.FILTER_ACCEPT;
 				},
@@ -336,6 +341,36 @@
 				textNodeCount = textNodes.length;
 			}
 
+			const matchedWlker = document.createTreeWalker(bookHTML, NodeFilter.SHOW_TEXT, {
+				acceptNode(node) {
+					matchedBookText += (node.textContent || '').replace(/\s/g, '').trim();
+
+					return NodeFilter.FILTER_ACCEPT;
+				},
+			});
+
+			while (matchedWlker.nextNode()) {}
+
+			const bookTextCharacters = [...bookText];
+			const matchedBookTextCharacters = [...matchedBookText];
+
+			for (let index = 0, { length } = bookTextCharacters; index < length; index += 1) {
+				const bookCharacter = bookTextCharacters[index];
+				const matchCharacter = matchedBookTextCharacters[index];
+
+				if (bookCharacter !== matchCharacter) {
+					throw new Error(
+						`mismatch on position ${index}: ${bookText.slice(
+							Math.max(0, index - 10),
+							Math.min(bookTextCharacters.length, index + 10),
+						)} | vs | ${matchedBookText.slice(
+							Math.max(0, index - 10),
+							Math.min(matchedBookTextCharacters.length, index + 10),
+						)}`,
+					);
+				}
+			}
+
 			lineMatchRate = `${matchedLines} / ${
 				subtitles.length
 			} (${caluclatePercentage(matchedLines, subtitles.length, false)}%)`;
@@ -378,7 +413,6 @@
 
 	function onDownloadAdjustedSubtiles() {
 		$isLoading$ = true;
-		$lastError$ = '';
 
 		let subtitleContent = '';
 
