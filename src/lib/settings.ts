@@ -208,7 +208,7 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-match-line-space-mode': MatchSpaceMode.ORIGINAL,
 		'ttu-whispersync-match-line-lookahead': 5,
 		'ttu-whispersync-match-line-similarity-threshold': 0.6,
-		'ttu-whispersync-match-line-max-attempts': 30,
+		'ttu-whispersync-match-line-max-attempts': 50,
 	};
 }
 

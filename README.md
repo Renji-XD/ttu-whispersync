@@ -113,7 +113,7 @@ Note: iOS may block the ability to select certain files. For subtitles you there
 
 ### I get a very low line match rate
 
--   Try out different combinations of the existing matching options - especially higher line match attempts may help
+-   Try to change some of the matching options and see if different combinations may increase the match rate
 
 ### After matching the book it looks different
 
