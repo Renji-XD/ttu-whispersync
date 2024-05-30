@@ -81,7 +81,7 @@ Known issues / missing features are e. g. :
 
 #### Android
 
--   Install and follow instructions for [AnkiconnectAndroid](https://github.com/KamWithK/AnkiconnectAndroid?tab=readme-ov-file#instructions)
+-   Install and follow instructions for [AnkiconnectAndroid](https://github.com/KamWithK/AnkiconnectAndroid?tab=readme-ov-file#instructions) (if you need multiple hosts for cors use a '\*' character to whitelist all sources)
 -   Install a browser which supports ViolentMonkey or chrome extensions (e. g. [Kiwi](https://play.google.com/store/apps/details?id=com.kiwibrowser.browser))
 -   Install ttu-whispersync as described in [Getting started](#getting-started)
 
