@@ -372,6 +372,12 @@
 	padding-left: 0.25rem;
 }
 
+.ttu-whispersync-container .pos-nav {
+	display: grid;
+	grid-template-columns: auto auto auto;
+	row-gap: 1rem;
+}
+
 @keyframes ttu-whispersync-spinner-rotation {
 	0% {
 		transform: rotate(0deg);

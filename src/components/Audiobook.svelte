@@ -124,6 +124,7 @@
 	let currentHours = 0;
 	let currentMinutes = 0;
 	let currentSeconds = 0;
+	let currentActiveSubtitle = '';
 	let imageLoaded: () => void;
 	let subtitles: Subtitle[] = [];
 
@@ -772,16 +773,34 @@
 		$skipKeyListener$ = false;
 	}
 
-	function onJumpToTime() {
+	async function onJumpToTime() {
 		currentTimePopover.hide();
 
-		executeAction(
+		const newSeconds = (currentHours || 0) * 3600 + (currentMinutes || 0) * 60 + (currentSeconds || 0);
+
+		await executeAction(
 			Action.RESTART_PLAYBACK,
-			getDummySubtitle(
-				between(0, $duration$, (currentHours || 0) * 3600 + (currentMinutes || 0) * 60 + (currentSeconds || 0)),
-			),
+			getDummySubtitle($currentAudioLoaded$ ? between(0, $duration$, newSeconds) : Math.max(0, newSeconds)),
 			{ keepPauseState: true },
 		);
+
+		updateScrollAfterJump(newSeconds);
+	}
+
+	async function onJumpToId() {
+		currentTimePopover.hide();
+
+		const targetSubtitle = $currentSubtitles$.get(currentActiveSubtitle);
+
+		if (!targetSubtitle) {
+			return;
+		}
+
+		await executeAction(Action.RESTART_PLAYBACK, getDummySubtitle(targetSubtitle.startSeconds), {
+			keepPauseState: true,
+		});
+
+		updateScrollAfterJump(targetSubtitle.startSeconds);
 	}
 
 	async function storeFileHandle(handle: FileSystemFileHandle, key: 'lastSubtitle' | 'lastAudio') {
@@ -823,6 +842,16 @@
 		for (let index = 0, { length } = elements; index < length; index += 1) {
 			elements[index].classList.remove('active');
 		}
+	}
+
+	function updateScrollAfterJump(newSeconds: number) {
+		if ($currentAudioLoaded$) {
+			return;
+		}
+
+		$currentTime$ = newSeconds;
+
+		subtitleListElement?.scrollToSubtitle(true);
 	}
 </script>
 
@@ -1041,26 +1070,43 @@
 				<Icon path={mdiFloppy} />
 			</button>
 		</div>
-		<div class="flex flex-1" class:hidden={!$currentAudioLoaded$} style="align-items: flex-end;">
+		<div
+			class="flex flex-1"
+			class:hidden={!$currentAudioLoaded$ && !$currentSubtitles$.size}
+			style="align-items: flex-end;"
+		>
 			<Popover placement="bottom" bind:this={currentTimePopover}>
 				<div slot="icon">
 					<button
 						title={$isRecording$ ? 'Recording in progress' : 'Change playback position'}
 						disabled={$isRecording$}
-						on:click={() => ([currentHours, currentMinutes, currentSeconds] = getTimeParts($currentTime$))}
+						on:click={() => {
+							[currentHours, currentMinutes, currentSeconds] = getTimeParts($currentTime$);
+							currentActiveSubtitle = $activeSubtitle$.current || $activeSubtitle$.previous;
+						}}
 					>
 						{toTimeString($currentTime$)} / {toTimeString($duration$)}
 					</button>
 				</div>
-				<div class="flex">
-					<TimeEditInput defaultValue={0} max={durationHours} bind:value={currentHours} />
-					<span>:</span>
-					<TimeEditInput defaultValue={0} bind:value={currentMinutes} />
-					<span>:</span>
-					<TimeEditInput defaultValue={0} bind:value={currentSeconds} />
+				<div class="pos-nav">
+					<span class="flex items-center m-r-s">Time:</span>
+					<div class="flex items-center">
+						<TimeEditInput defaultValue={0} max={durationHours} bind:value={currentHours} />
+						<span>:</span>
+						<TimeEditInput defaultValue={0} bind:value={currentMinutes} />
+						<span>:</span>
+						<TimeEditInput defaultValue={0} bind:value={currentSeconds} />
+					</div>
 					<button title="Jump to time" class="m-x-s" disabled={$isRecording$} on:click={onJumpToTime}>
 						<Icon path={mdiCheck} />
 					</button>
+					{#if $currentSubtitles$.size}
+						<span class="flex items-center m-r-s">Id:</span>
+						<input class="m-b-s" style="width: 70px; height: 35px;" bind:value={currentActiveSubtitle} />
+						<button title="Jump to time" class="m-x-s" disabled={$isRecording$} on:click={onJumpToId}>
+							<Icon path={mdiCheck} />
+						</button>
+					{/if}
 				</div>
 			</Popover>
 			{#if $currentSubtitles$.size}
