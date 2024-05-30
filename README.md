@@ -111,6 +111,10 @@ Note: iOS may block the ability to select certain files. For subtitles you there
 
 -   You are missing a required site update - connecting to the internet and hard refreshing the tab couple of times should fix this
 
+### I get a very low line match rate
+
+-   Try out different combinations of the existing matching options - especially higher line match attempts may help
+
 ### After matching the book it looks different
 
 -   By matching the book the text content is wrapped by helper elements to identify the related subtitle. Depending on the browser this may lead to some layout shifting afterwards and is expected / not really fixable. Whole missing characters or elements can be considered a bug which can be reported under "Issues". You can also try out the "Original" line space mode for matching in case you used a different one before
@@ -119,6 +123,14 @@ Note: iOS may block the ability to select certain files. For subtitles you there
 
 -   The recorder backend will create audio clips by recording the system audio. Therefore it needs to play the audio parts in real time and without muted sound. To avoid issues the main controls of the script will be disabled during this duration. The recorder only supports mp3 as export format. Editing subtitles is only availabe as basic functionality. On browsers like Firefox you may encounter unresponsiveness during the mp3 conversion compared to Chrome
 -   The ffmpeg backend uses a WebAssembly compiled version of FFMPEG and therefore has more options for the audio export format. Editing subtitles is available with the advanced editor. The ffmpeg backend can process the audio in the background which allows you to continuing using most of the script functionality during export. It is limited to files with a maximum size around 1.8 GB. As the ffmpeg backend needs to copy the file into memory and executes actions inside of it you may encounter unresponsiveness or site crashes on lower spec devices / big files - in this case refresh the tab and consider using the recorder backend instead
+
+### "Failed to fetch" error for exports
+
+-   Make sure your Anki and AnkiConnect are running (on mobile the service needs to be started) and that the respective urls were added to the webCorsOriginList list
+
+### "Export(s) failed" details
+
+-   You can find more details by opening the developer tools of your browser (often F12 keybind on desktop) and checking the console tab / output
 
 ### Is it possible to queue / execute exports in parallel
 
