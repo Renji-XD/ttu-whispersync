@@ -330,6 +330,8 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 	);
 	const isAnkiconnectAndroid = get(isAnkiconnectAndroid$);
 	const isBlockedUpdated = isUpdate && isAnkiconnectAndroid;
+	const isEmptyKeyFieldAllowed =
+		duplicateScope === AnkiDuplicateMode.DISABLED && get(settings$.ankiAllowEmptyKeyField$);
 
 	let cardToUpdate: RequestNotesInfoResult | undefined;
 
@@ -509,6 +511,14 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 				} else {
 					cardData.note.fields[field] = existingFieldValue;
 				}
+			}
+
+			const isKeyFieldEmpty = !cardData.note.fields[ankiFields[0]]?.trim();
+
+			if (isKeyFieldEmpty && isEmptyKeyFieldAllowed) {
+				cardData.note.fields[ankiFields[0]] = getNewFieldValue(exportFieldMode, '', '&#8203;');
+			} else if (isKeyFieldEmpty) {
+				throw new Error('cannot process note because it is empty');
 			}
 
 			const result = await request<number | boolean | null>(ankiUrl, {

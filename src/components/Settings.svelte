@@ -107,6 +107,7 @@
 		playerAltFastForwardTime$,
 		exportAudioProcessor$,
 		exportAudioFormat$,
+		ankiDuplicateMode$,
 		ankiUrl$,
 		ankiKey$,
 		ankiDeck$,
@@ -728,6 +729,13 @@
 			helpText="If enabled the name of the current loaded audio file will be added to the card tag list"
 			targetStore$={settings$.ankiAddAudioTag$}
 		/>
+		{#if $ankiDuplicateMode$ === AnkiDuplicateMode.DISABLED}
+			<SettingsCheckbox
+				label="Allow empty key field"
+				helpText="If enabled the export will set an empty key field to a zero-width character in order to avoid export errors"
+				targetStore$={settings$.ankiAllowEmptyKeyField$}
+			/>
+		{/if}
 		<SettingsTextInput
 			label="Card tags"
 			helpText="Comma separated list of tags added to the card tag list"
@@ -736,7 +744,7 @@
 		<SettingsSelect
 			label="Check duplicates"
 			helpText="Sets the respective options for Anki-Connect - works only on desktop and for creating new cards"
-			targetStore$={settings$.ankiDuplicateMode$}
+			targetStore$={ankiDuplicateMode$}
 			options={ankiDuplicateModes}
 		/>
 		<SettingsTextInput

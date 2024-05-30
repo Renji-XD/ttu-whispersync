@@ -128,6 +128,10 @@ Note: iOS may block the ability to select certain files. For subtitles you there
 
 -   Make sure your Anki and AnkiConnect are running (on mobile the service needs to be started) and that the respective urls were added to the webCorsOriginList list
 
+### Anki field requirements
+
+-   Anki cards require a non empty key field (first field of your card template). Trying to create a card without configuring the sentence or sound field (from which one of them need to be the key field) will therefore fail. In case you have the duplicate check disabled you can enable the "Allow empty key field" setting as workaround but note that this is considered bad practice and can also be confusing in the card browser
+
 ### "Export(s) failed" details
 
 -   You can find more details by opening the developer tools of your browser (often F12 keybind on desktop) and checking the console tab / output

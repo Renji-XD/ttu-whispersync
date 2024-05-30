@@ -162,6 +162,7 @@ export const settings$ = {
 	enableFFMPEGLog$: writableBooleanStore()('ttu-whispersync-enable-ffmpeg-log'),
 	ankiAddSubtitleTag$: writableBooleanStore()('ttu-whispersync-anki-add-subtitle-tag'),
 	ankiAddAudioTag$: writableBooleanStore()('ttu-whispersync-anki-add-audio-tag'),
+	ankiAllowEmptyKeyField$: writableBooleanStore()('ttu-whispersync-anki-allow-empty-key-field'),
 	ankiTagList$: writableStringStore()('ttu-whispersync-anki-tag-list'),
 	ankiDuplicateMode$: writableStringStore()('ttu-whispersync-anki-duplicate-mode'),
 	ankiUrl$: writableStringStore()('ttu-whispersync-anki-url'),
