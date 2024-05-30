@@ -65,6 +65,8 @@ export const currentAudioLoaded$ = writable<boolean>(false);
 
 export const canExportToAnki$ = writable<boolean>(false);
 
+export const isAnkiconnectAndroid$ = writable<boolean>(false);
+
 export const exportProgress$ = revertWriteable<number>(0);
 
 export const exportCancelController$ = revertWriteable<AbortController | undefined>();

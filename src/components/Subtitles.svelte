@@ -252,7 +252,7 @@
 					<div
 						class="flex items-center sub"
 						class:active={$activeSubtitle$.current === displayedSubtitle.key}
-						class:on-hover={$subtitlesActionsVisibility$ === SubtitleActionsVisibility.HOVER && !$isMobile$}
+						class:on-hover={$subtitlesActionsVisibility$ === SubtitleActionsVisibility.HOVER}
 						data-index={displayedSubtitle.index}
 						bind:this={virtualItemElements[idx]}
 					>

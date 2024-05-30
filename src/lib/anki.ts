@@ -6,6 +6,7 @@ import {
 	currentSubtitleFile$,
 	exportCancelController$,
 	exportProgress$,
+	isAnkiconnectAndroid$,
 	isMobile$,
 	lastError$,
 	paused$,
@@ -126,15 +127,27 @@ async function requestPermission(ankiUrl: string) {
 		return;
 	}
 
-	if (!get(isMobile$)) {
-		const result = await request<RequestPermissionResult>(ankiUrl, { action: 'requestPermission' }, false);
+	const result = await request<RequestPermissionResult | string>(
+		ankiUrl,
+		{ action: 'requestPermission' },
+		false,
+	).catch((error) => {
+		if (error.message.includes('com.google.gson.stream.MalformedJsonException')) {
+			isAnkiconnectAndroid$.set(true);
 
-		if (result.permission !== 'granted') {
-			throw new Error('Anki permission not granted');
+			return { permission: 'granted', requireApikey: false, version: 6 };
 		}
+
+		throw error;
+	});
+
+	if (typeof result !== 'string' && result.permission !== 'granted') {
+		throw new Error('Anki permission not granted');
 	}
 
 	permissionGranted = true;
+
+	return result;
 }
 
 async function verifyAnkiSettings(
@@ -315,13 +328,21 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 		ankiSentenceField,
 		ankiSoundField,
 	);
+	const isAnkiconnectAndroid = get(isAnkiconnectAndroid$);
+	const isBlockedUpdated = isUpdate && isAnkiconnectAndroid;
 
 	let cardToUpdate: RequestNotesInfoResult | undefined;
 
-	if (!isAnkiConfigValid) {
+	isAnkiconnectAndroid$.set(isAnkiconnectAndroid);
+
+	if (!isAnkiConfigValid || isBlockedUpdated) {
 		const lastError = get(lastError$);
 
-		return lastError$.set(`${lastError ? `${lastError}; ` : ''}Anki settings are invalid`);
+		return lastError$.set(
+			`${lastError ? `${lastError}; ` : ''}${isAnkiConfigValid ? '' : 'Anki settings are invalid'}${
+				isBlockedUpdated ? `${isAnkiConfigValid ? '' : '; '}Your AnkiConnect does not support updates` : ''
+			}`,
+		);
 	}
 
 	if (isUpdate) {
@@ -355,7 +376,7 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 		}
 	}
 
-	const lastNoteId = await startExport(ankiUrl, isMobile);
+	const lastNoteId = await startExport(ankiUrl, isAnkiconnectAndroid);
 	const baseSubtitleFileName = currentSubtitleFile.name.split(/\.(?=[^\.]+$)/)[0];
 	const baseAudioFileName = currentAudioFile ? currentAudioFile.name.split(/\.(?=[^\.]+$)/)[0] : '';
 

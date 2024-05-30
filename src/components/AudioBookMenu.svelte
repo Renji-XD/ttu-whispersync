@@ -32,6 +32,7 @@
 		exportNewTitle$,
 		exportUpdateTitle$,
 		extensionData$,
+		isAnkiconnectAndroid$,
 		isLoading$,
 		isMobile$,
 		isRecording$,
@@ -178,7 +179,7 @@
 		$exportCancelTitle$ = Action.CANCEL_EXPORT;
 	} else {
 		$exportNewTitle$ = Action.EXPORT_NEW;
-		$exportUpdateTitle$ = $isMobile$ ? 'Device not supported' : Action.EXPORT_UPDATE;
+		$exportUpdateTitle$ = $isAnkiconnectAndroid$ ? 'Device not supported' : Action.EXPORT_UPDATE;
 		$exportCancelTitle$ = 'Export not started';
 	}
 

@@ -31,6 +31,7 @@
 		exportCancelController$,
 		exportProgress$,
 		extensionData$,
+		isAnkiconnectAndroid$,
 		isLoading$,
 		isMobile$,
 		isRecording$,
@@ -239,7 +240,7 @@
 			canExportNew = false;
 		}
 
-		if ($isMobile$) {
+		if ($isAnkiconnectAndroid$) {
 			exportUpdateTitle = 'Device not supported';
 			canExportUpdate = false;
 		} else if (showSubtitlesForMergeOnly) {
