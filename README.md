@@ -113,7 +113,11 @@ Note: iOS may block the ability to select certain files. For subtitles you there
 
 ### I get a very low line match rate
 
--   Try to change some of the matching options and see if different combinations may increase the match rate
+-   Try to change some of the matching options and see if different combinations may increase the match rate. You can also try to hint the script from where to start by clicking on the bullseye icon and clicking on the respective element afterwards
+
+### The matching speed is very low
+
+-   This can give you a hint that the script has problems to find a proper first match against your subtitle. You can try out to tell the script from where to start by clicking on the bullseye icon and clicking on the respective element afterwards or alternatively increase the number of match attempts
 
 ### After matching the book it looks different
 

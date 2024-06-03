@@ -172,8 +172,6 @@ export const settings$ = {
 	ankiSentenceField$: writableStringStore()('ttu-whispersync-anki-sentence-field'),
 	ankiSoundField$: writableStringStore()('ttu-whispersync-anki-sound-field'),
 	matchLineIgnoreRp$: writableBooleanStore()('ttu-whispersync-match-line-ignore-rp'),
-	matchLineSpaceMode$: writableStringStore()('ttu-whispersync-match-line-space-mode'),
-	matchLineLookAhead$: writableNumberStore()('ttu-whispersync-match-line-lookahead'),
 	matchLineSimilarityThreshold$: writableNumberStore()('ttu-whispersync-match-line-similarity-threshold'),
 	matchLineMaxAttempts$: writableNumberStore()('ttu-whispersync-match-line-max-attempts'),
 };

@@ -849,7 +849,7 @@
 				<Audiobook {showMenu} bind:this={audiobookComponent} />
 			</div>
 			<div class="flex flex-col flex-1" class:hidden={$currentTab$ !== Tabs.MATCH}>
-				<Match />
+				<Match on:selectHint={() => (showMenu = false)} on:hintSelected={() => (showMenu = true)} />
 			</div>
 			<div class="overflow-auto" class:hidden={$currentTab$ !== Tabs.CHAPTERS}>
 				<Chapters />

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import Icon from './Icon.svelte';
 	import type { Context, DiffDetail, Subtitle } from '../lib/general';
-	import { MatchSpaceMode } from '../lib/settings';
 	import {
 		bookData$,
 		booksDB$,
@@ -18,29 +17,23 @@
 		caluclatePercentage,
 		downloadFile,
 		getBaseLineCSSSelectorForId,
+		getSubtitleIdFromElement,
 		parseHTML,
 		throwIfAborted,
 	} from '../lib/util';
-	import { mdiHelpCircle, mdiInformation } from '@mdi/js';
+	import MatchDiffDialog from './MatchDiffDialog.svelte';
+	import { mdiFloppy, mdiHelpCircle, mdiInformation, mdiTarget, mdiTrashCan } from '@mdi/js';
 	import Popover from './Popover.svelte';
 	import Progress from './Progress.svelte';
 	import SettingsCheckbox from './SettingsCheckbox.svelte';
 	import SettingsNumberInput from './SettingsNumberInput.svelte';
-	import ShowMatchDiffDialog from './ShowMatchDiffDialog.svelte';
-	import { stringSimilarity } from 'string-similarity-js';
-	import { getContext } from 'svelte';
-	import SettingsSelect from './SettingsSelect.svelte';
+	import { createEventDispatcher, getContext } from 'svelte';
 
 	const singleIgnoredElements = new Set(['rt']);
-	const {
-		matchLineIgnoreRp$,
-		matchLineSpaceMode$,
-		matchLineLookAhead$,
-		matchLineSimilarityThreshold$,
-		matchLineMaxAttempts$,
-	} = settings$;
+	const normalizeRegex = /[\p{punct}\s]/u;
 	const { isIOS } = getContext<Context>('context');
-	const matchLLineSpaceModes = [MatchSpaceMode.ORIGINAL, MatchSpaceMode.LEADING_TRAILING, MatchSpaceMode.ALL];
+	const { matchLineIgnoreRp$, matchLineSimilarityThreshold$, matchLineMaxAttempts$ } = settings$;
+	const dispatch = createEventDispatcher<{ selectHint: void; hintSelected: void }>();
 
 	let bookHTML: HTMLElement | undefined;
 	let cancelToken = new AbortController();
@@ -49,20 +42,65 @@
 	let maxProgress = 0;
 	let lineMatchRate = 'n/a';
 	let bookSubtitleDiffRate = 'n/a';
-	let bookSubtitleDiffLines = 0;
-	let matchLineSpaceModeHelpText = '';
-	let adjustedSubtitles: Subtitle[] = [];
-	let diffDetails: DiffDetail[] = [];
+	let subtitlesForDownload: Subtitle[] = [];
+	let subtitleDiffDetails: DiffDetail[] = [];
+	let unmatchedSubtitles: Subtitle[] = [];
+	let startHintNodeContent: string | undefined;
+	let startHintParentId: string | undefined;
+
+	$: hasHint = startHintNodeContent !== undefined && startHintParentId !== undefined;
 
 	$: ignoredTags = $matchLineIgnoreRp$ ? allIgnoredElements : singleIgnoredElements;
 
-	$: if ($matchLineSpaceMode$ === MatchSpaceMode.ORIGINAL) {
-		matchLineSpaceModeHelpText = 'Lines and book text will be compared as is';
-	} else {
-		matchLineSpaceModeHelpText =
-			$matchLineSpaceMode$ === MatchSpaceMode.LEADING_TRAILING
-				? 'Leading and trailing whitespace of lines and book text will be ignored for the comparison'
-				: 'All whitespaces of lines and book text will be ignored for the comparison';
+	async function onTriggerSelectStartHint() {
+		document.addEventListener('click', onSelectHintElement, { once: true, capture: false });
+
+		dispatch('selectHint');
+	}
+
+	function onResetHint() {
+		startHintNodeContent = undefined;
+		startHintParentId = undefined;
+	}
+
+	function onSelectHintElement({ x, y }: MouseEvent | PointerEvent) {
+		const firstTextNode = getTextNode(document.elementFromPoint(x, y));
+
+		if (firstTextNode) {
+			const ttuParent = getTTUParent(firstTextNode);
+
+			if (ttuParent?.id) {
+				startHintNodeContent = firstTextNode.textContent!;
+				startHintParentId = ttuParent.id;
+
+				firstTextNode.parentElement!.style.visibility = 'hidden';
+
+				setTimeout(() => (firstTextNode.parentElement!.style.visibility = ''), 500);
+			}
+		}
+
+		dispatch('hintSelected');
+	}
+
+	function onDownloadUnmatchedSubtitles() {
+		$isLoading$ = true;
+
+		let content = '';
+
+		for (let index = 0, { length } = unmatchedSubtitles; index < length; index += 1) {
+			const unmatchedSubtitle = unmatchedSubtitles[index];
+
+			content += `${unmatchedSubtitle.id}\n${unmatchedSubtitle.text}\n\n`;
+		}
+
+		downloadFile(
+			document,
+			new Blob([content], { type: 'text/plain;charset=utf-8' }),
+			`${$currentSubtitleFile$!.name.split(/\.(?=[^\.]+$)/)[0]}_unmatched.txt`,
+			isIOS,
+		);
+
+		$isLoading$ = false;
 	}
 
 	async function onMatchSubtitles() {
@@ -70,59 +108,67 @@
 		$lastError$ = '';
 		lineMatchRate = 'n/a';
 		bookSubtitleDiffRate = 'n/a';
-		bookSubtitleDiffLines = 0;
-		adjustedSubtitles = [];
-		diffDetails = [];
+		subtitlesForDownload = [];
+		subtitleDiffDetails = [];
+		unmatchedSubtitles = [];
 		maxProgress = $currentSubtitles$.size;
 
 		try {
 			const textNodes: Node[] = [];
 			const subtitles = [...$currentSubtitles$.values()];
 			const maxMatchAttempts = Math.min(subtitles.length, $matchLineMaxAttempts$);
+			const originalElementsMap = new Map<HTMLElement, string>();
+			const matchedElementsMap = new Map<HTMLElement, string>();
 
 			let currentNodes: Node[] = [];
 			let currentText = '';
 			let textInScope = '';
-			let bookText = '';
-			let matchedBookText = '';
-			let currentSubLineIndex = 0;
-			let currentSubLine = subtitles[currentSubLineIndex].text;
-			let currentSubLineLength = [...currentSubLine].length;
-			let currentSubLineLookAheadLength =
-				currentSubLineLength + Math.ceil(Math.min($matchLineLookAhead$, currentSubLineLength / 2));
+			let currentSubtitleIndex = 0;
+			let passedStartNode = hasHint ? false : true;
+			let { currentSubtitle, currentSubtitleLength } = getSubtitleData(subtitles, currentSubtitleIndex);
 
 			bookHTML = parseHTML(new DOMParser(), $bookData$.elementHtml);
 
-			const walker = document.createTreeWalker(bookHTML, NodeFilter.SHOW_TEXT, {
+			const bookTextWalker = document.createTreeWalker(bookHTML, NodeFilter.SHOW_TEXT, {
 				acceptNode(node) {
-					const textContent = (node.textContent || '').replace(/\s/g, '').trim();
+					if (hasHint && !passedStartNode) {
+						passedStartNode =
+							startHintNodeContent === node.textContent && getTTUParent(node)?.id === startHintParentId;
 
-					if (textContent) {
-						textNodes.push(node);
+						if (passedStartNode) {
+							node.parentElement!.dataset.ttuWhispersyncStartNode = '';
+						}
 					}
 
-					bookText += (node.textContent || '').replace(/\s/g, '').trim();
+					if (passedStartNode) {
+						const textContent = normalizeString(node.textContent);
+
+						addNodeContentToMap(originalElementsMap, node, textContent);
+
+						if (textContent) {
+							textNodes.push(node);
+						}
+					}
 
 					return NodeFilter.FILTER_ACCEPT;
 				},
 			});
 
-			while (walker.nextNode()) {}
+			while (bookTextWalker.nextNode()) {}
 
-			let textNodeCount = textNodes.length;
+			let matchedSubtitles = 0;
+			let matchAttempt = 1;
 			let currentTextNodeIndex = 0;
 			let textNodeIndexAfterLastMatch = 0;
-			let matchedLines = 0;
-			let matchAttempt = 1;
+			let textNodeCount = textNodes.length;
 
-			while (currentTextNodeIndex < textNodeCount) {
+			while (currentTextNodeIndex < textNodeCount && currentSubtitleIndex < subtitles.length) {
 				throwIfAborted(cancelSignal);
 
-				const newProgress = caluclatePercentage(currentSubLineIndex + 1, maxProgress);
+				const newProgress = caluclatePercentage(currentSubtitleIndex + 1, maxProgress);
 
 				let node = textNodes[currentTextNodeIndex];
-				let nodeParentElement = node.parentElement!;
-				let nodeParentTag = nodeParentElement.tagName.toLowerCase();
+				let nodeParentTag = node.parentElement!.tagName.toLowerCase();
 
 				if (newProgress !== currentProgress) {
 					currentProgress = newProgress;
@@ -131,30 +177,51 @@
 				}
 
 				if (!ignoredTags.has(nodeParentTag)) {
-					currentText += getAdjustedValue(node.textContent);
+					currentText += node.textContent;
 				}
 
-				const originalTextLength = [...currentText].length;
+				const currentNormalizedTextLength = getNormalizedLength(currentText);
 
-				if (originalTextLength >= currentSubLineLength) {
-					const textToCheck = currentText.slice(0, currentSubLineLookAheadLength);
-					const textToCheckLength = [...textToCheck].length;
-					const currentSubLineTextForComparison = getValueForComparison(currentSubLine);
-					const textToCheckForComparison = getValueForComparison(textToCheck);
+				if (currentNormalizedTextLength >= currentSubtitleLength) {
+					const textForComparison = getTextForComparison(currentText, currentSubtitleLength);
+					const textForComparisonLength = [...textForComparison].length;
 
-					const lineSimiliarity =
-						currentSubLineTextForComparison === textToCheckForComparison
-							? 1
-							: stringSimilarity(currentSubLineTextForComparison, textToCheckForComparison);
+					let bestLineSimiliarityStartIndex = 0;
+					let bestLineSimiliarityEndIndex = textForComparisonLength;
+					let bestLineSimiliarityValue = getSimilarity(textForComparison, currentSubtitle);
 
 					currentNodes.push(node);
+
+					const similiarityResult = findBestSimilarity(
+						currentSubtitle,
+						currentSubtitleLength,
+						textForComparison,
+						textForComparisonLength,
+						bestLineSimiliarityStartIndex,
+						bestLineSimiliarityValue,
+						currentNodes,
+						textNodes,
+						currentTextNodeIndex,
+					);
+					const isThresholdMet = similiarityResult.bestLineSimiliarityValue >= $matchLineSimilarityThreshold$;
+
+					if (isThresholdMet) {
+						({
+							bestLineSimiliarityStartIndex,
+							bestLineSimiliarityEndIndex,
+							currentNodes,
+							currentTextNodeIndex,
+						} = similiarityResult);
+					}
+
+					node = textNodes[currentTextNodeIndex];
+					nodeParentTag = node.parentElement!.tagName.toLowerCase();
 
 					currentTextNodeIndex += 1;
 
 					while (ignoredTags.has(nodeParentTag) && currentTextNodeIndex < textNodeCount) {
 						node = textNodes[currentTextNodeIndex];
-						nodeParentElement = node.parentElement!;
-						nodeParentTag = nodeParentElement.tagName.toLowerCase();
+						nodeParentTag = node.parentElement!.tagName.toLowerCase();
 
 						if (ignoredTags.has(nodeParentTag)) {
 							currentNodes.push(node);
@@ -165,64 +232,58 @@
 
 					currentTextNodeIndex -= 1;
 
-					if (lineSimiliarity > $matchLineSimilarityThreshold$) {
-						let bestLineSimiliarityLength = textToCheckLength;
-						let bestLineSimiliarityValue = lineSimiliarity;
-
-						if (bestLineSimiliarityValue !== 1) {
-							for (let index = textToCheckLength - 1; index > 0; index -= 1) {
-								const substring = textToCheck.slice(0, index);
-								const substringForComparison = getValueForComparison(substring);
-								const lineSimiliarityToCompare =
-									currentSubLineTextForComparison === substringForComparison
-										? 1
-										: stringSimilarity(currentSubLineTextForComparison, substringForComparison);
-
-								if (lineSimiliarityToCompare > bestLineSimiliarityValue) {
-									bestLineSimiliarityLength = index;
-									bestLineSimiliarityValue = lineSimiliarityToCompare;
-								}
-							}
-						}
-
-						let charactersToProcess = bestLineSimiliarityLength;
+					if (isThresholdMet) {
+						let charactersToProcess = bestLineSimiliarityEndIndex - bestLineSimiliarityStartIndex;
 						let charactersProcessed = 0;
 						let hadRemainingCharacters = false;
 
+						if (bestLineSimiliarityStartIndex !== 0) {
+							const nodeToProcess = currentNodes[0];
+							const nodeToProcessTextContent = nodeToProcess.textContent || '';
+							const ignoredTextNode = document.createTextNode(
+								nodeToProcessTextContent.slice(0, bestLineSimiliarityStartIndex),
+							);
+							const remainingTextNode = document.createTextNode(
+								nodeToProcessTextContent.slice(bestLineSimiliarityStartIndex),
+							);
+
+							nodeToProcess.parentElement!.replaceChild(ignoredTextNode, nodeToProcess);
+							ignoredTextNode.after(remainingTextNode);
+
+							currentNodes[0] = remainingTextNode;
+						}
+
 						for (let index = 0, { length } = currentNodes; index < length; index += 1) {
 							const nodeToProcess = currentNodes[index];
-							const parentElement = nodeToProcess.parentElement!;
-							const parentElementTag = parentElement.tagName.toLowerCase();
-							const nodeTextContent = getAdjustedValue(nodeToProcess.textContent);
-							const nodeTextContentLength = [...nodeTextContent].length;
-							const isIgnoredParent = ignoredTags.has(parentElementTag);
+							const nodeToProcessParentElement = nodeToProcess.parentElement!;
+							const nodeToProcessParentElementTag = nodeToProcessParentElement.tagName.toLowerCase();
+							const nodeToProcessTextContent = nodeToProcess.textContent || '';
+							const nodeTextContentLength = [...nodeToProcessTextContent].length;
+							const isIgnoredParent = ignoredTags.has(nodeToProcessParentElementTag);
 							const matchedContainer = document.createElement('span');
 							const matchedText = isIgnoredParent
-								? nodeTextContent.slice(0)
-								: nodeTextContent.slice(0, charactersToProcess);
+								? nodeToProcessTextContent.slice(0)
+								: nodeToProcessTextContent.slice(0, charactersToProcess);
 							const matchedTextNode = document.createTextNode(matchedText);
 							const matchedTextLength = [...matchedText].length;
 							const remainingCharacters = nodeTextContentLength - matchedTextLength;
 
-							let replacedInParent = false;
-
 							if (charactersToProcess) {
-								const subtitle = subtitles[currentSubLineIndex];
+								const subtitle = subtitles[currentSubtitleIndex];
 
 								matchedContainer.classList.add(getBaseLineCSSSelectorForId(subtitle.id));
 
 								matchedContainer.appendChild(matchedTextNode);
-								parentElement.replaceChild(matchedContainer, nodeToProcess);
+								nodeToProcessParentElement.replaceChild(matchedContainer, nodeToProcess);
 
-								replacedInParent = true;
-
-								if (!allIgnoredElements.has(parentElementTag)) {
+								if (!allIgnoredElements.has(nodeToProcessParentElementTag)) {
 									textInScope += matchedText;
 								}
 							}
 
 							charactersProcessed += isIgnoredParent ? 0 : matchedTextLength;
-							charactersToProcess = bestLineSimiliarityLength - charactersProcessed;
+							charactersToProcess =
+								bestLineSimiliarityEndIndex - bestLineSimiliarityStartIndex - charactersProcessed;
 
 							if (!charactersToProcess && remainingCharacters) {
 								const leftOverTextNodes: Text[] = [];
@@ -233,21 +294,19 @@
 
 								while (index < length) {
 									const leftOverNode = currentNodes[index];
-									const leftOverNodeContent = getAdjustedValue(leftOverNode.textContent);
-									const leftOverText = leftOverNodeContent.slice(leftOverLength);
-									const remainingTextNode = document.createTextNode(leftOverText);
+									const leftOverNodeContent = leftOverNode.textContent || '';
+									const remainingTextNode = document.createTextNode(
+										leftOverNodeContent.slice(leftOverLength),
+									);
 
 									if (!leftOverNodeContent) {
 										throw new Error('charactersToProcess without remaining text found');
 									}
 
-									if (replacedInParent) {
+									if (!leftOverNode.parentElement) {
 										matchedContainer.after(remainingTextNode);
-									} else {
-										parentElement.appendChild(remainingTextNode);
+										leftOverTextNodes.push(remainingTextNode);
 									}
-
-									leftOverTextNodes.push(remainingTextNode);
 
 									index += 1;
 									leftOverLength = 0;
@@ -265,22 +324,7 @@
 							}
 						}
 
-						const currentSubtitle = subtitles[currentSubLineIndex];
-						const trimmedSubtitle = currentSubLine.replace(/\s/g, '').trim().toLowerCase();
-						const trimmedTextInScope = textInScope.replace(/\s/g, '').trim().toLowerCase();
-
-						adjustedSubtitles.push({ ...currentSubtitle });
-
-						if (trimmedSubtitle !== trimmedTextInScope) {
-							adjustedSubtitles[adjustedSubtitles.length - 1].text = textInScope.trim();
-							bookSubtitleDiffLines += 1;
-
-							diffDetails.push({
-								id: currentSubtitle.id,
-								original: currentSubLine,
-								adjusted: textInScope,
-							});
-						}
+						updateSubtitlesForDownload(subtitles[currentSubtitleIndex], textInScope);
 
 						currentText = '';
 						textInScope = '';
@@ -290,20 +334,19 @@
 						}
 
 						textNodeIndexAfterLastMatch = currentTextNodeIndex;
-						currentSubLineIndex += 1;
-						matchedLines += 1;
+						currentSubtitleIndex += 1;
+						matchedSubtitles += 1;
 						matchAttempt = 1;
 
-						if (currentSubLineIndex < subtitles.length) {
-							currentSubLine = subtitles[currentSubLineIndex].text;
-							currentSubLineLength = [...currentSubLine].length;
-							currentSubLineLookAheadLength =
-								currentSubLineLength +
-								Math.ceil(Math.min($matchLineLookAhead$, currentSubLineLength / 2));
+						if (currentSubtitleIndex < subtitles.length) {
+							({ currentSubtitle, currentSubtitleLength } = getSubtitleData(
+								subtitles,
+								currentSubtitleIndex,
+							));
 						}
 					} else {
+						currentTextNodeIndex = textNodeIndexAfterLastMatch + matchAttempt;
 						matchAttempt += 1;
-						currentTextNodeIndex += 1;
 						currentText = '';
 						textInScope = '';
 
@@ -311,21 +354,26 @@
 						const maxAttemptsReached = matchAttempt > maxMatchAttempts;
 
 						if (maxAttemptsReached || isEndReached) {
-							matchAttempt = 1;
-							currentSubLineIndex += 1;
-
 							console.log(
 								maxAttemptsReached
-									? `max match attempts for ${currentSubLine} reached - reset`
-									: 'End of Text before max attempt reached - reset',
+									? `Max match attempts for ${currentSubtitle} (${subtitles[currentSubtitleIndex].id}) reached - reset`
+									: `End of Text before max attempt for ${currentSubtitle} (${subtitles[currentSubtitleIndex].id}) reached - reset`,
 							);
 
-							if (currentSubLineIndex < subtitles.length) {
+							unmatchedSubtitles.push(subtitles[currentSubtitleIndex]);
+
+							updateSubtitlesForDownload(subtitles[currentSubtitleIndex], textInScope);
+
+							matchAttempt = 1;
+							currentSubtitleIndex += 1;
+
+							if (currentSubtitleIndex < subtitles.length) {
 								currentTextNodeIndex = textNodeIndexAfterLastMatch;
-								currentSubLine = subtitles[currentSubLineIndex].text;
-								currentSubLineLength = [...currentSubLine].length;
-								currentSubLineLookAheadLength =
-									currentSubLineLength + Math.ceil(Math.min(16, currentSubLineLength / 2));
+
+								({ currentSubtitle, currentSubtitleLength } = getSubtitleData(
+									subtitles,
+									currentSubtitleIndex,
+								));
 							} else {
 								currentTextNodeIndex = textNodeCount;
 							}
@@ -341,9 +389,17 @@
 				textNodeCount = textNodes.length;
 			}
 
+			passedStartNode = hasHint ? false : true;
+
 			const matchedWlker = document.createTreeWalker(bookHTML, NodeFilter.SHOW_TEXT, {
 				acceptNode(node) {
-					matchedBookText += (node.textContent || '').replace(/\s/g, '').trim();
+					if (hasHint && !passedStartNode) {
+						passedStartNode = !!node.parentElement?.closest('*[data-ttu-whispersync-start-node]');
+					}
+
+					if (passedStartNode) {
+						addNodeContentToMap(matchedElementsMap, node, normalizeString(node.textContent));
+					}
 
 					return NodeFilter.FILTER_ACCEPT;
 				},
@@ -351,45 +407,81 @@
 
 			while (matchedWlker.nextNode()) {}
 
-			const bookTextCharacters = [...bookText];
-			const matchedBookTextCharacters = [...matchedBookText];
+			const bookTextEntries = [...originalElementsMap.entries()];
+			const matchedBookTextEntries = [...matchedElementsMap.entries()];
 
-			for (let index = 0, { length } = bookTextCharacters; index < length; index += 1) {
-				const bookCharacter = bookTextCharacters[index];
-				const matchCharacter = matchedBookTextCharacters[index];
+			for (let index = 0, { length } = bookTextEntries; index < length; index += 1) {
+				const [originalElement, originalContent] = bookTextEntries[index];
+				const [matchedElement, matchedContent] = matchedBookTextEntries[index] || [];
+				const ttuParent = getTTUParent(originalElement);
 
-				if (bookCharacter !== matchCharacter) {
-					throw new Error(
-						`mismatch on position ${index}: ${bookText.slice(
-							Math.max(0, index - 10),
-							Math.min(bookTextCharacters.length, index + 10),
-						)} | vs | ${matchedBookText.slice(
-							Math.max(0, index - 10),
-							Math.min(matchedBookTextCharacters.length, index + 10),
-						)}`,
-					);
+				if (originalElement !== matchedElement) {
+					throwMatchError(`element mismatch on index ${index}`, originalElement, matchedElement, ttuParent);
+				}
+
+				const bookTextCharacters = [...originalContent];
+				const matchedBookTextCharacters = [...matchedContent];
+
+				for (let index2 = 0, { length: length2 } = bookTextCharacters; index2 < length2; index2 += 1) {
+					const bookCharacter = bookTextCharacters[index2];
+					const matchCharacter = matchedBookTextCharacters[index2];
+
+					if (bookCharacter !== matchCharacter) {
+						throwMatchError(
+							`mismatch on index ${index}, position ${index2}: ${originalContent.slice(
+								Math.max(0, index2 - 10),
+								Math.min(bookTextCharacters.length, index2 + 10),
+							)} | vs | ${matchedContent.slice(
+								Math.max(0, index2 - 10),
+								Math.min(matchedBookTextCharacters.length, index2 + 10),
+							)}`,
+							originalElement,
+							matchedElement,
+							ttuParent,
+						);
+					}
 				}
 			}
 
-			lineMatchRate = `${matchedLines} / ${
-				subtitles.length
-			} (${caluclatePercentage(matchedLines, subtitles.length, false)}%)`;
+			const lastSubtitle = subtitles[subtitles.length - 1];
 
-			bookSubtitleDiffRate = `${bookSubtitleDiffLines} / ${
-				adjustedSubtitles.length
-			} (${adjustedSubtitles.length ? caluclatePercentage(bookSubtitleDiffLines, adjustedSubtitles.length, false) : 0}%)`;
+			if (currentText) {
+				unmatchedSubtitles.push(lastSubtitle);
+
+				console.log(
+					`End of Text before max attempt for ${lastSubtitle.text} (${lastSubtitle.id}) reached - reset`,
+				);
+			}
+
+			if (
+				subtitlesForDownload.length &&
+				subtitlesForDownload[subtitlesForDownload.length - 1].id !== lastSubtitle.id
+			) {
+				updateSubtitlesForDownload(lastSubtitle, textInScope);
+			}
+
+			lineMatchRate = `${matchedSubtitles} / ${
+				subtitles.length
+			} (${caluclatePercentage(matchedSubtitles, subtitles.length, false)}%)`;
+
+			bookSubtitleDiffRate = `${subtitleDiffDetails.length} / ${matchedSubtitles} (${caluclatePercentage(
+				subtitleDiffDetails.length,
+				matchedSubtitles,
+				false,
+			)}%)`;
 
 			if (bookHTML.firstElementChild instanceof HTMLElement) {
 				bookHTML.firstElementChild.dataset.ttuWhispersyncMatchedBy = $currentSubtitleFile$!.name;
 				bookHTML.firstElementChild.dataset.ttuWhispersyncMatchedOn = `${Date.now()}`;
+				bookHTML.firstElementChild.dataset.ttuWhispersyncMatchedSource = 'default';
 			}
 		} catch (error: any) {
 			lineMatchRate = 'n/a';
 			bookSubtitleDiffRate = 'n/a';
-			bookSubtitleDiffLines = 0;
 			bookHTML = undefined;
-			adjustedSubtitles = [];
-			diffDetails = [];
+			subtitlesForDownload = [];
+			subtitleDiffDetails = [];
+			unmatchedSubtitles = [];
 
 			if (!cancelToken.signal.aborted && error.name !== 'AbortError') {
 				$lastError$ = `Failed to match: ${error.message}`;
@@ -411,13 +503,13 @@
 		cancelToken.abort('user aborted');
 	}
 
-	function onDownloadAdjustedSubtiles() {
+	function onDownloadSubtitles() {
 		$isLoading$ = true;
 
 		let subtitleContent = '';
 
-		for (let index = 0, { length } = adjustedSubtitles; index < length; index += 1) {
-			const subtitle = adjustedSubtitles[index];
+		for (let index = 0, { length } = subtitlesForDownload; index < length; index += 1) {
+			const subtitle = subtitlesForDownload[index];
 
 			subtitleContent += `${subtitle.id}\n${subtitle.startTime} --> ${subtitle.endTime}\n${subtitle.text}\n\n`;
 		}
@@ -453,22 +545,320 @@
 		}
 	}
 
-	function getAdjustedValue(value: string | null) {
-		if (!value) {
-			return '';
+	function getTextNode(node: Node | null): Node | undefined {
+		if (node === null) {
+			return undefined;
 		}
 
-		return $matchLineSpaceMode$ === MatchSpaceMode.ORIGINAL ? value : value.trim();
+		if (node.nodeType === Node.TEXT_NODE && normalizeString(node.textContent)) {
+			return node;
+		}
+
+		let textNode: Node | undefined;
+
+		for (let index = 0, { length } = node.childNodes; index < length; index += 1) {
+			const childNode = node.childNodes[index];
+
+			if (childNode.nodeType === Node.TEXT_NODE && normalizeString(node.textContent)) {
+				textNode = childNode;
+			} else {
+				textNode = getTextNode(childNode);
+			}
+
+			if (textNode) {
+				break;
+			}
+		}
+
+		return textNode;
 	}
 
-	function getValueForComparison(value: string) {
-		if ($matchLineSpaceMode$ === MatchSpaceMode.ORIGINAL) {
-			return value;
+	function getTTUParent(node: Node) {
+		return node.parentElement!.closest('div[id^="ttu-"]');
+	}
+
+	function getSubtitleData(subtitles: Subtitle[], index: number) {
+		const currentSubtitle = subtitles[index].text;
+		const currentSubtitleLength = [...currentSubtitle].length;
+
+		return { currentSubtitle, currentSubtitleLength };
+	}
+
+	function getNormalizedLength(value: string) {
+		return [...normalizeString(value)].length;
+	}
+
+	function normalizeString(value: string | null, toLowerCase = false) {
+		const cleanValue = (value || '').replace(/\s/g, '').trim();
+
+		return toLowerCase ? cleanValue.toLowerCase() : cleanValue;
+	}
+
+	function addNodeContentToMap(map: Map<HTMLElement, string>, node: Node, textContent: string) {
+		const parent =
+			node.parentElement instanceof HTMLSpanElement &&
+			getSubtitleIdFromElement(node.parentElement) !== 'not existing'
+				? node.parentElement.parentElement!
+				: node.parentElement!;
+
+		map.set(parent, `${map.get(parent) || ''}${textContent}`);
+	}
+
+	function getTextForComparison(currentText: string, targetLength: number) {
+		const characters = [...currentText];
+
+		if (characters.length === targetLength) {
+			return currentText;
 		}
 
-		return $matchLineSpaceMode$ === MatchSpaceMode.LEADING_TRAILING
-			? value.trim()
-			: value.replace(/\s/g, '').trim();
+		let textForComparison = '';
+		let textForComparisonLength = 0;
+
+		for (let index = 0, { length } = characters; index < length; index += 1) {
+			let character = characters[index];
+
+			textForComparison += character;
+
+			const trimmedCharacter = character.trim();
+
+			if (trimmedCharacter && !normalizeRegex.test(trimmedCharacter)) {
+				textForComparisonLength += 1;
+			}
+
+			if (textForComparisonLength === targetLength) {
+				break;
+			}
+		}
+
+		return textForComparison;
+	}
+
+	function getSimilarity(str1: string, str2: string) {
+		const string1 = normalizeString(str1, true);
+		const string2 = normalizeString(str2, true);
+		const string1Length = [...string1].length;
+		const string2Length = [...string2].length;
+		const substringLength = string1Length < 5 ? 1 : 2;
+
+		if (string1 === string2) {
+			return 1;
+		}
+
+		if (string1Length < substringLength || string2Length < substringLength) {
+			return 0;
+		}
+
+		const map = new Map();
+
+		for (let i = 0; i < string1Length - (substringLength - 1); i += 1) {
+			const substring1 = string1.substring(i, i + substringLength);
+
+			map.set(substring1, map.has(substring1) ? map.get(substring1) + 1 : 1);
+		}
+
+		let match = 0;
+
+		for (let j = 0; j < string2Length - (substringLength - 1); j++) {
+			const substring2 = string2.substring(j, j + substringLength);
+			const count = map.has(substring2) ? map.get(substring2) : 0;
+
+			if (count > 0) {
+				map.set(substring2, count - 1);
+
+				match += 1;
+			}
+		}
+
+		return (match * 2) / (string1Length + string2Length - (substringLength - 1) * 2);
+	}
+
+	function findBestSimilarity(
+		currentSubtitle: string,
+		currentSubtitleLength: number,
+		textForComparison: string,
+		textForComparisonLength: number,
+		currentBestStartIndex: number,
+		currentBestValue: number,
+		currentNodes: Node[],
+		textNodes: Node[],
+		currentTextNodeIndex: number,
+	) {
+		let bestLineSimiliarityStartIndex = currentBestStartIndex;
+		let bestLineSimiliarityEndIndex = textForComparisonLength;
+		let bestLineSimiliarityValue = currentBestValue;
+
+		if (bestLineSimiliarityValue !== 1) {
+			for (let index = bestLineSimiliarityEndIndex; index > currentBestStartIndex; index -= 1) {
+				if (
+					normalizeString(currentSubtitle) ===
+					normalizeString(textForComparison.slice(currentBestStartIndex, index))
+				) {
+					bestLineSimiliarityStartIndex = currentBestStartIndex;
+					bestLineSimiliarityEndIndex = index;
+					bestLineSimiliarityValue = 1;
+					break;
+				}
+			}
+		}
+
+		if (bestLineSimiliarityValue !== 1) {
+			for (let index = currentBestStartIndex; index < bestLineSimiliarityEndIndex; index += 1) {
+				const lineSimiliarityToCompare = getSimilarity(
+					currentSubtitle,
+					textForComparison.slice(index, bestLineSimiliarityEndIndex),
+				);
+
+				if (lineSimiliarityToCompare > bestLineSimiliarityValue) {
+					bestLineSimiliarityStartIndex = index;
+					bestLineSimiliarityEndIndex = textForComparisonLength;
+					bestLineSimiliarityValue = lineSimiliarityToCompare;
+				}
+			}
+		}
+
+		if (
+			currentBestStartIndex === bestLineSimiliarityStartIndex ||
+			bestLineSimiliarityValue === 1 ||
+			bestLineSimiliarityValue < $matchLineSimilarityThreshold$
+		) {
+			if (bestLineSimiliarityValue !== 1) {
+				bestLineSimiliarityValue = -1;
+
+				for (let index = bestLineSimiliarityEndIndex; index > currentBestStartIndex; index -= 1) {
+					const lineSimiliarityToCompare = getSimilarity(
+						currentSubtitle,
+						textForComparison.slice(currentBestStartIndex, index),
+					);
+
+					if (lineSimiliarityToCompare > bestLineSimiliarityValue) {
+						bestLineSimiliarityStartIndex = currentBestStartIndex;
+						bestLineSimiliarityEndIndex = index;
+						bestLineSimiliarityValue = lineSimiliarityToCompare;
+					}
+				}
+			}
+
+			if (bestLineSimiliarityValue < $matchLineSimilarityThreshold$ || bestLineSimiliarityValue === 1) {
+				return {
+					bestLineSimiliarityStartIndex,
+					bestLineSimiliarityEndIndex,
+					bestLineSimiliarityValue,
+					currentNodes,
+					currentTextNodeIndex,
+				};
+			}
+
+			const finalNodes = [];
+			const originalLength = currentNodes.length;
+			const targetCharacterLength = bestLineSimiliarityEndIndex - bestLineSimiliarityStartIndex;
+
+			let characterCount = 0;
+
+			while (characterCount < targetCharacterLength && currentNodes.length) {
+				const nodeToCheck = currentNodes.shift()!;
+				const nodeToCheckParentTag = nodeToCheck.parentElement!.tagName.toLowerCase();
+
+				characterCount += ignoredTags.has(nodeToCheckParentTag)
+					? 0
+					: [...(nodeToCheck.textContent || '')].length;
+
+				finalNodes.push(nodeToCheck);
+			}
+
+			return {
+				bestLineSimiliarityStartIndex,
+				bestLineSimiliarityEndIndex,
+				bestLineSimiliarityValue,
+				currentNodes: finalNodes,
+				currentTextNodeIndex: currentTextNodeIndex - (originalLength - finalNodes.length),
+			};
+		}
+
+		let sliceIndex = 0;
+		let charactersSeen = 0;
+		let startOffset = bestLineSimiliarityStartIndex;
+
+		for (let index = 0, { length } = currentNodes; index < length; index += 1) {
+			let nodeToCheck = currentNodes[index];
+			let nodeToCheckParentTag = nodeToCheck.parentElement!.tagName.toLowerCase();
+			let nodeToCheckLength = ignoredTags.has(nodeToCheckParentTag)
+				? 0
+				: [...(nodeToCheck.textContent || '')].length;
+
+			const offsetDiff = startOffset - nodeToCheckLength;
+
+			charactersSeen += nodeToCheckLength;
+			startOffset = offsetDiff < 0 ? startOffset : offsetDiff;
+
+			if (charactersSeen >= bestLineSimiliarityStartIndex) {
+				sliceIndex = index + (charactersSeen === bestLineSimiliarityStartIndex ? 1 : 0);
+				break;
+			}
+		}
+
+		const newNodes = [];
+
+		let currentText = '';
+		let currentNormalizedTextLength = 0;
+		let newTextNodeIndex = currentTextNodeIndex - (currentNodes.length - (sliceIndex + 1));
+
+		while (currentNormalizedTextLength <= currentSubtitleLength && newTextNodeIndex < textNodes.length) {
+			const nodeToCheck = textNodes[newTextNodeIndex];
+			const nodeToCheckParentTag = nodeToCheck.parentElement!.tagName.toLowerCase();
+
+			if (!ignoredTags.has(nodeToCheckParentTag)) {
+				currentText += nodeToCheck.textContent;
+			}
+
+			newNodes.push(nodeToCheck);
+
+			newTextNodeIndex += 1;
+			currentNormalizedTextLength = getNormalizedLength(currentText);
+		}
+
+		newTextNodeIndex = newTextNodeIndex - 1;
+
+		currentText = getTextForComparison(currentText, currentSubtitleLength);
+
+		return findBestSimilarity(
+			currentSubtitle,
+			currentSubtitleLength,
+			currentText,
+			[...currentText].length,
+			startOffset,
+			bestLineSimiliarityValue,
+			newNodes,
+			textNodes,
+			newTextNodeIndex,
+		);
+	}
+
+	function updateSubtitlesForDownload(currentSubtitle: Subtitle, textInScope: string) {
+		const trimmedSubtitle = normalizeString(currentSubtitle.text, true);
+		const trimmedTextInScope = normalizeString(textInScope, true);
+
+		subtitlesForDownload.push({ ...currentSubtitle });
+
+		if (textInScope && trimmedSubtitle !== trimmedTextInScope) {
+			subtitlesForDownload[subtitlesForDownload.length - 1].text = textInScope;
+
+			subtitleDiffDetails.push({
+				id: currentSubtitle.id,
+				original: currentSubtitle.text,
+				adjusted: textInScope,
+			});
+		}
+	}
+
+	function throwMatchError(
+		error: string,
+		originalElement: HTMLElement,
+		matchedElement: HTMLElement,
+		ttuParent: Element | null,
+	) {
+		console.log(error, originalElement, matchedElement, ttuParent);
+
+		throw new Error(error);
 	}
 </script>
 
@@ -476,10 +866,21 @@
 	<div class="settings-grid">
 		<div>Lines to match</div>
 		<div>{$currentSubtitles$.size}</div>
-		<div></div>
+		<button title={hasHint ? 'Delete start hint element' : 'Select start hint element'}>
+			<Icon
+				path={hasHint ? mdiTrashCan : mdiTarget}
+				on:click={() => (hasHint ? onResetHint() : onTriggerSelectStartHint())}
+			/>
+		</button>
 		<div>Line match rate</div>
 		<div>{lineMatchRate}</div>
-		<div></div>
+		<div>
+			{#if !maxProgress && unmatchedSubtitles.length}
+				<button title="Download unmatched subtitle list">
+					<Icon path={mdiFloppy} on:click={onDownloadUnmatchedSubtitles} />
+				</button>
+			{/if}
+		</div>
 		<div>Book diff rate</div>
 		<div>{bookSubtitleDiffRate}</div>
 		<Popover>
@@ -488,12 +889,12 @@
 			</div>
 			<div>Indicates # of lines which passed the similiarity check but are not equal to the book text</div>
 		</Popover>
-		{#if !maxProgress && diffDetails.length}
+		{#if !maxProgress && subtitleDiffDetails.length}
 			<button
 				on:click={() =>
 					dialogs$.add({
-						component: ShowMatchDiffDialog,
-						props: { diffDetails },
+						component: MatchDiffDialog,
+						props: { subtitleDiffDetails },
 					})}
 			>
 				Show Diff
@@ -505,21 +906,6 @@
 			label="Ignore rp elements"
 			helpText="If enabled the content of rp elements will be ignored for the similiarity check"
 			targetStore$={matchLineIgnoreRp$}
-		/>
-		<SettingsSelect
-			label="Line space mode"
-			helpText={matchLineSpaceModeHelpText}
-			targetStore$={matchLineSpaceMode$}
-			options={matchLLineSpaceModes}
-		/>
-		<SettingsNumberInput
-			label="Line lookahead"
-			helpText="Determines the extra amount of characters added from 50% length of a subtitle line up to this value
-		which is used for the similiarity check"
-			min={1}
-			max={30}
-			step={1}
-			targetStore$={matchLineLookAhead$}
 		/>
 		<SettingsNumberInput
 			label="Line similiarity %"
@@ -552,8 +938,8 @@
 			Save & reload page
 		</button>
 	{/if}
-	{#if bookSubtitleDiffLines && !maxProgress}
-		<button class="btn m-r-s" on:click={onDownloadAdjustedSubtiles}>Download</button>
+	{#if !maxProgress && subtitleDiffDetails.length}
+		<button class="btn m-r-s" on:click={onDownloadSubtitles}>Download</button>
 	{/if}
 	<button class="btn m-r-s" disabled={maxProgress > 0} on:click={onMatchSubtitles}>Parse</button>
 	<Popover placement="top">

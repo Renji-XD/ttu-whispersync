@@ -41,7 +41,6 @@
 		"idb": "^8.0.0",
 		"mediainfo.js": "^0.2.1",
 		"srt-parser-2": "^1.2.3",
-		"string-similarity-js": "^2.1.4",
 		"wavesurfer.js": "^7.7.5"
 	}
 }

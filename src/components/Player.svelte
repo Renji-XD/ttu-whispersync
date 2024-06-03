@@ -110,7 +110,7 @@
 		? 'Recording in progress'
 		: `Fast-Forward ${$playerAltFastForwardTime$} seconds`;
 
-	$: currentProgress = $duration$ ? Math.min(100, caluclatePercentage($currentTime$, $duration$)) : 0;
+	$: currentProgress = Math.min(100, caluclatePercentage($currentTime$, $duration$));
 
 	$: handleVisibilityChange(visibilityState);
 

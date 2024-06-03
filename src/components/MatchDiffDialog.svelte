@@ -3,7 +3,7 @@
 	import type { DiffDetail } from '../lib/general';
 	import { createEventDispatcher } from 'svelte';
 
-	export let diffDetails: DiffDetail[];
+	export let subtitleDiffDetails: DiffDetail[];
 
 	const dispatch = createEventDispatcher<{
 		close: void;
@@ -18,10 +18,10 @@
 				<div>Id</div>
 				<div>Original</div>
 				<div>Adjusted</div>
-				{#each diffDetails as diffDetail (diffDetail.id)}
-					<div>{diffDetail.id}</div>
-					<div>{diffDetail.original}</div>
-					<div>{diffDetail.adjusted}</div>
+				{#each subtitleDiffDetails as subtitleDiffDetail (subtitleDiffDetail.id)}
+					<div>{subtitleDiffDetail.id}</div>
+					<div>{subtitleDiffDetail.original}</div>
+					<div>{subtitleDiffDetail.adjusted}</div>
 				{/each}
 			</div>
 		</div>

@@ -189,6 +189,10 @@ export function toTimeString(s: number) {
 }
 
 export function caluclatePercentage(x: number, y: number, roundDown = true) {
+	if (!x || !y) {
+		return 0;
+	}
+
 	if (roundDown) {
 		return Math.floor((x / y) * 100);
 	}
