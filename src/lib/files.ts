@@ -17,7 +17,7 @@ import {
 } from './stores';
 import { between, interactWithSandbox, toTimeStamp, toTimeString } from './util';
 import { getAudioMetadata, getMediaInfoCover } from './mediaInfo';
-import { initializeFFMPEG, putAudioFileInFFMPEG } from './ffmpeg';
+import { getChapterData, initializeFFMPEG, putAudioFileInFFMPEG } from './ffmpeg';
 
 import { AudioProcessor } from './settings';
 import type { MediaInfoType } from 'mediainfo.js';
@@ -310,11 +310,15 @@ export async function setAudioContext(
 ) {
 	await putAudioFileInFFMPEG(newAudioFile);
 
+	const audioChapters = await (newAudioFile && !audioResult.chapters.length
+		? getChapterData(newAudioFile)
+		: Promise.resolve(audioResult.chapters));
+
 	currentAudioLoaded$.set(false);
 	currentAudioFile$.set(newAudioFile);
 	currentCoverUrl$.set(audioResult.coverUrl);
 	currentAudioSourceUrl$.set(audioResult.audioSourceUrl);
-	currentAudioChapters$.set(audioResult.chapters);
+	currentAudioChapters$.set(audioChapters);
 
 	if (!newAudioFile) {
 		activeSubtitle$.set({ previous: '', current: '', useTimeFallback: false });

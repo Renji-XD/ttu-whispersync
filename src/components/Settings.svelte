@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Action, persistSubtitles } from '../lib/actions';
 	import { getDecksAndModels, getFields, resetAnkiSettings, setApiKey } from '../lib/anki';
-	import { initializeFFMPEG, putAudioFileInFFMPEG, terminateFFMPEG } from '../lib/ffmpeg';
+	import { getChapterData, initializeFFMPEG, putAudioFileInFFMPEG, terminateFFMPEG } from '../lib/ffmpeg';
 	import { updateAudio } from '../lib/files';
 	import { type Subtitle, type Context, type EventWithElement } from '../lib/general';
 	import { setMediaInfoInstance } from '../lib/mediaInfo';
@@ -315,7 +315,11 @@
 
 		if ($playerEnableChapters$ && $currentAudioFile$) {
 			try {
-				const { chapters } = await updateAudio($currentAudioFile$, sandboxElement, false, true);
+				let { chapters } = await updateAudio($currentAudioFile$, sandboxElement, false, true);
+
+				if (!chapters.length && $exportAudioProcessor$ === AudioProcessor.FFMPEG) {
+					chapters = await getChapterData($currentAudioFile$);
+				}
 
 				$currentAudioChapters$ = chapters;
 			} catch ({ message }: any) {
@@ -347,6 +351,15 @@
 			} catch ({ message }: any) {
 				$lastError$ = `Update to FFMPEG failed: ${message}`;
 			}
+		}
+
+		if (
+			nextAudioProcessor === AudioProcessor.FFMPEG &&
+			!$currentAudioChapters$.length &&
+			$playerEnableChapters$ &&
+			$currentAudioFile$
+		) {
+			$currentAudioChapters$ = await getChapterData($currentAudioFile$);
 		}
 
 		if (nextAudioProcessor === AudioProcessor.RECORDER) {

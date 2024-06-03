@@ -1,11 +1,11 @@
+import type { AudioChapter, Subtitle } from './general';
 import { AudioFormat, AudioProcessor } from './settings';
+import { throwIfAborted, toTimeString } from './util';
 
 import { FFmpeg } from '@ffmpeg/ffmpeg';
-import type { Subtitle } from './general';
 import ffmpegWorker from '../assets/js/ffmpeg.worker?url';
 import { get } from 'svelte/store';
 import { settings$ } from './stores';
-import { throwIfAborted } from './util';
 
 const ffmpeg = new FFmpeg();
 const isChromeExtension = !!window.chrome && !!chrome.runtime && chrome.runtime.id;
@@ -15,6 +15,12 @@ const libMap = new Map<string, string>([
 	['opus', 'opus'],
 	['mp3', 'libmp3lame'],
 ]);
+const chapterTimeMatchRegex = /chapter.+start (\d+\.\d+), end/i;
+const chapterLabelMatchRegex = /title.+:(.+)/i;
+
+let lastParsedChapter: AudioChapter = { key: '', label: '', startSeconds: 0, startText: '' };
+let parsedChapters: AudioChapter[] = [];
+let waitForChapter = true;
 
 function toBlobURL(url: string, type: string) {
 	return fetch(url)
@@ -40,7 +46,52 @@ function getUrl(fileName: string, isWorker = false) {
 	return isChromeExtension ? chrome.runtime.getURL(`${ffmpegBaseURL}/${fileName}`) : `${ffmpegBaseURL}/${fileName}`;
 }
 
-function handleFFMPEGLog(event: any) {
+function handleFFMPEGLogForChapterData(event: { type: string; message: string }) {
+	try {
+		if (waitForChapter) {
+			const chapterTimeMatch = event.message.match(chapterTimeMatchRegex);
+
+			if (chapterTimeMatch?.length === 2) {
+				const startSeconds = Number.parseFloat(chapterTimeMatch[1]);
+
+				lastParsedChapter.startSeconds = startSeconds;
+
+				waitForChapter = false;
+			}
+		} else if (!waitForChapter) {
+			const chapterLabelMatch = event.message.match(chapterLabelMatchRegex);
+
+			if (chapterLabelMatch?.length === 2) {
+				const label = chapterLabelMatch[1].trim();
+				const { startSeconds } = lastParsedChapter;
+
+				lastParsedChapter = {
+					key: `${label}_${startSeconds}`,
+					label,
+					startSeconds,
+					startText: toTimeString(startSeconds),
+				};
+
+				parsedChapters.push(lastParsedChapter);
+
+				resetChapterData();
+			}
+		}
+	} catch (_) {
+		resetChapterData();
+	}
+}
+
+function resetChapterData(resetParsedChapters = false) {
+	lastParsedChapter = { key: '', label: '', startSeconds: 0, startText: '' };
+	waitForChapter = true;
+
+	if (resetParsedChapters) {
+		parsedChapters = [];
+	}
+}
+
+function handleFFMPEGLog(event: { type: string; message: string }) {
 	console.log(event.type, event.message);
 }
 
@@ -125,6 +176,29 @@ export async function cleanFiles(cleanInput = false) {
 	);
 
 	return Promise.allSettled(audioFiles.map((audioFile) => ffmpeg.deleteFile(audioFile.name)));
+}
+
+export async function getChapterData(audioFile: File) {
+	resetChapterData(true);
+
+	if (!ffmpeg.loaded) {
+		return parsedChapters;
+	}
+
+	try {
+		const fileExtension = audioFile.name.split('.').pop();
+		const ffmpegArguments = ['-hide_banner', '-y', '-i', `audio_input.${fileExtension}`];
+
+		ffmpeg.on('log', handleFFMPEGLogForChapterData);
+
+		await ffmpeg.exec(ffmpegArguments);
+	} catch ({ message }: any) {
+		console.log(`Failed to get chapter data with ffmpeg: ${message}`);
+	}
+
+	ffmpeg.off('log', handleFFMPEGLogForChapterData);
+
+	return parsedChapters;
 }
 
 export async function getAudio(
