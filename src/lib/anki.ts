@@ -304,7 +304,6 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 	exportProgress$.set(0);
 	exportCancelController$.set(abortController);
 
-	const isMobile = get(isMobile$);
 	const currentAudioFile = get(currentAudioFile$);
 	const exportAudioFormat = get(settings$.exportAudioFormat$);
 	const exportAudioBitrate = get(settings$.exportAudioBitrate$);
@@ -383,12 +382,27 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 	const baseAudioFileName = currentAudioFile ? currentAudioFile.name.split(/\.(?=[^\.]+$)/)[0] : '';
 
 	let failures = 0;
+	let audioFilePrefix = '';
+
+	try {
+		const encoder = new TextEncoder();
+		const data = encoder.encode(baseAudioFileName);
+		const hashBuffer = await window.crypto.subtle.digest('SHA-1', data);
+		const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+		audioFilePrefix = hashArray
+			.map((b) => b.toString(16).padStart(2, '0'))
+			.join('')
+			.trim();
+	} catch (_) {
+		audioFilePrefix = baseSubtitleFileName;
+	}
 
 	for (let index = 0, { length } = subtitlesToExport; index < length; index += 1) {
 		throwIfAborted(abortController.signal);
 
 		const subtitles = subtitlesToExport[index];
-		const audioFileName = `${baseSubtitleFileName}-${subtitles[0].id}${subtitles.length > 1 ? `-${subtitles[subtitles.length - 1].id}` : ''}.${exportAudioFormat}`;
+		const audioFileName = `${audioFilePrefix}-${subtitles[0].id}${subtitles.length > 1 ? `-${subtitles[subtitles.length - 1].id}` : ''}.${exportAudioFormat}`;
 		const sentenceContent = subtitles.map((subtitle) => subtitle.text.trim()).join('<br/>') || '';
 		const tagList = new Set<string>(cardToUpdate ? cardToUpdate.tags : []);
 		const cardData: exportCardInput = {
@@ -472,33 +486,28 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 
 				if (processAsSentenceField || processAsAudioField) {
 					let newFieldValue = '';
-					let finalFileName = '';
 
 					if (processAsSentenceField) {
 						newFieldValue += sentenceContent;
 					}
 
 					if (processAsAudioField) {
-						if (isMobile) {
-							finalFileName = await request<string>(ankiUrl, {
-								action: 'storeMediaFile',
-								params: {
-									data: audioContent,
-									filename: audioFileName,
-								},
-							});
-						} else {
-							cardData.note.audio = [
-								{
-									data: audioContent,
-									deleteExisting: true,
-									filename: audioFileName,
-									fields: [''],
-								},
-							];
+						const finalFileName = await request<string>(ankiUrl, {
+							action: 'storeMediaFile',
+							params: {
+								data: audioContent,
+								filename: audioFileName,
+							},
+						});
 
-							finalFileName = audioFileName;
-						}
+						cardData.note.audio = [
+							{
+								data: audioContent,
+								deleteExisting: true,
+								filename: finalFileName,
+								fields: [''],
+							},
+						];
 
 						newFieldValue = getNewFieldValue(
 							ExportFieldMode.AFTER,
