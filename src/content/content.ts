@@ -48,7 +48,7 @@ async function observerCallback() {
 		currentBookId = Number.parseInt(site.searchParams.get('id') || '0', 10);
 
 		const root = document.querySelector<HTMLElement>(':root')!;
-		const componentContainer = document.createElement('div');
+		const componentContainerElement = document.createElement('div');
 		const stylesId = 'ttu-whispersync-styles';
 		const sandboxId = 'ttu-whispersync-sandbox';
 		const [r, g, b] = (bookContentElement.style.color.match(/rgb[a]{0,1}\((.+)\)/)?.[1] || '0,0,0,1')
@@ -80,19 +80,18 @@ async function observerCallback() {
 			});
 		}
 
-		componentContainer.classList.add(
+		componentContainerElement.classList.add(
 			'flex',
 			'h-full',
-			'w-8',
 			'items-center',
 			'justify-center',
 			'text-sm',
 			'sm:text-lg',
 		);
-		componentContainer.addEventListener('click', stopEventPropagation, false);
+		componentContainerElement.addEventListener('click', stopEventPropagation, false);
 
 		footerElm.classList.remove('justify-between');
-		footerElm.firstElementChild.insertAdjacentElement('beforebegin', componentContainer);
+		footerElm.firstElementChild.insertAdjacentElement('beforebegin', componentContainerElement);
 
 		await new Promise<void>((resolve) => {
 			const waitForBodyStyleInterval = setInterval(() => {
@@ -109,8 +108,9 @@ async function observerCallback() {
 		root.style.setProperty('--ttu-whispersync-color', `rgb(${r},${g},${b})`);
 
 		componentMenu = new AudioBookMenu({
-			target: componentContainer,
+			target: componentContainerElement,
 			props: {
+				componentContainerElement,
 				bookContentElement,
 				sandboxElement,
 				currentBookId,

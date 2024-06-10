@@ -78,7 +78,6 @@
 		exportAudioBitrate$,
 	} = settings$;
 	const { isIOS } = getContext<Context>('context');
-	const playbackRates: number[] = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
 	const statisticsEnabled = !!+`${window.localStorage.getItem('statisticsEnabled') || '0'}`;
 	const yomiObserver = new MutationObserver(handleYomiMutation);
 	const dictionaryObserver = new MutationObserver(handleMutation);

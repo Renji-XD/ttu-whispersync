@@ -659,6 +659,11 @@
 				targetStore$={settings$.playerEnableWakeLock$}
 			/>
 		{/if}
+		<SettingsCheckbox
+			label="Enable footer playback"
+			helpText="If enabled an icon for playback toogle will be displayed in the reader footer"
+			targetStore$={settings$.playerEnableFooterPlaybackElement$}
+		/>
 		<SettingsSelect
 			label="Auto pause"
 			helpText={autoPauseHelpText}

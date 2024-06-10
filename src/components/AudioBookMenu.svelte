@@ -56,11 +56,20 @@
 		between,
 	} from '../lib/util';
 	import Match from './Match.svelte';
-	import { mdiArrowSplitVertical, mdiClose, mdiPlaylistMusicOutline, mdiRepeatOff, mdiSwapHorizontal } from '@mdi/js';
+	import {
+		mdiArrowSplitVertical,
+		mdiClose,
+		mdiPauseCircleOutline,
+		mdiPlayCircleOutline,
+		mdiPlaylistMusicOutline,
+		mdiRepeatOff,
+		mdiSwapHorizontal,
+	} from '@mdi/js';
 	import ReaderMenu from './ReaderMenu.svelte';
 	import Settings from './Settings.svelte';
 	import { onDestroy, onMount, setContext } from 'svelte';
 
+	export let componentContainerElement: HTMLDivElement;
 	export let bookContentElement: HTMLDivElement;
 	export let sandboxElement: HTMLIFrameElement | undefined;
 	export let currentBookId: number;
@@ -91,6 +100,7 @@
 		readerMenuOpenTime$,
 		subtitlesGlobalStartPadding$,
 		subtitlesGlobalEndPadding$,
+		playerEnableFooterPlaybackElement$,
 		ankiUrl$,
 		ankiDeck$,
 		ankiModel$,
@@ -117,6 +127,8 @@
 
 	$isMobile$ = navigator.maxTouchPoints > 0;
 
+	$: showFooterPlaybackElement = $currentAudioLoaded$ && $playerEnableFooterPlaybackElement$;
+
 	$: isLeftMenu = $currentMenuPosition$ === 'left';
 
 	$: $canExportToAnki$ =
@@ -126,6 +138,8 @@
 		!!(($ankiSoundField$ && $currentAudioLoaded$) || $ankiSentenceField$);
 
 	$: $isRecording$ = $exportAudioProcessor$ === AudioProcessor.RECORDER && !!$exportCancelController$;
+
+	$: componentContainerElement.style.width = showFooterPlaybackElement ? '4rem' : '2rem';
 
 	$: if (!$currentSubtitles$.size) {
 		$restartPlaybackTitle$ = 'Subtitle file required';
@@ -736,6 +750,21 @@
 >
 	<Icon path={mdiPlaylistMusicOutline} />
 </button>
+
+{#if showFooterPlaybackElement}
+	<button
+		title="Toggle playback"
+		class="h-full hover:opacity-70"
+		style:margin-left="0.5rem"
+		disabled={$isRecording$}
+		on:click|stopPropagation={() => ($paused$ = !$paused$)}
+	>
+		<Icon
+			path={$isRecording$ || $paused$ ? mdiPlayCircleOutline : mdiPauseCircleOutline}
+			class={$isRecording$ ? 'cursor-not-allowed' : ''}
+		/>
+	</button>
+{/if}
 
 <Dialogs />
 
