@@ -8,6 +8,7 @@
 		type PointerEventWithElement,
 		type Subtitle,
 		type SubtitleChange,
+		type EventWithElement,
 	} from '../lib/general';
 	import { startRecording, stopRecording } from '../lib/recorder';
 	import { AutoPauseMode } from '../lib/settings';
@@ -97,6 +98,7 @@
 	let originalCurrentTime = -1;
 	let originalPlaybackRate = -1;
 	let originalMuted: boolean | undefined;
+	let displayedPlaybackrate = $playbackRate$;
 	let recorderSuccess: undefined | ((audioBuffer: ArrayBuffer | undefined) => void);
 	let recorderFailure: undefined | ((error: any) => void);
 
@@ -449,6 +451,13 @@
 		executeAction(Action.RESTART_PLAYBACK, getDummySubtitle(timeStringToSeconds(progressToolTip)), {
 			keepPauseState: true,
 		});
+	}
+
+	function onChangePlaybackRate({ currentTarget }: EventWithElement<HTMLInputElement>) {
+		const newPlaybackRate = Number.parseFloat(currentTarget.value);
+
+		$playbackRate$ = newPlaybackRate;
+		playbackRatesPopover.hide();
 	}
 
 	function setTime(seconds: number) {
@@ -881,20 +890,16 @@
 			</button>
 		</div>
 		<div class="playback-rates">
-			{#each playbackRates as rate (rate)}
-				{@const isCurrentRate = rate === $playbackRate$}
-				<button
-					class:color-inverted={isCurrentRate}
-					class:color-inverted-hover={!isCurrentRate}
-					disabled={$isRecording$}
-					on:click={() => {
-						$playbackRate$ = rate;
-						playbackRatesPopover.hide();
-					}}
-				>
-					{rate}
-				</button>
-			{/each}
+			<input
+				type="range"
+				min="0.1"
+				max="2"
+				step="0.05"
+				disabled={$isRecording$}
+				bind:value={displayedPlaybackrate}
+				on:change={onChangePlaybackRate}
+			/>
+			<span class="m-t-s">{displayedPlaybackrate}</span>
 		</div>
 	</Popover>
 </div>

@@ -340,10 +340,14 @@
 .ttu-whispersync-container .playback-rates {
 	display: flex;
 	flex-direction: column;
+	width: 2.5rem;
+	align-items: center;
 }
 
-.ttu-whispersync-container .playback-rates button {
-	width: 3rem;
+.ttu-whispersync-container .playback-rates input {
+	writing-mode: vertical-lr;
+	direction: rtl;
+	appearance: slider-vertical;
 }
 
 .ttu-whispersync-container details {
