@@ -199,9 +199,11 @@ export async function updateAudio(
 ) {
 	const enableCover = get(settings$.playerEnableCover$);
 	const enableChapters = get(settings$.playerEnableChapters$);
+	const fileExtension = file.name.split('.').pop();
 	const errors: string[] = [];
 
 	let coverUrl = '';
+	let isMP3VBR = false;
 	let audioSourceUrl = '';
 	let chapters: AudioChapter[] = [];
 	let metadata: MediaInfoType | undefined;
@@ -234,6 +236,10 @@ export async function updateAudio(
 			if (!generalTrack) {
 				throw new Error('No general track found');
 			}
+
+			isMP3VBR =
+				fileExtension === 'mp3' &&
+				(generalTrack.OverallBitRate_Mode === 'VBR' || generalTrack.OverallBitRate_Mode_String === 'VBR');
 
 			if (enableChapters) {
 				for (let index = 0, { length } = metadata.media.track; index < length; index += 1) {
@@ -276,7 +282,7 @@ export async function updateAudio(
 		}
 	}
 
-	if (!metadataOnly) {
+	if (!metadataOnly && !isMP3VBR) {
 		try {
 			audioSourceUrl = URL.createObjectURL(file);
 
@@ -293,6 +299,10 @@ export async function updateAudio(
 
 			errors.push(message);
 		}
+	}
+
+	if (isMP3VBR) {
+		errors.push('MP3 files with variable bitrates are not supported');
 	}
 
 	if (errors.length) {

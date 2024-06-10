@@ -63,7 +63,7 @@ pnpm run build:ext
 
 ### What formats are supported
 
--   .srt / .vtt for subtitle and .m4a / .m4b / .mp3 for audio files (support may depends on used browser / actual audio codec)
+-   .srt / .vtt for subtitle and .m4a / .m4b / .mp3 (with constant bitrate) for audio files (support may depends on used browser / actual audio codec)
 
 ### Are mobile devices supported
 
@@ -151,6 +151,25 @@ Note: iOS may block the ability to select certain files. For subtitles you there
 ### The reader menu / action list is not opening - only my popup dictionary
 
 -   The popop dictionary is probably capturing the necessary events and therefore prevents the script functionality. Check available scan options for your dictionary (e. g. Yomitan will not work with enabled touch press option)
+
+### The audio gets out of sync after seeking / playing for a while
+
+-   You may use a mp3 file with variable bitrate which is not supported. Consider changing the bitrate to a constant value e. g. via Audacity export or FFMPEG:
+
+<details>
+<summary>Audacity</summary>
+File => Export => Export as mp3
+
+![Icon](src/assets/readme/audacity.png)
+
+</details>
+
+<details>
+<summary>FFMPEG example command</summary>
+
+ffmpeg.exe -y -i "path_to_input" -c:v copy -c:a libmp3lame -b:a 128 -map_metadata 0 -id3v2_version 3 -write_xing 0 "output_path"
+
+</details>
 
 ### Is it possible to sync data to other devices/browsers
 
