@@ -304,6 +304,7 @@
 				? window.localStorage.getItem(sideMenuWidthKey) || ''
 				: '';
 			audiobookComponent?.resetSubtitleContainerHeight();
+			audiobookComponent?.scrollToSubtitle();
 		}, 1000);
 	}
 

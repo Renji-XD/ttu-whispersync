@@ -91,6 +91,10 @@
 		subtitleListElement?.onResetList();
 	}
 
+	export function scrollToSubtitle() {
+		playerElement?.onScrollToSubtitle();
+	}
+
 	const { subtitlesEnablePersist$, ankiSentenceField$, ankiSoundField$ } = settings$;
 	const { sandboxElement, supportsFileSystem, isIOS } = getContext<Context>('context');
 	const allowedSubtitleExtensions: FileExtension[] = ['.srt', '.vtt', '.txt'];

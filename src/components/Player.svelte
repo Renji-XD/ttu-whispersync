@@ -60,6 +60,50 @@
 
 	export let imageLoaded: () => void;
 
+	export async function onScrollToSubtitle() {
+		if ($isRecording$ || !$readerEnableAutoScroll$) {
+			return;
+		}
+
+		let targetSubtitle = $currentSubtitles$.get($activeSubtitle$.current || $activeSubtitle$.previous);
+
+		if (!targetSubtitle) {
+			const subtitles = [...$currentSubtitles$.values()];
+
+			targetSubtitle = subtitles.findLast((subtitle) => $currentTime$ >= subtitle.startSeconds);
+		}
+
+		if (!targetSubtitle) {
+			return;
+		}
+
+		if ($readerEnableTrackerAutoPause$ && statisticsEnabled) {
+			document.dispatchEvent(
+				new CustomEvent('ttu-action', {
+					detail: {
+						type: 'pauseTracker',
+						scrollMode: $readerScrollMode$,
+						scrollBehavior: $readerScrollBehavior$,
+						selector: getLineCSSSelectorForId(targetSubtitle.id),
+					},
+				}),
+			);
+		}
+
+		await new Promise((resolve) => setTimeout(resolve));
+
+		document.dispatchEvent(
+			new CustomEvent('ttu-action', {
+				detail: {
+					type: 'cue',
+					scrollMode: $readerScrollMode$,
+					scrollBehavior: $readerScrollBehavior$,
+					selector: getLineCSSSelectorForId(targetSubtitle.id),
+				},
+			}),
+		);
+	}
+
 	const dispatch = createEventDispatcher<{
 		loaded: void;
 	}>();
