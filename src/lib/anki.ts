@@ -7,11 +7,11 @@ import {
 	exportCancelController$,
 	exportProgress$,
 	isAnkiconnectAndroid$,
-	isMobile$,
 	lastError$,
 	paused$,
 	playLine$,
 	settings$,
+	type SettingsStore,
 } from './stores';
 
 import { Action } from './actions';
@@ -153,11 +153,16 @@ async function requestPermission(ankiUrl: string) {
 async function verifyAnkiSettings(
 	ankiUrl: string,
 	ankiDeck: string,
+	deckStore: SettingsStore<string>,
 	ankiModel: string,
+	modelStore: SettingsStore<string>,
 	ankiSentenceField: string,
+	sentenceFieldStore: SettingsStore<string>,
 	ankiSoundField: string,
+	soundFieldStore: SettingsStore<string>,
+	isUpdate: boolean,
 ): Promise<VerificationResult> {
-	if (!ankiUrl || !ankiDeck || !ankiModel) {
+	if (!ankiUrl || !ankiDeck || !ankiModel || (!ankiSentenceField && !ankiSoundField)) {
 		return { isAnkiConfigValid: false, ankiFields: [] };
 	}
 
@@ -168,13 +173,13 @@ async function verifyAnkiSettings(
 		const [ankiDecks, ankiModels] = await getDecksAndModels(ankiUrl);
 
 		if (!ankiDecks.find((entry) => ankiDeck === entry)) {
-			settings$.ankiDeck$.set('');
+			deckStore.set('');
 
 			isAnkiConfigValid = false;
 		}
 
 		if (!ankiModels.find((entry) => ankiModel === entry)) {
-			settings$.ankiModel$.set('');
+			modelStore.set('');
 
 			isAnkiConfigValid = false;
 		}
@@ -183,21 +188,21 @@ async function verifyAnkiSettings(
 			ankiFields = await getFields(ankiUrl, ankiModel);
 
 			if (ankiSentenceField && !ankiFields.find((field) => field === ankiSentenceField)) {
-				settings$.ankiSentenceField$.set('');
+				sentenceFieldStore.set('');
 
 				isAnkiConfigValid = false;
 			}
 
 			if (ankiSoundField && !ankiFields.find((field) => field === ankiSoundField)) {
-				settings$.ankiSoundField$.set('');
+				soundFieldStore.set('');
 
 				isAnkiConfigValid = false;
 			}
 		}
 	} catch ({ message }: any) {
-		resetAnkiSettings();
+		resetAnkiSettings(isUpdate);
 
-		lastError$.set(`Failed to verify Anki settings: ${message}`);
+		lastError$.set(`Failed to verify Anki settings for card ${isUpdate ? 'update' : 'creation'}: ${message}`);
 
 		isAnkiConfigValid = false;
 		ankiFields = [];
@@ -278,11 +283,18 @@ export function getFields(ankiUrl: string, modelName: string) {
 	});
 }
 
-export function resetAnkiSettings() {
-	settings$.ankiDeck$.set('');
-	settings$.ankiModel$.set('');
-	settings$.ankiSoundField$.set('');
-	settings$.ankiSentenceField$.set('');
+export function resetAnkiSettings(isUpdate: boolean) {
+	if (isUpdate) {
+		settings$.ankiUpdateDeck$.set('');
+		settings$.ankiUpdateModel$.set('');
+		settings$.ankiUpdateSentenceField$.set('');
+		settings$.ankiUpdateSoundField$.set('');
+	} else {
+		settings$.ankiDeck$.set('');
+		settings$.ankiModel$.set('');
+		settings$.ankiSentenceField$.set('');
+		settings$.ankiSoundField$.set('');
+	}
 
 	permissionGranted = false;
 }
@@ -315,17 +327,28 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 		? ankiTagListSetting.split(',').map((tag) => tag.trim().replaceAll(' ', '_').trim())
 		: [];
 	const duplicateScope = get(settings$.ankiDuplicateMode$);
+	const useUpdateStores =
+		isUpdate && (!!get(settings$.ankiUpdateSentenceField$) || !!get(settings$.ankiUpdateSoundField$));
+	const deckStore = useUpdateStores ? settings$.ankiUpdateDeck$ : settings$.ankiDeck$;
+	const modelStore = useUpdateStores ? settings$.ankiUpdateModel$ : settings$.ankiModel$;
+	const sentenceFieldStore = useUpdateStores ? settings$.ankiUpdateSentenceField$ : settings$.ankiSentenceField$;
+	const soundFieldStore = useUpdateStores ? settings$.ankiUpdateSoundField$ : settings$.ankiSoundField$;
 	const ankiUrl = get(settings$.ankiUrl$);
-	const deckName = get(settings$.ankiDeck$);
-	const modelName = get(settings$.ankiModel$);
-	const ankiSentenceField = get(settings$.ankiSentenceField$);
-	const ankiSoundField = get(settings$.ankiSoundField$);
+	const deckName = get(deckStore);
+	const modelName = get(modelStore);
+	const ankiSentenceField = get(sentenceFieldStore);
+	const ankiSoundField = get(soundFieldStore);
 	const { isAnkiConfigValid, ankiFields } = await verifyAnkiSettings(
 		ankiUrl,
 		deckName,
+		deckStore,
 		modelName,
+		modelStore,
 		ankiSentenceField,
+		sentenceFieldStore,
 		ankiSoundField,
+		soundFieldStore,
+		isUpdate,
 	);
 	const isAnkiconnectAndroid = get(isAnkiconnectAndroid$);
 	const isBlockedUpdated = isUpdate && isAnkiconnectAndroid;
@@ -340,7 +363,7 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 		const lastError = get(lastError$);
 
 		return lastError$.set(
-			`${lastError ? `${lastError}; ` : ''}${isAnkiConfigValid ? '' : 'Anki settings are invalid'}${
+			`${lastError ? `${lastError}; ` : ''}${isAnkiConfigValid ? '' : `Anki ${isUpdate ? 'update' : 'create'} settings are invalid`}${
 				isBlockedUpdated ? `${isAnkiConfigValid ? '' : '; '}Your AnkiConnect does not support updates` : ''
 			}`,
 		);

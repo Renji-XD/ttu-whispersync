@@ -66,9 +66,13 @@ export type Settings = {
 	'ttu-whispersync-anki-url': string;
 	'ttu-whispersync-anki-key': string;
 	'ttu-whispersync-anki-deck': string;
+	'ttu-whispersync-anki-update-deck': string;
 	'ttu-whispersync-anki-model': string;
+	'ttu-whispersync-anki-update-model': string;
 	'ttu-whispersync-anki-sentence-field': string;
+	'ttu-whispersync-anki-update-sentence-field': string;
 	'ttu-whispersync-anki-sound-field': string;
+	'ttu-whispersync-anki-update-sound-field': string;
 	'ttu-whispersync-match-line-ignore-rp': boolean;
 	'ttu-whispersync-match-line-similarity-threshold': number;
 	'ttu-whispersync-match-line-max-attempts': number;
@@ -82,6 +86,11 @@ export enum SettingsMenu {
 	EXPORT = 'Export',
 	ANKI = 'Anki',
 	KEYBINDINGS = 'Keybindings',
+}
+
+export enum AnkiSettingssMode {
+	CREATE = 'Create card',
+	UPDATE = 'Update card',
 }
 
 export enum ReaderScrollMode {
@@ -195,9 +204,13 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-anki-url': 'http://localhost:8765',
 		'ttu-whispersync-anki-key': '',
 		'ttu-whispersync-anki-deck': '',
+		'ttu-whispersync-anki-update-deck': '',
 		'ttu-whispersync-anki-model': '',
+		'ttu-whispersync-anki-update-model': '',
 		'ttu-whispersync-anki-sentence-field': '',
+		'ttu-whispersync-anki-update-sentence-field': '',
 		'ttu-whispersync-anki-sound-field': '',
+		'ttu-whispersync-anki-update-sound-field': '',
 		'ttu-whispersync-match-line-ignore-rp': false,
 		'ttu-whispersync-match-line-similarity-threshold': 0.9,
 		'ttu-whispersync-match-line-max-attempts': 50,

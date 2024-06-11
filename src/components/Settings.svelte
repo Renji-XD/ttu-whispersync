@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from './Icon.svelte';
 	import { Action, persistSubtitles } from '../lib/actions';
 	import { getDecksAndModels, getFields, resetAnkiSettings, setApiKey } from '../lib/anki';
 	import { getChapterData, initializeFFMPEG, putAudioFileInFFMPEG, terminateFFMPEG } from '../lib/ffmpeg';
@@ -7,6 +8,7 @@
 	import { setMediaInfoInstance } from '../lib/mediaInfo';
 	import {
 		AnkiDuplicateMode,
+		AnkiSettingssMode,
 		AudioFormat,
 		AudioProcessor,
 		AutoPauseMode,
@@ -34,7 +36,8 @@
 		type SettingsStore,
 	} from '../lib/stores';
 	import { between, interactWithSandbox, onNumberFieldChange, toTimeStamp } from '../lib/util';
-	import { mdiRepeatVariant, mdiTrashCan } from '@mdi/js';
+	import { mdiHelpCircle, mdiRepeatVariant, mdiTrashCan } from '@mdi/js';
+	import Popover from './Popover.svelte';
 	import SettingsCheckbox from './SettingsCheckbox.svelte';
 	import SettingsColorInput from './SettingsColorInput.svelte';
 	import SettingsKeybind from './SettingsKeybind.svelte';
@@ -43,6 +46,7 @@
 	import SettingsSelect from './SettingsSelect.svelte';
 	import SettingsTextInput from './SettingsTextInput.svelte';
 	import { getContext, tick } from 'svelte';
+	import { get } from 'svelte/store';
 
 	const wakeLockSupported = 'wakeLock' in navigator;
 	const { supportsFileSystem, sandboxElement } = getContext<Context>('context');
@@ -111,12 +115,18 @@
 		ankiUrl$,
 		ankiKey$,
 		ankiDeck$,
+		ankiUpdateDeck$,
 		ankiModel$,
+		ankiUpdateModel$,
 		ankiSentenceField$,
+		ankiUpdateSentenceField$,
 		ankiSoundField$,
+		ankiUpdateSoundField$,
 	} = settings$;
 	const ankiModelFields = new Map<string, string[]>();
+	const ankiSettingsModes: AnkiSettingssMode[] = [AnkiSettingssMode.CREATE, AnkiSettingssMode.UPDATE];
 
+	let ankiSettingsMode = AnkiSettingssMode.CREATE;
 	let openSettingsMenu = SettingsMenu.READER;
 	let autoPauseHelpText = '';
 	let ankiDecks: string[] = [];
@@ -137,6 +147,8 @@
 		$exportAudioProcessor$ === AudioProcessor.FFMPEG
 			? [AudioFormat.MP3, AudioFormat.OGG, AudioFormat.OPUS]
 			: [AudioFormat.MP3];
+
+	$: showAnkiCreateSettings = ankiSettingsMode === AnkiSettingssMode.CREATE;
 
 	$: if ($playerAutoPauseMode$ === AutoPauseMode.DISABLED) {
 		autoPauseHelpText = 'Player does not auto pause';
@@ -375,8 +387,8 @@
 		$isLoading$ = false;
 	}
 
-	async function onFetchAnkiData(forceRefresh = false) {
-		if (!forceRefresh && ankiDecks.length && ankiModels.length) {
+	async function onFetchAnkiData(forceRefresh = false, forceFieldCheck = false) {
+		if (!forceRefresh && !forceFieldCheck && ankiDecks.length && ankiModels.length) {
 			return;
 		}
 
@@ -388,20 +400,26 @@
 				[ankiDecks, ankiModels] = await getDecksAndModels($ankiUrl$);
 			}
 
-			if ($ankiDeck$ && !ankiDecks.find((ankiDeck) => ankiDeck === $ankiDeck$)) {
-				$ankiDeck$ = '';
-			}
-
-			if ($ankiModel$ && !ankiModels.find((ankiModel) => ankiModel === $ankiModel$)) {
-				$ankiModel$ = '';
-			}
-
 			if (forceRefresh) {
 				ankiModelFields.clear();
 			}
 
-			if ($ankiModel$) {
-				await onUpdateAnkiFields();
+			let targetDeck$ = showAnkiCreateSettings ? ankiDeck$ : ankiUpdateDeck$;
+			let targetModel$ = showAnkiCreateSettings ? ankiModel$ : ankiUpdateModel$;
+			let targetDeck = get(targetDeck$);
+			let targetModel = get(targetModel$);
+
+			if (targetDeck && !ankiDecks.find((ankiDeck) => ankiDeck === targetDeck)) {
+				targetDeck$.set('');
+			}
+
+			if (targetModel && !ankiModels.find((ankiModel) => ankiModel === targetModel)) {
+				targetModel$.set('');
+				targetModel = '';
+			}
+
+			if (targetModel) {
+				await onUpdateAnkiFields(targetModel);
 			}
 		} catch ({ message }: any) {
 			$lastError$ = `Failed to get Anki data: ${message}`;
@@ -412,21 +430,28 @@
 		$isLoading$ = false;
 	}
 
-	async function onUpdateAnkiFields() {
+	async function onUpdateAnkiFields(targetModel: string) {
 		$isLoading$ = true;
 		$lastError$ = '';
 
 		try {
-			ankiFields = await (ankiModelFields.has($ankiModel$)
-				? Promise.resolve(ankiModelFields.get($ankiModel$)!)
-				: getFields($ankiUrl$, $ankiModel$));
+			ankiFields = await (ankiModelFields.has(targetModel)
+				? Promise.resolve(ankiModelFields.get(targetModel)!)
+				: getFields($ankiUrl$, targetModel));
 
-			if ($ankiSentenceField$ && !ankiFields.find((field) => field === $ankiSentenceField$)) {
-				$ankiSentenceField$ = '';
+			ankiModelFields.set(targetModel, ankiFields);
+
+			let targetSentenceField$ = showAnkiCreateSettings ? ankiSentenceField$ : ankiUpdateSentenceField$;
+			let targetSoundField$ = showAnkiCreateSettings ? ankiSoundField$ : ankiUpdateSoundField$;
+			let targetSentenceField = get(targetSentenceField$);
+			let targetSoundField = get(targetSoundField$);
+
+			if (targetSentenceField && !ankiFields.find((field) => field === targetSentenceField)) {
+				targetSentenceField$.set('');
 			}
 
-			if ($ankiSoundField$ && !ankiFields.find((field) => field === $ankiSoundField$)) {
-				$ankiSoundField$ = '';
+			if (targetSoundField && !ankiFields.find((field) => field === targetSoundField)) {
+				targetSoundField$.set('');
 			}
 		} catch ({ message }: any) {
 			$lastError$ = `Failed to get Anki data: ${message}`;
@@ -438,7 +463,7 @@
 	}
 
 	function resetAnkiData() {
-		resetAnkiSettings();
+		resetAnkiSettings(!showAnkiCreateSettings);
 
 		ankiModelFields.clear();
 
@@ -780,34 +805,63 @@
 				setApiKey($ankiKey$);
 			}}
 		/>
+		<label for="anki-settings-mode">Anki settings</label>
+		<select id="anki-settings-mode" bind:value={ankiSettingsMode} on:change={() => onFetchAnkiData(false, true)}>
+			{#each ankiSettingsModes as mode (mode)}
+				<option value={mode}>
+					{mode}
+				</option>
+			{/each}
+		</select>
+		<Popover>
+			<div slot="icon">
+				<Icon path={mdiHelpCircle} />
+			</div>
+			<div>
+				Anki export settings for the respective operation. Leaving sentence and sound field empty for 'Update
+				card' will automatically use all values from 'Create card' as fallback
+			</div>
+		</Popover>
 		<SettingsSelect
 			label="Anki deck"
 			helpText="Target anki deck for exporting"
-			targetStore$={ankiDeck$}
+			targetStore$={showAnkiCreateSettings ? ankiDeck$ : ankiUpdateDeck$}
 			options={ankiDecks}
 		/>
 		<SettingsSelect
 			label="Anki model"
 			helpText="Target anki model for exporting"
-			targetStore$={ankiModel$}
+			targetStore$={showAnkiCreateSettings ? ankiModel$ : ankiUpdateModel$}
 			options={ankiModels}
-			on:change={onUpdateAnkiFields}
+			on:change={() => onUpdateAnkiFields(showAnkiCreateSettings ? $ankiModel$ : $ankiUpdateModel$)}
 		/>
 		<SettingsSelect
 			label="Sentence field"
 			buttonTitle="Clear field"
-			targetStore$={ankiSentenceField$}
+			targetStore$={showAnkiCreateSettings ? ankiSentenceField$ : ankiUpdateSentenceField$}
 			buttonIcon={mdiTrashCan}
 			options={ankiFields}
-			on:click={() => ($ankiSentenceField$ = '')}
+			on:click={() => {
+				if (showAnkiCreateSettings) {
+					$ankiSentenceField$ = '';
+				} else {
+					$ankiUpdateSentenceField$ = '';
+				}
+			}}
 		/>
 		<SettingsSelect
 			label="Sound field"
 			buttonTitle="Clear field"
-			targetStore$={ankiSoundField$}
+			targetStore$={showAnkiCreateSettings ? ankiSoundField$ : ankiUpdateSoundField$}
 			buttonIcon={mdiTrashCan}
 			options={ankiFields}
-			on:click={() => ($ankiSoundField$ = '')}
+			on:click={() => {
+				if (showAnkiCreateSettings) {
+					$ankiUpdateSoundField$ = '';
+				} else {
+					$ankiUpdateSoundField$ = '';
+				}
+			}}
 		/>
 	</SettingsMenuContent>
 	{#if !$isMobile$}
