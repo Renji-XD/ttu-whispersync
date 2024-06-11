@@ -76,6 +76,7 @@
 		playerFastForwardTime$,
 		playerAltFastForwardTime$,
 		exportAudioBitrate$,
+		keybindingsEnableTimeFallback$,
 	} = settings$;
 	const { isIOS } = getContext<Context>('context');
 	const statisticsEnabled = !!+`${window.localStorage.getItem('statisticsEnabled') || '0'}`;
@@ -209,7 +210,14 @@
 		let action = Action.NONE;
 		let stopEvent = true;
 		let keepPauseState = false;
-		let targetSubtitle = $currentSubtitles$.get($activeSubtitle$.current);
+		let targetSubtitle = $currentSubtitles$.get($activeSubtitle$.current || $activeSubtitle$.previous);
+		let subtitles: Subtitle[] | undefined;
+
+		if (!targetSubtitle && $keybindingsEnableTimeFallback$) {
+			subtitles = [...$currentSubtitles$.values()];
+
+			targetSubtitle = subtitles.findLast((subtitle) => $currentTime$ >= subtitle.startSeconds);
+		}
 
 		if (event.altKey) {
 			switch (actionKey) {
@@ -221,7 +229,7 @@
 				case 'keyq':
 				case 'q':
 					if (targetSubtitle) {
-						const subtitles = [...$currentSubtitles$.values()];
+						subtitles = subtitles || [...$currentSubtitles$.values()];
 
 						targetSubtitle = subtitles[Math.min(targetSubtitle.subIndex + 1, subtitles.length - 1)];
 					}
@@ -253,7 +261,7 @@
 				case 'keyq':
 				case 'q':
 					if (targetSubtitle) {
-						const subtitles = [...$currentSubtitles$.values()];
+						subtitles = subtitles || [...$currentSubtitles$.values()];
 
 						targetSubtitle = subtitles[Math.max(targetSubtitle.subIndex - 1, 0)];
 					}

@@ -107,6 +107,7 @@
 		ankiSoundField$,
 		ankiSentenceField$,
 		exportAudioProcessor$,
+		keybindingsEnableTimeFallback$,
 	} = settings$;
 
 	let menuElement: HTMLDivElement;
@@ -234,19 +235,24 @@
 	});
 
 	function onKeyDown(event: KeyboardEvent) {
-		if (
-			$skipKeyListener$ ||
-			event.repeat ||
-			!(event.ctrlKey || event.metaKey || event.altKey) ||
-			!$currentSubtitles$.has($activeSubtitle$.current)
-		) {
+		if ($skipKeyListener$ || event.repeat || !(event.ctrlKey || event.metaKey || event.altKey)) {
 			return;
 		}
 
-		const targetSubtitle = $currentSubtitles$.get($activeSubtitle$.current);
 		const actionKey = event.code || event.key?.toLowerCase();
 
 		let action;
+		let targetSubtitle = $currentSubtitles$.get($activeSubtitle$.current || $activeSubtitle$.previous);
+
+		if (!targetSubtitle && $keybindingsEnableTimeFallback$) {
+			const subtitles = [...$currentSubtitles$.values()];
+
+			targetSubtitle = subtitles.findLast((subtitle) => $currentTime$ >= subtitle.startSeconds);
+		}
+
+		if (!targetSubtitle) {
+			return;
+		}
 
 		if (event.altKey) {
 			switch (actionKey) {

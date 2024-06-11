@@ -63,7 +63,7 @@ pnpm run build:ext
 
 ### What formats are supported
 
--   .srt / .vtt for subtitle and .m4a / .m4b / .mp3 (with constant bitrate) for audio files (support may depends on used browser / actual audio codec)
+-   .srt / .vtt for subtitle and .m4a / .m4b / .mp3 (with constant bitrate) for audio files (support may depends on used browser / actual audio codec / container)
 
 ### Are mobile devices supported
 
@@ -146,7 +146,7 @@ Note: iOS may block the ability to select certain files. For subtitles you there
 
 ### Keybind 'X' is not executed
 
--   Note that most of the keybinds are only executed for the current most recent active subtitle. If none exist no action will be executed but you can still do so with the reader / subtitle actions. For exports see also the [previous](#is-it-possible-to-queue--execute-exports-in-parallel) point
+-   Note that most of the keybinds are only executed for the current most recent active subtitle. If none exist no action will be executed but you can still do so with the reader / subtitle actions. For exports see also the [previous](#is-it-possible-to-queue--execute-exports-in-parallel) point. Alternatively you can enable the "Enable time fallback" setting under keybindings which search through the whole list for the closest subtitle on the current playback position
 
 ### The reader menu / action list is not opening - only my popup dictionary
 

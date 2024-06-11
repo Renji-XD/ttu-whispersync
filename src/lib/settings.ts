@@ -73,6 +73,7 @@ export type Settings = {
 	'ttu-whispersync-anki-update-sentence-field': string;
 	'ttu-whispersync-anki-sound-field': string;
 	'ttu-whispersync-anki-update-sound-field': string;
+	'ttu-whispersync-keybindings-enable-time-fallback': boolean;
 	'ttu-whispersync-match-line-ignore-rp': boolean;
 	'ttu-whispersync-match-line-similarity-threshold': number;
 	'ttu-whispersync-match-line-max-attempts': number;
@@ -211,6 +212,7 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-anki-update-sentence-field': '',
 		'ttu-whispersync-anki-sound-field': '',
 		'ttu-whispersync-anki-update-sound-field': '',
+		'ttu-whispersync-keybindings-enable-time-fallback': false,
 		'ttu-whispersync-match-line-ignore-rp': false,
 		'ttu-whispersync-match-line-similarity-threshold': 0.9,
 		'ttu-whispersync-match-line-max-attempts': 50,

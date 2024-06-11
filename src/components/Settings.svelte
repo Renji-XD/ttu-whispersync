@@ -866,6 +866,11 @@
 	</SettingsMenuContent>
 	{#if !$isMobile$}
 		<SettingsMenuContent settingsMenu={SettingsMenu.KEYBINDINGS} bind:openSettingsMenu>
+			<SettingsCheckbox
+				label="Enable time fallback"
+				helpText="If enabled and no subtitle is currently active the current time is used as fallback to search for the closest subtitle"
+				targetStore$={settings$.keybindingsEnableTimeFallback$}
+			/>
 			<SettingsKeybind key="Cmd + Space" description="Toggle playback" extendDescription={false} />
 			<SettingsKeybind key="Cmd + d" description={Action.RESTART_PLAYBACK} />
 			<SettingsKeybind key="Alt + d" description={Action.TOGGLE_PLAY_PAUSE} />

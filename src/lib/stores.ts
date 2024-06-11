@@ -176,6 +176,7 @@ export const settings$ = {
 	ankiUpdateSentenceField$: writableStringStore()('ttu-whispersync-anki-update-sentence-field'),
 	ankiSoundField$: writableStringStore()('ttu-whispersync-anki-sound-field'),
 	ankiUpdateSoundField$: writableStringStore()('ttu-whispersync-anki-update-sound-field'),
+	keybindingsEnableTimeFallback$: writableBooleanStore()('ttu-whispersync-keybindings-enable-time-fallback'),
 	matchLineIgnoreRp$: writableBooleanStore()('ttu-whispersync-match-line-ignore-rp'),
 	matchLineSimilarityThreshold$: writableNumberStore()('ttu-whispersync-match-line-similarity-threshold'),
 	matchLineMaxAttempts$: writableNumberStore()('ttu-whispersync-match-line-max-attempts'),
