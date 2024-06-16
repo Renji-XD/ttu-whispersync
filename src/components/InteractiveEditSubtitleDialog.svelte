@@ -1,12 +1,21 @@
 <script lang="ts">
+	import ActionButton from './ActionButton.svelte';
 	import DialogTemplate from './DialogTemplate.svelte';
 	import Icon from './Icon.svelte';
 	import { Action, executeAction } from '../lib/actions';
 	import { getDummySubtitle, type EditSubtitleResult, type Subtitle } from '../lib/general';
 	import { getAudio } from '../lib/ffmpeg';
-	import { bookMatched$, currentAudioFile$, currentSubtitles$ } from '../lib/stores';
+	import {
+		bookMatched$,
+		currentAudioFile$,
+		currentSubtitles$,
+		exportCancelController$,
+		exportCancelTitle$,
+		exportNewTitle$,
+		exportUpdateTitle$,
+	} from '../lib/stores';
 	import { toTimeStamp } from '../lib/util';
-	import { mdiEqual, mdiPause, mdiRepeat, mdiRestore } from '@mdi/js';
+	import { mdiCancel, mdiDatabasePlus, mdiDatabaseSync, mdiEqual, mdiPause, mdiRepeat, mdiRestore } from '@mdi/js';
 	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 	import WaveSurfer from 'wavesurfer.js';
 	import RegionsPlugin, { type Region } from 'wavesurfer.js/dist/plugins/regions.esm.js';
@@ -20,6 +29,8 @@
 	const dispatch = createEventDispatcher<{
 		close: void;
 	}>();
+	const initialActiveSubtitle = JSON.parse(JSON.stringify(activeSubtitle));
+	const wasActiveSubtitleAligned = activeSubtitle.text !== activeSubtitle.originalText;
 
 	let waveformContainer: HTMLDivElement;
 	let wavesurferInstance: WaveSurfer;
@@ -41,49 +52,124 @@
 		URL.revokeObjectURL(slicedBlobUrl);
 	});
 
+	function onKeyDown(event: KeyboardEvent) {
+		if (isLoading || event.repeat || !(event.ctrlKey || event.metaKey || event.altKey)) {
+			return;
+		}
+
+		const actionKey = (event.code || event.key || '').toLowerCase();
+
+		let action = Action.NONE;
+		let stopEvent = true;
+
+		if (event.altKey) {
+			switch (actionKey) {
+				case 'keyd':
+				case 'd':
+					action = Action.TOGGLE_PLAY_PAUSE;
+
+					break;
+				case 'keye':
+				case 'e':
+					action = Action.EXPORT_UPDATE;
+
+					break;
+				default:
+					stopEvent = false;
+
+					break;
+			}
+		} else {
+			switch (actionKey) {
+				case 'space':
+				case ' ':
+					onPause();
+
+					break;
+				case 'keyd':
+				case 'd':
+					action = Action.TOGGLE_PLAY_PAUSE;
+
+					break;
+				case 'keye':
+				case 'e':
+					action = Action.EXPORT_NEW;
+
+					break;
+				default:
+					stopEvent = false;
+
+					break;
+			}
+		}
+
+		if (stopEvent) {
+			event.preventDefault();
+			event.stopPropagation();
+		}
+
+		if (action === Action.TOGGLE_PLAY_PAUSE) {
+			onPlayActiveSubtitle();
+		} else {
+			executeAction(action, activeSubtitle, { ignoreSkipKeyListener: true });
+		}
+	}
+
+	function onPause() {
+		wavesurferInstance.pause();
+
+		stopTimer?.();
+
+		stopTime = -1;
+	}
+
+	function onPlayActiveSubtitle() {
+		stopTimer?.();
+
+		stopTime = activeRegion.end;
+
+		stopTimer = wavesurferInstance.on('timeupdate', onTimeUpdate);
+
+		wavesurferInstance.setTime(activeRegion.start);
+		wavesurferInstance.play();
+	}
+
 	function onTimeUpdate(currentTime: number) {
 		if (currentTime > stopTime) {
-			pause();
+			onPause();
 		}
 	}
 
 	async function onAlignSubtitle() {
 		isLoading = true;
 
-		await executeAction(Action.ALIGN_SUBTITLE, activeSubtitle, {
+		await executeAction(Action.ALIGN_SUBTITLE, initialActiveSubtitle, {
 			persistAlignment: false,
 			ignoreSkipKeyListener: true,
 		});
 
-		activeSubtitle = $currentSubtitles$.get(activeSubtitle.id)!;
+		activeSubtitle.text = $currentSubtitles$.get(activeSubtitle.id)!.text;
+
 		isLoading = false;
 	}
 
 	function onCancel() {
-		if (activeSubtitle.text !== activeSubtitle.originalText) {
-			activeSubtitle.text = activeSubtitle.originalText;
-
-			return close({ wasCanceled: false, subtitle: activeSubtitle });
+		if (!wasActiveSubtitleAligned && activeSubtitle.text !== activeSubtitle.originalText) {
+			return close({
+				wasCanceled: false,
+				subtitle: initialActiveSubtitle,
+			});
 		}
 
 		close({ wasCanceled: true });
 	}
 
 	function onSaveNewTime() {
-		const adjustedStartSeconds = activeRegion.start + startTime;
-		const adjustedEndSeconds = activeRegion.end + startTime;
+		updateActiveSubtitle();
 
 		close({
 			wasCanceled: false,
-			subtitle: {
-				...activeSubtitle,
-				adjustedStartSeconds,
-				startSeconds: adjustedStartSeconds,
-				startTime: toTimeStamp(adjustedStartSeconds),
-				adjustedEndSeconds,
-				endSeconds: adjustedEndSeconds,
-				endTime: toTimeStamp(adjustedEndSeconds),
-			},
+			subtitle: activeSubtitle,
 		});
 	}
 
@@ -128,9 +214,12 @@
 					if (isActiveSub) {
 						region.element.part.add('active');
 
-						region.on('update', pause);
+						region.on('update', onPause);
+						region.on('update-end', updateActiveSubtitle);
 
 						activeRegion = region;
+
+						updateActiveSubtitle();
 					} else {
 						region.element.part.add('inactive');
 					}
@@ -172,12 +261,19 @@
 		};
 	}
 
-	function pause() {
-		wavesurferInstance.pause();
+	function updateActiveSubtitle() {
+		const adjustedStartSeconds = activeRegion.start + startTime;
+		const adjustedEndSeconds = activeRegion.end + startTime;
 
-		stopTimer?.();
-
-		stopTime = -1;
+		activeSubtitle = {
+			...activeSubtitle,
+			adjustedStartSeconds,
+			startSeconds: adjustedStartSeconds,
+			startTime: toTimeStamp(adjustedStartSeconds),
+			adjustedEndSeconds,
+			endSeconds: adjustedEndSeconds,
+			endTime: toTimeStamp(adjustedEndSeconds),
+		};
 	}
 
 	function close(resolveValue: EditSubtitleResult) {
@@ -187,47 +283,64 @@
 	}
 </script>
 
+<svelte:window on:keydown={onKeyDown} />
+
 <DialogTemplate>
 	<svelte:fragment slot="header">Edit Subtitle</svelte:fragment>
 	<div class="w-full p-x-xs" slot="content" on:touchstart|stopPropagation>
 		<div>
-			<button title={!isPlaying ? 'Already paused' : 'Pause playback'} disabled={!isPlaying} on:click={pause}>
+			<button title={!isPlaying ? 'Already paused' : 'Pause playback'} disabled={!isPlaying} on:click={onPause}>
 				<Icon path={mdiPause} />
 			</button>
-			<button
-				title="Play active subtitle"
-				class="m-l-s"
-				on:click={() => {
-					stopTimer?.();
-
-					stopTime = activeRegion.end;
-
-					stopTimer = wavesurferInstance.on('timeupdate', onTimeUpdate);
-
-					wavesurferInstance.setTime(activeRegion.start);
-					wavesurferInstance.play();
-				}}
-			>
+			<button title="Play active subtitle" class="m-l-s" on:click={onPlayActiveSubtitle}>
 				<Icon path={mdiRepeat} />
 			</button>
 			<button
 				title="Restore time"
 				class="m-l-s"
 				on:click={() => {
-					pause();
+					onPause();
 
-					activeRegion.setOptions(getRegionOptions(activeSubtitle));
+					activeRegion.setOptions(getRegionOptions(initialActiveSubtitle));
 
 					activeRegion.element.part.add('active');
+
+					updateActiveSubtitle();
 				}}
 			>
 				<Icon path={mdiRestore} />
 			</button>
+			<ActionButton
+				ignoreSkipKeyListener
+				buttonClasses="m-l-s"
+				path={mdiDatabasePlus}
+				title={$exportNewTitle$}
+				action={Action.EXPORT_NEW}
+				subtitle={activeSubtitle}
+			/>
+			<ActionButton
+				ignoreSkipKeyListener
+				buttonClasses="m-l-s"
+				path={mdiDatabaseSync}
+				title={$exportUpdateTitle$}
+				action={Action.EXPORT_UPDATE}
+				subtitle={activeSubtitle}
+			/>
+			{#if $exportCancelController$}
+				<ActionButton
+					ignoreSkipKeyListener
+					buttonClasses="match-btns m-l-s"
+					path={mdiCancel}
+					title={$exportCancelTitle$}
+					action={Action.CANCEL_EXPORT}
+					subtitle={activeSubtitle}
+				/>
+			{/if}
 		</div>
 		<div class="waveform w-full h-full" bind:this={waveformContainer}></div>
 		<div class="flex items-center">
 			<div>{activeSubtitle.text}</div>
-			{#if $bookMatched$.matchedBy}
+			{#if !wasActiveSubtitleAligned && $bookMatched$.matchedBy}
 				<button title={Action.ALIGN_SUBTITLE} class="m-l-s" on:click={onAlignSubtitle}>
 					<Icon path={mdiEqual} />
 				</button>
@@ -239,6 +352,6 @@
 		<button on:click={onSaveNewTime}>Save</button>
 	</div>
 </DialogTemplate>
-<div class:hidden={!isLoading} class="backdrop">
+<div class:hidden={!isLoading && !$exportCancelController$} class="backdrop">
 	<span class="spinner"></span>
 </div>
