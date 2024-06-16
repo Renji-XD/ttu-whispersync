@@ -879,6 +879,7 @@
 			<SettingsKeybind key="Cmd + m" description={Action.TOGGLE_MERGE} />
 			<SettingsKeybind key="Cmd + e" description={Action.EXPORT_NEW} />
 			<SettingsKeybind key="Alt + e" description={Action.EXPORT_UPDATE} />
+			<SettingsKeybind key="Alt + g" description={Action.EDIT_SUBTITLE} extendDescription={false} />
 			<SettingsKeybind key="Cmd + q" description="Go to previous subtitle" extendDescription={false} />
 			<SettingsKeybind key="Alt + q" description="Go to next subtitle" extendDescription={false} />
 			<SettingsKeybind

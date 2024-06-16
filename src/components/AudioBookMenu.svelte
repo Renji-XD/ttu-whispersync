@@ -260,6 +260,10 @@
 				case 'e':
 					action = $exportCancelController$ ? Action.NONE : Action.EXPORT_UPDATE;
 					break;
+				case 'KeyG':
+				case 'g':
+					action = $exportCancelController$ ? Action.NONE : Action.EDIT_SUBTITLE;
+					break;
 				default:
 					action = Action.NONE;
 					break;
