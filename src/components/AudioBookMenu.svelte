@@ -124,6 +124,8 @@
 		: '';
 	let originalMenuWidth = 0;
 	let originalMouseX = 0;
+	let originalPos = 0;
+	let posDiff = 0;
 	let resizeTimer: number | undefined;
 
 	$isMobile$ = navigator.maxTouchPoints > 0;
@@ -612,6 +614,13 @@
 			return;
 		}
 
+		if (!isPaginated) {
+			originalPos = isVertical ? event.pageX : event.pageY;
+			posDiff = 0;
+
+			window.addEventListener('pointermove', onPointerMove, false);
+		}
+
 		if ($readerPreventActionOnSelection$ && $isMobile$) {
 			window.getSelection()?.removeAllRanges();
 			document.body.style.userSelect = 'none';
@@ -622,8 +631,16 @@
 		readerInteractionTimer = window.setTimeout(handleReaderInteraction, $readerMenuOpenTime$);
 	}
 
+	function onPointerMove(event: PointerEvent) {
+		const currentPos = isVertical ? event.pageX : event.pageY;
+
+		posDiff = Math.abs(currentPos - originalPos);
+	}
+
 	function onReaderPointerUp() {
-		resetEventEnd();
+		if (resetEventEnd()) {
+			return;
+		}
 
 		if (!$readerPreventActionOnSelection$ || !window.getSelection()?.toString().trim()) {
 			setReaderActionSubtitle();
@@ -644,9 +661,12 @@
 	function resetEventEnd() {
 		clearTimeout(readerInteractionTimer);
 
+		window.removeEventListener('pointermove', onPointerMove, false);
 		bookContentElement.removeEventListener('pointerup', onReaderPointerUp, false);
 
 		document.body.style.userSelect = 'auto';
+
+		return !isPaginated && posDiff > 10;
 	}
 
 	function setClosestSubtitleElement(event: MouseEvent | PointerEvent) {
@@ -692,7 +712,9 @@
 	}
 
 	function handleReaderInteraction() {
-		resetEventEnd();
+		if (resetEventEnd()) {
+			return;
+		}
 
 		if (
 			!readerMenuBookElement ||
