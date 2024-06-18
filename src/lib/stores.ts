@@ -103,6 +103,8 @@ export const subtitlesForMerge$ = revertWriteable<Set<string>>(new Set<string>()
 
 export const activeSubtitle$ = revertWriteable<ActiveSubtitle>({ previous: '', current: '', useTimeFallback: true });
 
+export const readerActionSubtitle$ = revertWriteable<Subtitle | undefined>();
+
 export const paused$ = revertWriteable<boolean>(true);
 
 export const currentTime$ = revertWriteable<number>(0);
@@ -125,6 +127,7 @@ export const settings$ = {
 	readerEnableAutoScroll$: writableBooleanStore()('ttu-whispersync-reader-enable-auto-scroll'),
 	readerEnableTrackerAutoPause$: writableBooleanStore()('ttu-whispersync-reader-enable-tracker-auto-pause'),
 	readerPreventActionOnSelection$: writableBooleanStore()('ttu-whispersync-reader-prevent-action-on-selection'),
+	readerEnableMenuTarget$: writableBooleanStore()('ttu-whispersync-reader-enable-menu-target'),
 	readerScrollMode$: writableStringStore()('ttu-whispersync-reader-scroll-mode'),
 	readerScrollBehavior$: writableStringStore()('ttu-whispersync-reader-scroll-behavior'),
 	readerClickAction$: writableStringStore()('ttu-whispersync-reader-click-action'),

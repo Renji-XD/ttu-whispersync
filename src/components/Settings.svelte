@@ -518,6 +518,13 @@
 				targetStore$={settings$.readerPreventActionOnSelection$}
 			/>
 		{/if}
+		{#if $readerMenuOpenMode$ !== ReaderMenuOpenMode.DISABLED}
+			<SettingsCheckbox
+				label="Enable menu target"
+				helpText="If enabled keybindings will prioritize the active menu subtitle over the current played one"
+				targetStore$={settings$.readerEnableMenuTarget$}
+			/>
+		{/if}
 		{#if $readerEnableAutoScroll$}
 			<SettingsSelect
 				label="Continuous scroll"

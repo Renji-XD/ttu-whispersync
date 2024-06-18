@@ -11,7 +11,7 @@
 		type EventWithElement,
 	} from '../lib/general';
 	import { startRecording, stopRecording } from '../lib/recorder';
-	import { AutoPauseMode } from '../lib/settings';
+	import { AutoPauseMode, ReaderMenuOpenMode } from '../lib/settings';
 	import {
 		activeSubtitle$,
 		booksDB$,
@@ -29,6 +29,7 @@
 		paused$,
 		playbackRate$,
 		playLine$,
+		readerActionSubtitle$,
 		settings$,
 		skipKeyListener$,
 		subtitleChange$,
@@ -112,6 +113,8 @@
 		readerEnableTrackerAutoPause$,
 		readerScrollMode$,
 		readerScrollBehavior$,
+		readerEnableMenuTarget$,
+		readerMenuOpenMode$,
 		playerEnableDictionaryDetection$,
 		playerEnableWakeLock$,
 		playerAutoPauseMode$,
@@ -250,11 +253,16 @@
 		}
 
 		const actionKey = (event.code || event.key || '').toLowerCase();
+		const prioritizedSubtitle =
+			$readerEnableMenuTarget$ && $readerMenuOpenMode$ !== ReaderMenuOpenMode.DISABLED
+				? $readerActionSubtitle$
+				: undefined;
 
 		let action = Action.NONE;
 		let stopEvent = true;
 		let keepPauseState = false;
-		let targetSubtitle = $currentSubtitles$.get($activeSubtitle$.current || $activeSubtitle$.previous);
+		let targetSubtitle =
+			prioritizedSubtitle || $currentSubtitles$.get($activeSubtitle$.current || $activeSubtitle$.previous);
 		let subtitles: Subtitle[] | undefined;
 
 		if (!targetSubtitle && $keybindingsEnableTimeFallback$) {

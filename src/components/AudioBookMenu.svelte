@@ -38,6 +38,7 @@
 		isRecording$,
 		lastError$,
 		paused$,
+		readerActionSubtitle$,
 		restartPlaybackTitle$,
 		restoreSubtitleTitle$,
 		settings$,
@@ -94,6 +95,7 @@
 	const {
 		readerEnableAutoReload$,
 		readerPreventActionOnSelection$,
+		readerEnableMenuTarget$,
 		readerClickAction$,
 		readerMenuOpenMode$,
 		readerMenuPauseMode$,
@@ -116,7 +118,6 @@
 	let readerMenuBookElement: Element | undefined;
 	let readerMenuRangeElement: Range | undefined;
 	let readerMenuElement: ReaderMenu | undefined;
-	let readerActionSubtitle: Subtitle | undefined;
 	let showMenu = false;
 	let loadError = '';
 	let sideMenuWidth = window.matchMedia('(min-width: 1000px)').matches
@@ -242,9 +243,14 @@
 		}
 
 		const actionKey = event.code || event.key?.toLowerCase();
+		const prioritizedSubtitle =
+			$readerEnableMenuTarget$ && $readerMenuOpenMode$ !== ReaderMenuOpenMode.DISABLED
+				? $readerActionSubtitle$
+				: undefined;
 
 		let action;
-		let targetSubtitle = $currentSubtitles$.get($activeSubtitle$.current || $activeSubtitle$.previous);
+		let targetSubtitle =
+			prioritizedSubtitle || $currentSubtitles$.get($activeSubtitle$.current || $activeSubtitle$.previous);
 
 		if (!targetSubtitle && $keybindingsEnableTimeFallback$) {
 			const subtitles = [...$currentSubtitles$.values()];
@@ -645,7 +651,7 @@
 		if (!$readerPreventActionOnSelection$ || !window.getSelection()?.toString().trim()) {
 			setReaderActionSubtitle();
 
-			executeAction($readerClickAction$, readerActionSubtitle);
+			executeAction($readerClickAction$, $readerActionSubtitle$);
 		}
 
 		resetReaderMenu();
@@ -694,7 +700,7 @@
 		if (resetAll) {
 			readerMenuBookElement = undefined;
 			readerMenuRangeElement = undefined;
-			readerActionSubtitle = undefined;
+			$readerActionSubtitle$ = undefined;
 		}
 	}
 
@@ -704,9 +710,9 @@
 		}
 
 		const subtitleId = getSubtitleIdFromElement(readerMenuBookElement);
-		const oldSubtitleId = readerActionSubtitle?.id;
+		const oldSubtitleId = $readerActionSubtitle$?.id;
 
-		readerActionSubtitle = $currentSubtitles$.get(subtitleId);
+		$readerActionSubtitle$ = $currentSubtitles$.get(subtitleId);
 
 		return [oldSubtitleId, subtitleId];
 	}
@@ -759,11 +765,11 @@
 	}
 
 	function updateReaderActionSubtitle(subtitles: Map<string, Subtitle>) {
-		if (!readerActionSubtitle) {
+		if (!$readerActionSubtitle$) {
 			return;
 		}
 
-		readerActionSubtitle = subtitles.get(readerActionSubtitle.id);
+		$readerActionSubtitle$ = subtitles.get($readerActionSubtitle$.id);
 	}
 </script>
 
@@ -803,7 +809,7 @@
 
 <ReaderMenu
 	range={readerMenuRangeElement}
-	subtitle={readerActionSubtitle}
+	subtitle={$readerActionSubtitle$}
 	bind:this={readerMenuElement}
 	on:close={() => resetReaderMenu()}
 />

@@ -23,6 +23,7 @@ export type Settings = {
 	'ttu-whispersync-reader-enable-auto-scroll': boolean;
 	'ttu-whispersync-reader-enable-tracker-auto-pause': boolean;
 	'ttu-whispersync-reader-prevent-action-on-selection': boolean;
+	'ttu-whispersync-reader-enable-menu-target': boolean;
 	'ttu-whispersync-reader-scroll-mode': ReaderScrollMode;
 	'ttu-whispersync-reader-scroll-behavior': ReaderScrollBehavior;
 	'ttu-whispersync-reader-click-action': Action;
@@ -162,6 +163,7 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-reader-enable-auto-scroll': true,
 		'ttu-whispersync-reader-enable-tracker-auto-pause': true,
 		'ttu-whispersync-reader-prevent-action-on-selection': true,
+		'ttu-whispersync-reader-enable-menu-target': true,
 		'ttu-whispersync-reader-scroll-mode': ReaderScrollMode.ALWAYS,
 		'ttu-whispersync-reader-scroll-behavior': ReaderScrollBehavior.INSTANT,
 		'ttu-whispersync-reader-click-action': Action.NONE,
