@@ -50,6 +50,18 @@
 
 	const wakeLockSupported = 'wakeLock' in navigator;
 	const { supportsFileSystem, sandboxElement } = getContext<Context>('context');
+	const footerActions = [
+		Action.TOGGLE_PLAYBACK,
+		Action.RESTART_PLAYBACK,
+		Action.TOGGLE_PLAY_PAUSE,
+		Action.TOGGLE_PLAYBACK_LOOP,
+		Action.TOGGLE_BOOKMARK,
+		Action.TOGGLE_MERGE,
+		Action.EDIT_SUBTITLE,
+		Action.RESTORE_SUBTITLE,
+		Action.EXPORT_NEW,
+		Action.EXPORT_UPDATE,
+	];
 	const clickActions = [
 		Action.NONE,
 		Action.RESTART_PLAYBACK,
@@ -57,11 +69,10 @@
 		Action.TOGGLE_PLAYBACK_LOOP,
 		Action.TOGGLE_BOOKMARK,
 		Action.TOGGLE_MERGE,
-		Action.EXPORT_NEW,
-		Action.EXPORT_UPDATE,
-		Action.ALIGN_SUBTITLE,
 		Action.EDIT_SUBTITLE,
 		Action.RESTORE_SUBTITLE,
+		Action.EXPORT_NEW,
+		Action.EXPORT_UPDATE,
 	];
 	const readerScrollModes = [ReaderScrollMode.ALWAYS, ReaderScrollMode.PAGE];
 	const readerScrollBehaviors = [
@@ -91,6 +102,7 @@
 		readerLineTextHighlightColor$,
 		readerEnableLineHighlight$,
 		readerEnableAutoScroll$,
+		readerFooterActions$,
 		readerScrollMode$,
 		readerClickAction$,
 		readerMenuOpenMode$,
@@ -525,6 +537,17 @@
 				targetStore$={settings$.readerEnableMenuTarget$}
 			/>
 		{/if}
+		<label for={readerFooterActions$.key()}>Footer Actions</label>
+		<select multiple size="3" bind:value={$readerFooterActions$}>
+			{#each footerActions as footerAction (footerAction)}
+				<option class="truncate" title={footerAction} value={footerAction}>
+					{footerAction}
+				</option>
+			{/each}
+		</select>
+		<button title="Remove all" on:click={() => ($readerFooterActions$ = [])}>
+			<Icon path={mdiTrashCan}></Icon>
+		</button>
 		{#if $readerEnableAutoScroll$}
 			<SettingsSelect
 				label="Continuous scroll"
@@ -691,11 +714,6 @@
 				targetStore$={settings$.playerEnableWakeLock$}
 			/>
 		{/if}
-		<SettingsCheckbox
-			label="Enable footer playback"
-			helpText="If enabled an icon for playback toogle will be displayed in the reader footer"
-			targetStore$={settings$.playerEnableFooterPlaybackElement$}
-		/>
 		<SettingsSelect
 			label="Auto pause"
 			helpText={autoPauseHelpText}

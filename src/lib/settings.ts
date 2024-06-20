@@ -1,5 +1,6 @@
 enum Action {
 	NONE = 'None',
+	TOGGLE_PLAYBACK = 'Toggle playback',
 	RESTART_PLAYBACK = 'Restart playback',
 	TOGGLE_PLAY_PAUSE = 'Toggle play and pause',
 	TOGGLE_PLAYBACK_LOOP = 'Toggle playback loop',
@@ -24,6 +25,7 @@ export type Settings = {
 	'ttu-whispersync-reader-enable-tracker-auto-pause': boolean;
 	'ttu-whispersync-reader-prevent-action-on-selection': boolean;
 	'ttu-whispersync-reader-enable-menu-target': boolean;
+	'ttu-whispersync-reader-footer-actions': Action[];
 	'ttu-whispersync-reader-scroll-mode': ReaderScrollMode;
 	'ttu-whispersync-reader-scroll-behavior': ReaderScrollBehavior;
 	'ttu-whispersync-reader-click-action': Action;
@@ -47,7 +49,6 @@ export type Settings = {
 	'ttu-whispersync-player-enable-cover': boolean;
 	'ttu-whispersync-player-enable-chapters': boolean;
 	'ttu-whispersync-player-enable-wake-lock': boolean;
-	'ttu-whispersync-player-enable-footer-playback-element': boolean;
 	'ttu-whispersync-player-enable-dictionary-detection': boolean;
 	'ttu-whispersync-player-auto-pause-mode': AutoPauseMode;
 	'ttu-whispersync-player-rewind-time': number;
@@ -164,6 +165,7 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-reader-enable-tracker-auto-pause': true,
 		'ttu-whispersync-reader-prevent-action-on-selection': true,
 		'ttu-whispersync-reader-enable-menu-target': true,
+		'ttu-whispersync-reader-footer-actions': [Action.TOGGLE_PLAYBACK],
 		'ttu-whispersync-reader-scroll-mode': ReaderScrollMode.ALWAYS,
 		'ttu-whispersync-reader-scroll-behavior': ReaderScrollBehavior.INSTANT,
 		'ttu-whispersync-reader-click-action': Action.NONE,
@@ -187,7 +189,6 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-player-enable-cover': true,
 		'ttu-whispersync-player-enable-chapters': true,
 		'ttu-whispersync-player-enable-wake-lock': false,
-		'ttu-whispersync-player-enable-footer-playback-element': true,
 		'ttu-whispersync-player-enable-dictionary-detection': false,
 		'ttu-whispersync-player-auto-pause-mode': AutoPauseMode.DISABLED,
 		'ttu-whispersync-player-rewind-time': 5,

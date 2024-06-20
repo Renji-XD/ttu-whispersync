@@ -9,14 +9,17 @@
 	export let skipUpdates = false;
 	export let ignoreSkipKeyListener = false;
 	export let buttonClasses = 'm-y-xs';
+	export let buttonStyles = '';
+	export let iconStyles = '';
 	export let subtitle: Subtitle[] | Subtitle | undefined = undefined;
 	export let clickHandler: (() => void) | undefined = undefined;
 </script>
 
 <button
+	{title}
+	style={buttonStyles}
 	class={buttonClasses}
 	disabled={title !== action}
-	{title}
 	on:click={() => {
 		clickHandler?.();
 
@@ -29,5 +32,5 @@
 		});
 	}}
 >
-	<Icon {path} />
+	<Icon {path} {iconStyles} />
 </button>

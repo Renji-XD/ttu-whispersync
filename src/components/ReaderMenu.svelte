@@ -3,8 +3,8 @@
 	import { computePosition, flip, inline, offset, autoUpdate, type Placement } from '@floating-ui/dom';
 	import Icon from './Icon.svelte';
 	import type { Context, Subtitle } from '../lib/general';
-	import { currentAudioLoaded$, currentSubtitles$, isRecording$, paused$ } from '../lib/stores';
-	import { mdiClose, mdiPause, mdiPlay } from '@mdi/js';
+	import { currentAudioLoaded$, currentSubtitles$, isRecording$ } from '../lib/stores';
+	import { mdiClose } from '@mdi/js';
 	import { createEventDispatcher, getContext, onDestroy, tick } from 'svelte';
 
 	export let range: Range | undefined;
@@ -147,18 +147,6 @@
 		on:click={() => dispatch('close')}
 	>
 		<Icon path={mdiClose} />
-	</button>
-	<button
-		class:p-y-xs={isVertical}
-		class:separator-y={isVertical}
-		class:p-r-xs={!isVertical}
-		class:p-l-xs={!isVertical}
-		class:separator-x={!isVertical}
-		title={togglePlaybackTitle}
-		disabled={togglePlaybackTitle !== 'Toggle playback'}
-		on:click={() => ($paused$ = !$paused$)}
-	>
-		<Icon path={$paused$ ? mdiPlay : mdiPause} />
 	</button>
 	<ActionButtonList isReaderMenu {subtitle} />
 </div>

@@ -3,6 +3,7 @@
 	export let width = '1.4rem';
 	export let height = '1.4rem';
 	export let element: SVGElement | undefined = undefined;
+	export let iconStyles = '';
 	export { _class as class };
 
 	let _class = '';
@@ -11,7 +12,7 @@
 <svg
 	tabindex="0"
 	role="button"
-	style="width: {width}; height: {height};"
+	style="width: {width}; height: {height};{iconStyles}"
 	viewBox="0 0 24 24"
 	fill="currentColor"
 	class={`icon ${_class}`}

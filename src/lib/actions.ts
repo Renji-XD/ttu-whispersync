@@ -245,6 +245,7 @@ function getSubtitlesForExport(subtitles: Subtitle[], mergeSubtitles: boolean | 
 
 export enum Action {
 	NONE = 'None',
+	TOGGLE_PLAYBACK = 'Toggle playback',
 	RESTART_PLAYBACK = 'Restart playback',
 	TOGGLE_PLAY_PAUSE = 'Toggle play and pause',
 	TOGGLE_PLAYBACK_LOOP = 'Toggle playback loop',
@@ -326,7 +327,11 @@ export async function executeAction(
 		return;
 	}
 
-	if (
+	if (!isRecording && action === Action.TOGGLE_PLAYBACK) {
+		const paused = get(paused$);
+
+		paused$.set(!paused);
+	} else if (
 		!isRecording &&
 		(action === Action.RESTART_PLAYBACK ||
 			action === Action.TOGGLE_PLAY_PAUSE ||

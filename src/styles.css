@@ -382,6 +382,12 @@
 	row-gap: 1rem;
 }
 
+.ttu-whispersync-container .truncate {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 @keyframes ttu-whispersync-spinner-rotation {
 	0% {
 		transform: rotate(0deg);

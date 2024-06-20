@@ -1,3 +1,4 @@
+import type { Action } from './actions';
 import type { BooksDB, BooksDBData, ExtensionData } from './db';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import {
@@ -16,6 +17,7 @@ import { type Settings } from './settings';
 import { writable, type Subscriber, type Invalidator, type Unsubscriber } from 'svelte/store';
 import { writableBooleanStore } from './writeables/writeable-boolean-store';
 import { writableNumberStore } from './writeables/writeable-number-store';
+import { writeableArrayStore } from './writeables/writeable-object-store';
 import { revertWriteable } from './writeables/writeable-revert-store';
 import { writableStringStore } from './writeables/writeable-string-store';
 
@@ -73,6 +75,8 @@ export const exportCancelController$ = revertWriteable<AbortController | undefin
 
 export const isRecording$ = writable<boolean>(false);
 
+export const togglePlaybackTitle$ = writable<string>('');
+
 export const restartPlaybackTitle$ = writable<string>('');
 
 export const togglePlayPauseTitle$ = writable<string>('');
@@ -128,6 +132,7 @@ export const settings$ = {
 	readerEnableTrackerAutoPause$: writableBooleanStore()('ttu-whispersync-reader-enable-tracker-auto-pause'),
 	readerPreventActionOnSelection$: writableBooleanStore()('ttu-whispersync-reader-prevent-action-on-selection'),
 	readerEnableMenuTarget$: writableBooleanStore()('ttu-whispersync-reader-enable-menu-target'),
+	readerFooterActions$: writeableArrayStore<Action>()('ttu-whispersync-reader-footer-actions'),
 	readerScrollMode$: writableStringStore()('ttu-whispersync-reader-scroll-mode'),
 	readerScrollBehavior$: writableStringStore()('ttu-whispersync-reader-scroll-behavior'),
 	readerClickAction$: writableStringStore()('ttu-whispersync-reader-click-action'),
@@ -152,7 +157,6 @@ export const settings$ = {
 	playerEnableCover$: writableBooleanStore()('ttu-whispersync-player-enable-cover'),
 	playerEnableChapters$: writableBooleanStore()('ttu-whispersync-player-enable-chapters'),
 	playerEnableWakeLock$: writableBooleanStore()('ttu-whispersync-player-enable-wake-lock'),
-	playerEnableFooterPlaybackElement$: writableBooleanStore()('ttu-whispersync-player-enable-footer-playback-element'),
 	playerEnableDictionaryDetection$: writableBooleanStore()('ttu-whispersync-player-enable-dictionary-detection'),
 	playerAutoPauseMode$: writableStringStore()('ttu-whispersync-player-auto-pause-mode'),
 	playerRewindTime$: writableNumberStore()('ttu-whispersync-player-rewind-time'),

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ActionButtonList from './ActionButtonList.svelte';
 	import Audiobook from './Audiobook.svelte';
 	import Chapters from './Chapters.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
@@ -46,6 +47,7 @@
 		toggleBookmarkTitle$,
 		toggleMergeTitle$,
 		togglePlaybackLoopTitle$,
+		togglePlaybackTitle$,
 		togglePlayPauseTitle$,
 	} from '../lib/stores';
 	import {
@@ -57,15 +59,7 @@
 		between,
 	} from '../lib/util';
 	import Match from './Match.svelte';
-	import {
-		mdiArrowSplitVertical,
-		mdiClose,
-		mdiPauseCircleOutline,
-		mdiPlayCircleOutline,
-		mdiPlaylistMusicOutline,
-		mdiRepeatOff,
-		mdiSwapHorizontal,
-	} from '@mdi/js';
+	import { mdiArrowSplitVertical, mdiClose, mdiPlaylistMusicOutline, mdiRepeatOff, mdiSwapHorizontal } from '@mdi/js';
 	import ReaderMenu from './ReaderMenu.svelte';
 	import Settings from './Settings.svelte';
 	import { onDestroy, onMount, setContext } from 'svelte';
@@ -96,13 +90,13 @@
 		readerEnableAutoReload$,
 		readerPreventActionOnSelection$,
 		readerEnableMenuTarget$,
+		readerFooterActions$,
 		readerClickAction$,
 		readerMenuOpenMode$,
 		readerMenuPauseMode$,
 		readerMenuOpenTime$,
 		subtitlesGlobalStartPadding$,
 		subtitlesGlobalEndPadding$,
-		playerEnableFooterPlaybackElement$,
 		ankiUrl$,
 		ankiDeck$,
 		ankiModel$,
@@ -131,8 +125,6 @@
 
 	$isMobile$ = navigator.maxTouchPoints > 0;
 
-	$: showFooterPlaybackElement = $currentAudioLoaded$ && $playerEnableFooterPlaybackElement$;
-
 	$: isLeftMenu = $currentMenuPosition$ === 'left';
 
 	$: $canExportToAnki$ =
@@ -143,7 +135,22 @@
 
 	$: $isRecording$ = $exportAudioProcessor$ === AudioProcessor.RECORDER && !!$exportCancelController$;
 
-	$: componentContainerElement.style.width = showFooterPlaybackElement ? '4rem' : '2rem';
+	$: footerActions = new Set($readerFooterActions$);
+
+	$: showCancelFooterAction =
+		(footerActions.has(Action.EXPORT_NEW) || footerActions.has(Action.EXPORT_UPDATE)) && !!$exportCancelController$;
+
+	$: componentContainerElement.style.width = $readerFooterActions$.length
+		? `${2 + 2 * $readerFooterActions$.length + (showCancelFooterAction ? 2 : 0)}rem`
+		: '2rem';
+
+	$: if (!$currentAudioLoaded$) {
+		$togglePlaybackTitle$ = 'Audio file required';
+	} else if ($isRecording$) {
+		$togglePlaybackTitle$ = 'Recording in progress';
+	} else {
+		$togglePlaybackTitle$ = Action.TOGGLE_PLAYBACK;
+	}
 
 	$: if (!$currentSubtitles$.size) {
 		$restartPlaybackTitle$ = 'Subtitle file required';
@@ -790,19 +797,12 @@
 	<Icon path={mdiPlaylistMusicOutline} />
 </button>
 
-{#if showFooterPlaybackElement}
-	<button
-		title="Toggle playback"
-		class="h-full hover:opacity-70"
-		style:margin-left="0.5rem"
-		disabled={$isRecording$}
-		on:click|stopPropagation={() => ($paused$ = !$paused$)}
-	>
-		<Icon
-			path={$isRecording$ || $paused$ ? mdiPlayCircleOutline : mdiPauseCircleOutline}
-			class={$isRecording$ ? 'cursor-not-allowed' : ''}
-		/>
-	</button>
+{#if footerActions.size}
+	<ActionButtonList
+		{footerActions}
+		{showCancelFooterAction}
+		subtitle={$currentSubtitles$.get($activeSubtitle$.current || $activeSubtitle$.previous)}
+	/>
 {/if}
 
 <Dialogs />
