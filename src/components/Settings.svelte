@@ -139,7 +139,7 @@
 	const ankiSettingsModes: AnkiSettingssMode[] = [AnkiSettingssMode.CREATE, AnkiSettingssMode.UPDATE];
 
 	let ankiSettingsMode = AnkiSettingssMode.CREATE;
-	let openSettingsMenu = SettingsMenu.READER;
+	let openSettingsMenu = SettingsMenu.NONE;
 	let autoPauseHelpText = '';
 	let ankiDecks: string[] = [];
 	let ankiModels: string[] = [];
