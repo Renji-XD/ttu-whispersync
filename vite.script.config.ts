@@ -18,9 +18,12 @@ const header = `// ==UserScript==
 // @version     1.0.5
 // @description Listen to audiobooks with ttu ebook-reader
 // @icon https://raw.githubusercontent.com/Renji-XD/ttu-whispersync/main/src/assets/icons/icon64.png
+// @resource mediaInfo https://cdn.jsdelivr.net/npm/mediainfo.js@0.2.1/dist/MediaInfoModule.wasm
+// @resource ffmpeg-core.js https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js
+// @resource ffmpeg-core.wasm https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm
 // @run-at      document-idle
 // @noframes
-// @grant       none
+// @grant       GM_getResourceURL
 // @downloadURL https://github.com/Renji-XD/ttu-whispersync/releases/latest/download/ttu-whispersync.user.js
 // @supportURL  https://github.com/Renji-XD/ttu-whispersync/issues
 // @homepageURL https://github.com/Renji-XD/ttu-whispersync

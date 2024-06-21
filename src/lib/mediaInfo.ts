@@ -32,16 +32,11 @@ export function setMediaInfoInstance(
 			return resolve();
 		}
 
-		if (!mediaInfoUrl && !navigator.onLine) {
-			return reject(new Error('Need to be online for initialization'));
-		}
-
 		MediaInfoFactory(
 			{
 				coverData,
 				format: 'object',
-				locateFile: () =>
-					mediaInfoUrl || 'https://cdn.jsdelivr.net/npm/mediainfo.js@0.2.1/dist/MediaInfoModule.wasm',
+				locateFile: () => mediaInfoUrl || window.GM_getResourceURL('mediaInfo'),
 			},
 			(mediainfo: MediaInfo) => {
 				if (mediaInfoInstance) {

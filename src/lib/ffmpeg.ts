@@ -9,7 +9,6 @@ import { settings$ } from './stores';
 
 const ffmpeg = new FFmpeg();
 const isChromeExtension = !!window.chrome && !!chrome.runtime && chrome.runtime.id;
-const ffmpegBaseURL = isChromeExtension ? 'src/assets/js' : 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm';
 const libMap = new Map<string, string>([
 	['ogg', 'libvorbis'],
 	['opus', 'opus'],
@@ -38,12 +37,14 @@ function toBlobURL(url: string, type: string) {
 		});
 }
 
-function getUrl(fileName: string, isWorker = false) {
-	if (isWorker) {
-		return ffmpegWorker;
+function getUrl(fileName: string, type = 'text/javascript') {
+	if (fileName === ffmpegWorker) {
+		return toBlobURL(ffmpegWorker, type);
 	}
 
-	return isChromeExtension ? chrome.runtime.getURL(`${ffmpegBaseURL}/${fileName}`) : `${ffmpegBaseURL}/${fileName}`;
+	return isChromeExtension
+		? toBlobURL(chrome.runtime.getURL(`src/assets/js/${fileName}`), type)
+		: window.GM_getResourceURL(fileName);
 }
 
 function handleFFMPEGLogForChapterData(event: { type: string; message: string }) {
@@ -103,15 +104,11 @@ export async function initializeFFMPEG() {
 	const blobUrls: string[] = [];
 
 	try {
-		if (!isChromeExtension && !navigator.onLine) {
-			throw new Error('Need to be online for initialization');
-		}
-
 		const errors: string[] = [];
 		const results = await Promise.allSettled([
-			toBlobURL(getUrl('ffmpeg-core.js'), 'text/javascript'),
-			toBlobURL(getUrl('ffmpeg-core.wasm'), 'application/wasm'),
-			toBlobURL(getUrl('ffmpeg.worker.js', true), 'text/javascript'),
+			getUrl('ffmpeg-core.js'),
+			getUrl('ffmpeg-core.wasm', 'application/wasm'),
+			getUrl(ffmpegWorker),
 		]);
 
 		for (let index = 0, { length } = results; index < length; index += 1) {
