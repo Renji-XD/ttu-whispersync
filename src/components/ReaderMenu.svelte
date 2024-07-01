@@ -46,6 +46,10 @@
 
 	onDestroy(() => cleanup?.());
 
+	function onClose() {
+		dispatch('close');
+	}
+
 	async function setupMenu(rangeElement: Range | undefined) {
 		cleanup?.();
 
@@ -134,19 +138,19 @@
 </script>
 
 <div
-	class="ttu-whispersync-container popover flex"
+	class="ttu-whispersync-container popover reader-menu"
 	class:flex-col={isVertical}
 	class:hidden={!range}
 	bind:this={popoverElement}
 >
 	<button
 		title="Close menu"
-		class:p-y-xs={isVertical}
-		class:p-r-xs={!isVertical}
-		class:p-l-xs={!isVertical}
-		on:click={() => dispatch('close')}
+		class:p-t-xs={isVertical}
+		class:p-b-s={isVertical}
+		class:p-r-s={!isVertical}
+		on:click={onClose}
 	>
 		<Icon path={mdiClose} />
 	</button>
-	<ActionButtonList isReaderMenu {subtitle} />
+	<ActionButtonList isReaderMenu {subtitle} on:executed={onClose} />
 </div>

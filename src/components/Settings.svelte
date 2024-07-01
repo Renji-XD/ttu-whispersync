@@ -59,6 +59,7 @@
 		Action.TOGGLE_MERGE,
 		Action.EDIT_SUBTITLE,
 		Action.RESTORE_SUBTITLE,
+		Action.COPY_SUBTITLE,
 		Action.EXPORT_NEW,
 		Action.EXPORT_UPDATE,
 	];
@@ -71,6 +72,7 @@
 		Action.TOGGLE_MERGE,
 		Action.EDIT_SUBTITLE,
 		Action.RESTORE_SUBTITLE,
+		Action.COPY_SUBTITLE,
 		Action.EXPORT_NEW,
 		Action.EXPORT_UPDATE,
 	];
@@ -714,6 +716,11 @@
 				targetStore$={settings$.playerEnableWakeLock$}
 			/>
 		{/if}
+		<SettingsCheckbox
+			label="Enable subtitle copy"
+			helpText="If enabled an active subtitle will automatically be copied to the clipboard (chromium only;site needs to stay in focus)"
+			targetStore$={settings$.playerEnableSubtitleCopy$}
+		/>
 		<SettingsSelect
 			label="Auto pause"
 			helpText={autoPauseHelpText}
@@ -905,6 +912,7 @@
 			<SettingsKeybind key="Cmd + e" description={Action.EXPORT_NEW} />
 			<SettingsKeybind key="Alt + e" description={Action.EXPORT_UPDATE} />
 			<SettingsKeybind key="Alt + g" description={Action.EDIT_SUBTITLE} extendDescription={false} />
+			<SettingsKeybind key="Alt + z" description={Action.COPY_SUBTITLE} extendDescription={false} />
 			<SettingsKeybind key="Cmd + q" description="Go to previous subtitle" extendDescription={false} />
 			<SettingsKeybind key="Alt + q" description="Go to next subtitle" extendDescription={false} />
 			<SettingsKeybind

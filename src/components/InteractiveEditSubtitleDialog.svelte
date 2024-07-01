@@ -15,7 +15,16 @@
 		exportUpdateTitle$,
 	} from '../lib/stores';
 	import { toTimeStamp } from '../lib/util';
-	import { mdiCancel, mdiDatabasePlus, mdiDatabaseSync, mdiEqual, mdiPause, mdiRepeat, mdiRestore } from '@mdi/js';
+	import {
+		mdiCancel,
+		mdiContentCopy,
+		mdiDatabasePlus,
+		mdiDatabaseSync,
+		mdiEqual,
+		mdiPause,
+		mdiRepeat,
+		mdiRestore,
+	} from '@mdi/js';
 	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 	import WaveSurfer from 'wavesurfer.js';
 	import RegionsPlugin, { type Region } from 'wavesurfer.js/dist/plugins/regions.esm.js';
@@ -72,6 +81,11 @@
 				case 'keye':
 				case 'e':
 					action = Action.EXPORT_UPDATE;
+
+					break;
+				case 'keyz':
+				case 'z':
+					action = Action.COPY_SUBTITLE;
 
 					break;
 				default:
@@ -345,6 +359,14 @@
 					<Icon path={mdiEqual} />
 				</button>
 			{/if}
+			<ActionButton
+				path={mdiContentCopy}
+				title={Action.COPY_SUBTITLE}
+				action={Action.COPY_SUBTITLE}
+				subtitle={activeSubtitle}
+				ignoreSkipKeyListener
+				buttonClasses="match-btns m-l-s"
+			/>
 		</div>
 	</div>
 	<div class="flex grow justify-between p-x-xs" slot="footer">

@@ -254,6 +254,7 @@ export enum Action {
 	ALIGN_SUBTITLE = 'Align with book text',
 	EDIT_SUBTITLE = 'Edit subtitle',
 	RESTORE_SUBTITLE = 'Restore original text and time',
+	COPY_SUBTITLE = 'Copy subtitle',
 	EXPORT_NEW = 'Create new card',
 	EXPORT_UPDATE = 'Update last created card',
 	CANCEL_EXPORT = 'Cancel Export',
@@ -353,6 +354,10 @@ export async function executeAction(
 		await executeAlignSubtitle(subtitles, settings.persistAlignment);
 	} else if (!exportCancelController && action === Action.RESTORE_SUBTITLE) {
 		await executeRestoreSubtitle(subtitles);
+	} else if (action === Action.COPY_SUBTITLE) {
+		await navigator.clipboard
+			.writeText(subtitles[0].text)
+			.catch(({ message }) => console.log(`failed to copy subtitle: ${message}`));
 	} else if (
 		!exportCancelController &&
 		(action === Action.EXPORT_NEW || action === Action.EXPORT_UPDATE) &&

@@ -117,6 +117,7 @@
 		readerMenuOpenMode$,
 		playerEnableDictionaryDetection$,
 		playerEnableWakeLock$,
+		playerEnableSubtitleCopy$,
 		playerAutoPauseMode$,
 		playerRewindTime$,
 		playerAltRewindTime$,
@@ -729,6 +730,12 @@
 					},
 				}),
 			);
+		}
+
+		if ($playerEnableSubtitleCopy$) {
+			navigator.clipboard
+				.writeText($currentSubtitles$.get(id)?.text || '')
+				.catch(({ message }) => console.log(`failed to copy subtitle: ${message}`));
 		}
 	}
 

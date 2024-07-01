@@ -49,6 +49,7 @@ pnpm run build:ext
 | <kbd>Cmd</kbd> + <kbd>e</kbd>           | Create new card for active line          |
 | <kbd>Alt</kbd> + <kbd>e</kbd>           | Update last created card for active line |
 | <kbd>Alt</kbd> + <kbd>g</kbd>           | Edit subtitle                            |
+| <kbd>Alt</kbd> + <kbd>z</kbd>           | Copy active subtitle                     |
 | <kbd>Cmd</kbd> + <kbd>q</kbd>           | Go to previous subtitle                  |
 | <kbd>Alt</kbd> + <kbd>q</kbd>           | Go to next subtitle                      |
 | <kbd>Cmd</kbd> + <kbd>Arrow Left</kbd>  | Rewind                                   |
@@ -102,6 +103,7 @@ Note: iOS may block the ability to select certain files. For subtitles you there
 ### What are the differences between desktop/mobile Chrome and/or other browsers
 
 -   The Filesystem API is only supported on desktop chromium browsers (some browsers like brave may need to have extra options enabled for it). On other devices/browsers you need to select your files every time you open or refresh the tab. Subtitles have a local storage option, audio files are never stored locally
+-   "Enable subtitle copy" will only work in chromium browsers as other browsers block clipboard actions without user interaction
 
 ### The menu icon in the bottom left corner is not visible or duplicated
 

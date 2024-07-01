@@ -26,6 +26,7 @@
 	import {
 		mdiCancel,
 		mdiClockEdit,
+		mdiContentCopy,
 		mdiDatabasePlus,
 		mdiDatabaseSync,
 		mdiPause,
@@ -98,6 +99,14 @@
 
 {#if isReaderMenu}
 	<ActionButton
+		path={mdiContentCopy}
+		title={Action.COPY_SUBTITLE}
+		action={Action.COPY_SUBTITLE}
+		buttonClasses={isVertical ? 'p-t-xs p-b-s' : 'p-l-xs p-r-s'}
+		{subtitle}
+		on:executed
+	/>
+	<ActionButton
 		{...getActionButtonProps(
 			Action.TOGGLE_PLAYBACK,
 			$togglePlaybackTitle$,
@@ -129,7 +138,7 @@
 	/>
 	<ActionButton
 		{...getActionButtonProps(Action.EDIT_SUBTITLE, $editSubtitleTitle$, mdiClockEdit, subtitle)}
-		buttonClasses={isVertical ? 'p-b-xs separator-y' : 'p-r-xs separator-x'}
+		buttonClasses={isVertical ? 'p-b-xs separator-y' : 'p-r-xs separator-x-row'}
 	/>
 	<ActionButton
 		{...getActionButtonProps(Action.RESTORE_SUBTITLE, $restoreSubtitleTitle$, mdiRestore, subtitle)}
@@ -200,6 +209,12 @@
 	{#if footerActions.has(Action.RESTORE_SUBTITLE)}
 		<ActionButton
 			{...getActionButtonProps(Action.RESTORE_SUBTITLE, $restoreSubtitleTitle$, mdiRestore, subtitle)}
+			buttonClasses={'h-full hover:opacity-70'}
+		/>
+	{/if}
+	{#if footerActions.has(Action.COPY_SUBTITLE)}
+		<ActionButton
+			{...getActionButtonProps(Action.COPY_SUBTITLE, Action.COPY_SUBTITLE, mdiContentCopy, subtitle)}
 			buttonClasses={'h-full hover:opacity-70'}
 		/>
 	{/if}

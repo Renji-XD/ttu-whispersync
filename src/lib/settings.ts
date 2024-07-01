@@ -49,6 +49,7 @@ export type Settings = {
 	'ttu-whispersync-player-enable-cover': boolean;
 	'ttu-whispersync-player-enable-chapters': boolean;
 	'ttu-whispersync-player-enable-wake-lock': boolean;
+	'ttu-whispersync-player-enable-subtitle-copy': boolean;
 	'ttu-whispersync-player-enable-dictionary-detection': boolean;
 	'ttu-whispersync-player-auto-pause-mode': AutoPauseMode;
 	'ttu-whispersync-player-rewind-time': number;
@@ -189,6 +190,7 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-player-enable-cover': true,
 		'ttu-whispersync-player-enable-chapters': true,
 		'ttu-whispersync-player-enable-wake-lock': false,
+		'ttu-whispersync-player-enable-subtitle-copy': false,
 		'ttu-whispersync-player-enable-dictionary-detection': false,
 		'ttu-whispersync-player-auto-pause-mode': AutoPauseMode.DISABLED,
 		'ttu-whispersync-player-rewind-time': 5,

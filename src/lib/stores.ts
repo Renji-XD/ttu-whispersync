@@ -157,6 +157,7 @@ export const settings$ = {
 	playerEnableCover$: writableBooleanStore()('ttu-whispersync-player-enable-cover'),
 	playerEnableChapters$: writableBooleanStore()('ttu-whispersync-player-enable-chapters'),
 	playerEnableWakeLock$: writableBooleanStore()('ttu-whispersync-player-enable-wake-lock'),
+	playerEnableSubtitleCopy$: writableBooleanStore()('ttu-whispersync-player-enable-subtitle-copy'),
 	playerEnableDictionaryDetection$: writableBooleanStore()('ttu-whispersync-player-enable-dictionary-detection'),
 	playerAutoPauseMode$: writableStringStore()('ttu-whispersync-player-auto-pause-mode'),
 	playerRewindTime$: writableNumberStore()('ttu-whispersync-player-rewind-time'),

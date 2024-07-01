@@ -2,6 +2,7 @@
 	import Icon from './Icon.svelte';
 	import { executeAction } from '../lib/actions';
 	import type { Subtitle } from '../lib/general';
+	import { createEventDispatcher } from 'svelte';
 
 	export let path: string;
 	export let title: string;
@@ -13,6 +14,10 @@
 	export let iconStyles = '';
 	export let subtitle: Subtitle[] | Subtitle | undefined = undefined;
 	export let clickHandler: (() => void) | undefined = undefined;
+
+	const dispatch = createEventDispatcher<{
+		executed: void;
+	}>();
 </script>
 
 <button
@@ -29,7 +34,7 @@
 			mergeSubtitles: false,
 			keepPauseState: false,
 			persistAlignment: true,
-		});
+		}).finally(() => dispatch('executed'));
 	}}
 >
 	<Icon {path} {iconStyles} />

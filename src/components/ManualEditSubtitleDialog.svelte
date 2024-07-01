@@ -17,6 +17,7 @@
 	import { getTimeParts, toTimeStamp } from '../lib/util';
 	import {
 		mdiCancel,
+		mdiContentCopy,
 		mdiDatabasePlus,
 		mdiDatabaseSync,
 		mdiEqual,
@@ -90,6 +91,11 @@
 				case 'e':
 					pauseReset();
 					action = Action.EXPORT_UPDATE;
+
+					break;
+				case 'keyz':
+				case 'z':
+					action = Action.COPY_SUBTITLE;
 
 					break;
 				default:
@@ -430,6 +436,14 @@
 						<Icon path={mdiEqual} />
 					</button>
 				{/if}
+				<ActionButton
+					path={mdiContentCopy}
+					title={Action.COPY_SUBTITLE}
+					action={Action.COPY_SUBTITLE}
+					subtitle={activeSubtitle}
+					ignoreSkipKeyListener
+					buttonClasses="match-btns m-l-s"
+				/>
 			</div>
 		</div>
 	</div>
