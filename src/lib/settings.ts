@@ -63,6 +63,7 @@ export type Settings = {
 	'ttu-whispersync-enable-ffmpeg-log': boolean;
 	'ttu-whispersync-anki-add-subtitle-tag': boolean;
 	'ttu-whispersync-anki-add-audio-tag': boolean;
+	'ttu-whispersync-anki-enable-open-in-browser': boolean;
 	'ttu-whispersync-anki-allow-empty-key-field': boolean;
 	'ttu-whispersync-anki-tag-list': string;
 	'ttu-whispersync-anki-duplicate-mode': AnkiDuplicateMode;
@@ -204,6 +205,7 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-enable-ffmpeg-log': false,
 		'ttu-whispersync-anki-add-subtitle-tag': false,
 		'ttu-whispersync-anki-add-audio-tag': false,
+		'ttu-whispersync-anki-enable-open-in-browser': false,
 		'ttu-whispersync-anki-allow-empty-key-field': false,
 		'ttu-whispersync-anki-tag-list': '',
 		'ttu-whispersync-anki-duplicate-mode': AnkiDuplicateMode.DISABLED,

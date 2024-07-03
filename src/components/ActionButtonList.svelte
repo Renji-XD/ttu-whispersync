@@ -11,6 +11,7 @@
 		exportNewTitle$,
 		exportUpdateTitle$,
 		isRecording$,
+		openLastExportedCardTitle$,
 		paused$,
 		restartPlaybackTitle$,
 		restoreSubtitleTitle$,
@@ -29,6 +30,7 @@
 		mdiContentCopy,
 		mdiDatabasePlus,
 		mdiDatabaseSync,
+		mdiOpenInApp,
 		mdiPause,
 		mdiPauseCircleOutline,
 		mdiPlay,
@@ -152,6 +154,15 @@
 		{...getActionButtonProps(Action.EXPORT_UPDATE, $exportUpdateTitle$, mdiDatabaseSync, subtitle)}
 		buttonClasses={isVertical ? 'p-t-xs p-b-s' : 'p-l-xs p-r-s'}
 	/>
+	<ActionButton
+		{...getActionButtonProps(
+			Action.OPEN_LAST_EXPORTED_CARD,
+			$openLastExportedCardTitle$,
+			mdiOpenInApp,
+			getDummySubtitle(0),
+		)}
+		buttonClasses={isVertical ? 'p-t-xs p-b-s' : 'p-l-xs p-r-s'}
+	/>
 	{#if $exportCancelController$}
 		<ActionButton
 			{...getActionButtonProps(Action.CANCEL_EXPORT, $exportCancelTitle$, mdiCancel, getDummySubtitle(0))}
@@ -227,6 +238,17 @@
 	{#if footerActions.has(Action.EXPORT_UPDATE)}
 		<ActionButton
 			{...getActionButtonProps(Action.EXPORT_UPDATE, $exportUpdateTitle$, mdiDatabaseSync, subtitle)}
+			buttonClasses={'h-full hover:opacity-70'}
+		/>
+	{/if}
+	{#if footerActions.has(Action.OPEN_LAST_EXPORTED_CARD)}
+		<ActionButton
+			{...getActionButtonProps(
+				Action.OPEN_LAST_EXPORTED_CARD,
+				$openLastExportedCardTitle$,
+				mdiOpenInApp,
+				getDummySubtitle(0),
+			)}
 			buttonClasses={'h-full hover:opacity-70'}
 		/>
 	{/if}

@@ -48,6 +48,7 @@ pnpm run build:ext
 | <kbd>Cmd</kbd> + <kbd>m</kbd>           | Toggle for merge for active line         |
 | <kbd>Cmd</kbd> + <kbd>e</kbd>           | Create new card for active line          |
 | <kbd>Alt</kbd> + <kbd>e</kbd>           | Update last created card for active line |
+| <kbd>Cmd</kbd> + <kbd>o</kbd>           | Open last exported card in Anki Browser  |
 | <kbd>Alt</kbd> + <kbd>g</kbd>           | Edit subtitle                            |
 | <kbd>Alt</kbd> + <kbd>z</kbd>           | Copy active subtitle                     |
 | <kbd>Cmd</kbd> + <kbd>q</kbd>           | Go to previous subtitle                  |
@@ -75,7 +76,7 @@ Known issues / missing features are e. g. :
 
 -   worse performance
 -   no filesystem api support
--   no "update last created card" functionality
+-   no "update last created card" / "open in anki browser" functionality
 -   no duplicate check for creating cards
 -   various iOS quirks
 

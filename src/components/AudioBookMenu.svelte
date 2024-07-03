@@ -8,7 +8,7 @@
 	import { Action, executeAction } from '../lib/actions';
 	import { setBooksDB } from '../lib/db';
 	import { setAudioContext, setSubtitleContext, updateAudio, updateSubtitles, verifyPermissions } from '../lib/files';
-	import { type Context, Tabs, type Subtitle } from '../lib/general';
+	import { type Context, Tabs, type Subtitle, getDummySubtitle } from '../lib/general';
 	import { AudioProcessor, ReaderMenuOpenMode, ReaderMenuPauseMode } from '../lib/settings';
 	import {
 		activeSubtitle$,
@@ -38,6 +38,8 @@
 		isMobile$,
 		isRecording$,
 		lastError$,
+		lastExportedCardId$,
+		openLastExportedCardTitle$,
 		paused$,
 		readerActionSubtitle$,
 		restartPlaybackTitle$,
@@ -208,6 +210,16 @@
 		$exportCancelTitle$ = 'Export not started';
 	}
 
+	$: if ($isAnkiconnectAndroid$) {
+		$openLastExportedCardTitle$ = 'Device not supported';
+	} else if ($exportCancelController$) {
+		$openLastExportedCardTitle$ = 'Export in progress';
+	} else if (!$lastExportedCardId$) {
+		$openLastExportedCardTitle$ = 'No card exported';
+	} else {
+		$openLastExportedCardTitle$ = Action.OPEN_LAST_EXPORTED_CARD;
+	}
+
 	$: if (!loadError && $bookMatched$.matchedBy) {
 		setupActions($readerMenuOpenMode$, $readerClickAction$, $currentSubtitleFile$);
 	}
@@ -265,19 +277,15 @@
 			targetSubtitle = subtitles.findLast((subtitle) => $currentTime$ >= subtitle.startSeconds);
 		}
 
-		if (!targetSubtitle) {
-			return;
-		}
-
 		if (event.altKey) {
 			switch (actionKey) {
 				case 'KeyE':
 				case 'e':
-					action = $exportCancelController$ ? Action.NONE : Action.EXPORT_UPDATE;
+					action = Action.EXPORT_UPDATE;
 					break;
 				case 'KeyG':
 				case 'g':
-					action = $exportCancelController$ ? Action.NONE : Action.EDIT_SUBTITLE;
+					action = Action.EDIT_SUBTITLE;
 					break;
 				case 'KeyZ':
 				case 'z':
@@ -299,7 +307,12 @@
 					break;
 				case 'KeyE':
 				case 'e':
-					action = $exportCancelController$ ? Action.NONE : Action.EXPORT_NEW;
+					action = Action.EXPORT_NEW;
+					break;
+				case 'KeyO':
+				case 'o':
+					targetSubtitle = getDummySubtitle(0);
+					action = Action.OPEN_LAST_EXPORTED_CARD;
 					break;
 				default:
 					action = Action.NONE;

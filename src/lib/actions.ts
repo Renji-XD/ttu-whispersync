@@ -1,4 +1,4 @@
-import { exportToAnki } from './anki';
+import { exportToAnki, openGUIForNote } from './anki';
 import InteractiveEditSubtitleDialog from '../components/InteractiveEditSubtitleDialog.svelte';
 import ManualEditSubtitleDialog from '../components/ManualEditSubtitleDialog.svelte';
 import type { SubtitleData } from './db';
@@ -257,6 +257,7 @@ export enum Action {
 	COPY_SUBTITLE = 'Copy subtitle',
 	EXPORT_NEW = 'Create new card',
 	EXPORT_UPDATE = 'Update last created card',
+	OPEN_LAST_EXPORTED_CARD = 'Open last exported card',
 	CANCEL_EXPORT = 'Cancel Export',
 }
 
@@ -370,6 +371,8 @@ export async function executeAction(
 			exportProgress$.set(0);
 			exportCancelController$.set(undefined);
 		});
+	} else if (!exportCancelController) {
+		await openGUIForNote(get(settings$.ankiUrl$));
 	} else if (exportCancelController && !exportCancelController.signal.aborted && action === Action.CANCEL_EXPORT) {
 		exportCancelController.abort('user aborted');
 		exportCancelController$.set(exportCancelController);

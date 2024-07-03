@@ -69,6 +69,8 @@ export const canExportToAnki$ = writable<boolean>(false);
 
 export const isAnkiconnectAndroid$ = writable<boolean>(false);
 
+export const lastExportedCardId$ = writable<number>(0);
+
 export const exportProgress$ = revertWriteable<number>(0);
 
 export const exportCancelController$ = revertWriteable<AbortController | undefined>();
@@ -94,6 +96,8 @@ export const restoreSubtitleTitle$ = writable<string>('');
 export const exportNewTitle$ = writable<string>('');
 
 export const exportUpdateTitle$ = writable<string>('');
+
+export const openLastExportedCardTitle$ = writable<string>('');
 
 export const exportCancelTitle$ = writable<string>('');
 
@@ -184,6 +188,7 @@ export const settings$ = {
 	ankiUpdateSentenceField$: writableStringStore()('ttu-whispersync-anki-update-sentence-field'),
 	ankiSoundField$: writableStringStore()('ttu-whispersync-anki-sound-field'),
 	ankiUpdateSoundField$: writableStringStore()('ttu-whispersync-anki-update-sound-field'),
+	ankiEnableOpenInBrowser$: writableBooleanStore()('ttu-whispersync-anki-enable-open-in-browser'),
 	keybindingsEnableTimeFallback$: writableBooleanStore()('ttu-whispersync-keybindings-enable-time-fallback'),
 	matchLineIgnoreRp$: writableBooleanStore()('ttu-whispersync-match-line-ignore-rp'),
 	matchLineSimilarityThreshold$: writableNumberStore()('ttu-whispersync-match-line-similarity-threshold'),

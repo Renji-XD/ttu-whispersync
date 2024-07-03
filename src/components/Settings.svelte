@@ -62,6 +62,7 @@
 		Action.COPY_SUBTITLE,
 		Action.EXPORT_NEW,
 		Action.EXPORT_UPDATE,
+		Action.OPEN_LAST_EXPORTED_CARD,
 	];
 	const clickActions = [
 		Action.NONE,
@@ -803,6 +804,11 @@
 			label="Add audio tag"
 			helpText="If enabled the name of the current loaded audio file will be added to the card tag list"
 			targetStore$={settings$.ankiAddAudioTag$}
+		/>
+		<SettingsCheckbox
+			label="Open in browser"
+			helpText="If enabled an exported card will automatically open/show in the anki gui browser"
+			targetStore$={settings$.ankiEnableOpenInBrowser$}
 		/>
 		{#if $ankiDuplicateMode$ === AnkiDuplicateMode.DISABLED}
 			<SettingsCheckbox

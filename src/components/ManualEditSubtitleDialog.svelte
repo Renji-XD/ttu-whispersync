@@ -12,7 +12,10 @@
 		exportCancelTitle$,
 		exportNewTitle$,
 		exportUpdateTitle$,
+		isAnkiconnectAndroid$,
 		isRecording$,
+		openLastExportedCardTitle$,
+		settings$,
 	} from '../lib/stores';
 	import { getTimeParts, toTimeStamp } from '../lib/util';
 	import {
@@ -21,6 +24,7 @@
 		mdiDatabasePlus,
 		mdiDatabaseSync,
 		mdiEqual,
+		mdiOpenInApp,
 		mdiPause,
 		mdiPlay,
 		mdiRepeat,
@@ -33,6 +37,7 @@
 	export let resolver: (arg0: EditSubtitleResult) => void;
 
 	const { isIOS } = getContext<Context>('context');
+	const { ankiEnableOpenInBrowser$ } = settings$;
 	const [originalStartHours, originalStartMinutes, originalStartSeconds, originalStartMiliseconds] = getTimeParts(
 		activeSubtitle.startSeconds,
 	);
@@ -51,6 +56,7 @@
 	let currentTime = activeSubtitle.startSeconds;
 	let duration = 0;
 	let paused = true;
+	let wasExportCanceled = false;
 	let [startHours, startMinutes, startSeconds, startMiliseconds] = [
 		originalStartHours,
 		originalStartMinutes,
@@ -121,6 +127,11 @@
 				case 'e':
 					pauseReset();
 					action = Action.EXPORT_NEW;
+
+					break;
+				case 'keyo':
+				case 'o':
+					action = Action.OPEN_LAST_EXPORTED_CARD;
 
 					break;
 				default:
@@ -243,6 +254,28 @@
 		isLoading = false;
 	}
 
+	function onResetWasExportCanceled() {
+		pauseReset();
+
+		wasExportCanceled = false;
+	}
+
+	function onAfterExport() {
+		if (wasExportCanceled || (!$isAnkiconnectAndroid$ && !$ankiEnableOpenInBrowser$)) {
+			return;
+		}
+
+		if (
+			(!wasActiveSubtitleAligned && activeSubtitle.text !== activeSubtitle.originalText) ||
+			currentStartSeconds !== initialActiveSubtitle.startSeconds ||
+			currentEndSeconds !== initialActiveSubtitle.endSeconds
+		) {
+			return onSaveNewTime();
+		}
+
+		return close({ wasCanceled: true });
+	}
+
 	function onCancel() {
 		if (!wasActiveSubtitleAligned && activeSubtitle.text !== activeSubtitle.originalText) {
 			return close({ wasCanceled: false, subtitle: initialActiveSubtitle });
@@ -347,7 +380,8 @@
 				title={$exportNewTitle$}
 				action={Action.EXPORT_NEW}
 				subtitle={activeSubtitle}
-				clickHandler={pauseReset}
+				clickHandler={onResetWasExportCanceled}
+				on:executed={onAfterExport}
 			/>
 			<ActionButton
 				ignoreSkipKeyListener
@@ -356,7 +390,16 @@
 				title={$exportUpdateTitle$}
 				action={Action.EXPORT_UPDATE}
 				subtitle={activeSubtitle}
-				clickHandler={pauseReset}
+				clickHandler={onResetWasExportCanceled}
+				on:executed={onAfterExport}
+			/>
+			<ActionButton
+				ignoreSkipKeyListener
+				buttonClasses="m-l-s"
+				path={mdiOpenInApp}
+				title={$openLastExportedCardTitle$}
+				action={Action.OPEN_LAST_EXPORTED_CARD}
+				subtitle={activeSubtitle}
 			/>
 			{#if $exportCancelController$}
 				<ActionButton
@@ -366,6 +409,7 @@
 					title={$exportCancelTitle$}
 					action={Action.CANCEL_EXPORT}
 					subtitle={activeSubtitle}
+					on:executed={() => (wasExportCanceled = true)}
 				/>
 			{/if}
 		</div>

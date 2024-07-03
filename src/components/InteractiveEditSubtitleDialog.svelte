@@ -13,6 +13,9 @@
 		exportCancelTitle$,
 		exportNewTitle$,
 		exportUpdateTitle$,
+		isAnkiconnectAndroid$,
+		openLastExportedCardTitle$,
+		settings$,
 	} from '../lib/stores';
 	import { toTimeStamp } from '../lib/util';
 	import {
@@ -21,6 +24,7 @@
 		mdiDatabasePlus,
 		mdiDatabaseSync,
 		mdiEqual,
+		mdiOpenInApp,
 		mdiPause,
 		mdiRepeat,
 		mdiRestore,
@@ -40,6 +44,7 @@
 	}>();
 	const initialActiveSubtitle = JSON.parse(JSON.stringify(activeSubtitle));
 	const wasActiveSubtitleAligned = activeSubtitle.text !== activeSubtitle.originalText;
+	const { ankiEnableOpenInBrowser$ } = settings$;
 
 	let waveformContainer: HTMLDivElement;
 	let wavesurferInstance: WaveSurfer;
@@ -48,6 +53,7 @@
 	let slicedBlobUrl: string;
 	let activeRegion: Region;
 	let isPlaying = false;
+	let wasExportCanceled = false;
 	let stopTime = -1;
 	let stopTimer: () => void;
 
@@ -110,6 +116,11 @@
 					action = Action.EXPORT_NEW;
 
 					break;
+				case 'keyo':
+				case 'o':
+					action = Action.OPEN_LAST_EXPORTED_CARD;
+
+					break;
 				default:
 					stopEvent = false;
 
@@ -165,6 +176,29 @@
 		activeSubtitle.text = $currentSubtitles$.get(activeSubtitle.id)!.text;
 
 		isLoading = false;
+	}
+
+	function onResetWasExportCanceled() {
+		wasExportCanceled = false;
+	}
+
+	function onAfterExport() {
+		if (wasExportCanceled || (!$isAnkiconnectAndroid$ && !$ankiEnableOpenInBrowser$)) {
+			return;
+		}
+
+		const adjustedStartSeconds = activeRegion.start + startTime;
+		const adjustedEndSeconds = activeRegion.end + startTime;
+
+		if (
+			(!wasActiveSubtitleAligned && activeSubtitle.text !== activeSubtitle.originalText) ||
+			adjustedStartSeconds !== initialActiveSubtitle.startSeconds ||
+			adjustedEndSeconds !== initialActiveSubtitle.endSeconds
+		) {
+			return onSaveNewTime();
+		}
+
+		return close({ wasCanceled: true });
 	}
 
 	function onCancel() {
@@ -331,6 +365,8 @@
 				title={$exportNewTitle$}
 				action={Action.EXPORT_NEW}
 				subtitle={activeSubtitle}
+				clickHandler={onResetWasExportCanceled}
+				on:executed={onAfterExport}
 			/>
 			<ActionButton
 				ignoreSkipKeyListener
@@ -338,6 +374,16 @@
 				path={mdiDatabaseSync}
 				title={$exportUpdateTitle$}
 				action={Action.EXPORT_UPDATE}
+				subtitle={activeSubtitle}
+				clickHandler={onResetWasExportCanceled}
+				on:executed={onAfterExport}
+			/>
+			<ActionButton
+				ignoreSkipKeyListener
+				buttonClasses="m-l-s"
+				path={mdiOpenInApp}
+				title={$openLastExportedCardTitle$}
+				action={Action.OPEN_LAST_EXPORTED_CARD}
 				subtitle={activeSubtitle}
 			/>
 			{#if $exportCancelController$}
@@ -348,6 +394,7 @@
 					title={$exportCancelTitle$}
 					action={Action.CANCEL_EXPORT}
 					subtitle={activeSubtitle}
+					on:executed={() => (wasExportCanceled = true)}
 				/>
 			{/if}
 		</div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ActionButton from './ActionButton.svelte';
 	import Dropzone from './Dropzone.svelte';
 	import Icon from './Icon.svelte';
 	import { Action, executeAction, persistSubtitles } from '../lib/actions';
@@ -36,6 +37,7 @@
 		isMobile$,
 		isRecording$,
 		lastError$,
+		openLastExportedCardTitle$,
 		paused$,
 		settings$,
 		skipKeyListener$,
@@ -66,6 +68,7 @@
 		mdiFilePlusOutline,
 		mdiFloppy,
 		mdiInformation,
+		mdiOpenInApp,
 		mdiPlayPause,
 		mdiRefresh,
 		mdiRestore,
@@ -1058,9 +1061,13 @@
 			>
 				<Icon path={mdiDatabaseSync} />
 			</button>
-			<button class="invisible">
-				<Icon path={mdiFloppy} />
-			</button>
+			<ActionButton
+				title={$openLastExportedCardTitle$}
+				action={Action.OPEN_LAST_EXPORTED_CARD}
+				subtitle={getDummySubtitle(0)}
+				path={mdiOpenInApp}
+				buttonClasses=""
+			/>
 			<button class="invisible">
 				<Icon path={mdiFloppy} />
 			</button>

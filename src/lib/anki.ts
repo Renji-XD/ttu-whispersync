@@ -8,6 +8,7 @@ import {
 	exportProgress$,
 	isAnkiconnectAndroid$,
 	lastError$,
+	lastExportedCardId$,
 	paused$,
 	playLine$,
 	settings$,
@@ -211,8 +212,8 @@ async function verifyAnkiSettings(
 	return { isAnkiConfigValid, ankiFields };
 }
 
-async function startExport(ankiUrl: string, isMobile: boolean) {
-	if (isMobile) {
+async function startExport(ankiUrl: string, isAnkiconnectAndroid: boolean) {
+	if (isAnkiconnectAndroid) {
 		return undefined;
 	}
 
@@ -338,6 +339,7 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 	const modelName = get(modelStore);
 	const ankiSentenceField = get(sentenceFieldStore);
 	const ankiSoundField = get(soundFieldStore);
+	const ankiEnableOpenInBrowser = get(settings$.ankiEnableOpenInBrowser$);
 	const { isAnkiConfigValid, ankiFields } = await verifyAnkiSettings(
 		ankiUrl,
 		deckName,
@@ -356,8 +358,6 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 		duplicateScope === AnkiDuplicateMode.DISABLED && get(settings$.ankiAllowEmptyKeyField$);
 
 	let cardToUpdate: RequestNotesInfoResult | undefined;
-
-	isAnkiconnectAndroid$.set(isAnkiconnectAndroid);
 
 	if (!isAnkiConfigValid || isBlockedUpdated) {
 		const lastError = get(lastError$);
@@ -399,13 +399,13 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 			return lastError$.set(`Failed to get card for update: ${message}`);
 		}
 	}
-
 	const lastNoteId = await startExport(ankiUrl, isAnkiconnectAndroid);
 	const baseSubtitleFileName = currentSubtitleFile.name.split(/\.(?=[^\.]+$)/)[0];
 	const baseAudioFileName = currentAudioFile ? currentAudioFile.name.split(/\.(?=[^\.]+$)/)[0] : '';
 
 	let failures = 0;
 	let audioFilePrefix = '';
+	let lastExportedCardId = 0;
 
 	try {
 		const encoder = new TextEncoder();
@@ -420,6 +420,8 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 	} catch (_) {
 		audioFilePrefix = baseSubtitleFileName;
 	}
+
+	lastExportedCardId$.set(0);
 
 	for (let index = 0, { length } = subtitlesToExport; index < length; index += 1) {
 		throwIfAborted(abortController.signal);
@@ -561,6 +563,12 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 			if (!isUpdate && !result) {
 				throw new Error(`Got failure response`);
 			}
+
+			if (cardToUpdate) {
+				lastExportedCardId = cardToUpdate.noteId;
+			} else if (typeof result === 'number') {
+				lastExportedCardId = result;
+			}
 		} catch (error: any) {
 			if (!abortController.signal.aborted && error.name !== 'AbortError') {
 				console.log(
@@ -576,10 +584,34 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 		exportProgress$.set(Math.min(100, caluclatePercentage(index + 1, length)));
 	}
 
+	const handleLastExportedCard = lastExportedCardId && !isAnkiconnectAndroid;
+
 	await cleanFiles();
-	await finalizeExport(ankiUrl, lastNoteId);
+
+	if (handleLastExportedCard) {
+		lastExportedCardId$.set(lastExportedCardId);
+	}
+
+	if (handleLastExportedCard && ankiEnableOpenInBrowser) {
+		await openGUIForNote(ankiUrl, lastExportedCardId);
+	} else {
+		await finalizeExport(ankiUrl, lastNoteId);
+	}
 
 	if (failures) {
 		lastError$.set(`${failures} Export(s) failed`);
 	}
+}
+
+export function openGUIForNote(ankiUrl: string, note = 0) {
+	const nid = note || get(lastExportedCardId$);
+
+	if (!nid) {
+		return Promise.resolve([0]);
+	}
+
+	return request<number[]>(ankiUrl, {
+		action: 'guiBrowse',
+		params: { query: `nid:${note || get(lastExportedCardId$)}` },
+	}).catch(({ message }) => console.log(`Failed to open Anki browser: ${message}`));
 }
