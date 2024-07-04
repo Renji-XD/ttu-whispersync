@@ -56,6 +56,8 @@ export type Settings = {
 	'ttu-whispersync-player-alt-rewind-time': number;
 	'ttu-whispersync-player-fast-forward-time': number;
 	'ttu-whispersync-player-alt-fast-forward-time': number;
+	'ttu-whispersync-player-playback-rate-decrease-time': number;
+	'ttu-whispersync-player-playback-rate-increase-time': number;
 	'ttu-whispersync-export-field-mode': ExportFieldMode;
 	'ttu-whispersync-export-audio-processor': AudioProcessor;
 	'ttu-whispersync-export-audio-format': AudioFormat;
@@ -198,6 +200,8 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-player-alt-rewind-time': 10,
 		'ttu-whispersync-player-fast-forward-time': 5,
 		'ttu-whispersync-player-alt-fast-forward-time': 10,
+		'ttu-whispersync-player-playback-rate-decrease-time': 0.05,
+		'ttu-whispersync-player-playback-rate-increase-time': 0.05,
 		'ttu-whispersync-export-field-mode': ExportFieldMode.AFTER,
 		'ttu-whispersync-export-audio-processor': AudioProcessor.RECORDER,
 		'ttu-whispersync-export-audio-format': AudioFormat.MP3,

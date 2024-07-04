@@ -335,7 +335,7 @@
 .ttu-whispersync-container .playback-rates {
 	display: flex;
 	flex-direction: column;
-	width: 2.5rem;
+	width: 6rem;
 	align-items: center;
 }
 
@@ -343,6 +343,12 @@
 	writing-mode: vertical-lr;
 	direction: rtl;
 	appearance: slider-vertical;
+}
+
+.ttu-whispersync-container .playback-display {
+	width: 100%;
+	justify-content: space-between;
+	align-items: end;
 }
 
 .ttu-whispersync-container details {

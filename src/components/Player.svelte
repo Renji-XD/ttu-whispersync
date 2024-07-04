@@ -45,8 +45,10 @@
 		toTimeString,
 	} from '../lib/util';
 	import {
+		mdiMinus,
 		mdiPause,
 		mdiPlay,
+		mdiPlus,
 		mdiSkipBackward,
 		mdiSkipForward,
 		mdiSkipNext,
@@ -123,6 +125,8 @@
 		playerAltRewindTime$,
 		playerFastForwardTime$,
 		playerAltFastForwardTime$,
+		playerPlaybackRateDecreaseTime$,
+		playerPlaybackRateIncreaseTime$,
 		exportAudioBitrate$,
 		keybindingsEnableTimeFallback$,
 	} = settings$;
@@ -291,6 +295,11 @@
 					keepPauseState = true;
 
 					break;
+				case 'keyk':
+				case 'k':
+					adjustPlaybackRateBy($playerPlaybackRateIncreaseTime$);
+
+					break;
 				default:
 					stopEvent = false;
 					break;
@@ -321,6 +330,11 @@
 
 					action = targetSubtitle ? Action.RESTART_PLAYBACK : Action.NONE;
 					keepPauseState = true;
+
+					break;
+				case 'keyk':
+				case 'k':
+					adjustPlaybackRateBy(-$playerPlaybackRateDecreaseTime$);
 
 					break;
 				case 'arrowleft':
@@ -843,6 +857,11 @@
 
 		wakeLock = undefined;
 	}
+
+	function adjustPlaybackRateBy(value: number) {
+		$playbackRate$ = between(0.1, 2, Math.round(($playbackRate$ + value) * 100 + Number.EPSILON) / 100);
+		displayedPlaybackrate = $playbackRate$;
+	}
 </script>
 
 {#key $currentAudioSourceUrl$}
@@ -949,7 +968,7 @@
 	<button title="Toggle mute" class="m-x-xs" disabled={$isRecording$} on:click={() => ($muted$ = !$muted$)}>
 		<Icon path={$isRecording$ || !$muted$ ? mdiVolumeHigh : mdiVolumeOff} />
 	</button>
-	<Popover placement="top" bind:this={playbackRatesPopover}>
+	<Popover placement="top" fallbackPlacements={['top-start', 'left-start']} bind:this={playbackRatesPopover}>
 		<div class="flex m-x-xs" slot="icon">
 			<button title="Change playback speed" disabled={$isRecording$}>
 				<Icon path={mdiSpeedometer} />
@@ -965,7 +984,21 @@
 				bind:value={displayedPlaybackrate}
 				on:change={onChangePlaybackRate}
 			/>
-			<span class="m-t-s">{displayedPlaybackrate}</span>
+			<div class="playback-display flex m-t-s">
+				<button
+					disabled={$isRecording$}
+					on:click={() => adjustPlaybackRateBy(-$playerPlaybackRateDecreaseTime$)}
+				>
+					<Icon path={mdiMinus} />
+				</button>
+				<span class="m-x-s">{displayedPlaybackrate}</span>
+				<button
+					disabled={$isRecording$}
+					on:click={() => adjustPlaybackRateBy($playerPlaybackRateIncreaseTime$)}
+				>
+					<Icon path={mdiPlus} />
+				</button>
+			</div>
 		</div>
 	</Popover>
 </div>

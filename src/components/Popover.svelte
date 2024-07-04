@@ -4,6 +4,7 @@
 	import { tick } from 'svelte';
 
 	export let placement: Placement = 'left';
+	export let fallbackPlacements: Placement[] = ['right', 'top', 'left'];
 
 	export function hide() {
 		cleanup?.();
@@ -30,7 +31,7 @@
 	function updatePosition() {
 		computePosition(triggerElement, popoverElement, {
 			placement,
-			middleware: [offset(5), flip({ fallbackPlacements: ['right', 'top', 'left'] }), shift()],
+			middleware: [offset(5), flip({ fallbackPlacements }), shift()],
 		})
 			.then(({ x, y }) => {
 				popoverElement.style.left = `${x}px`;

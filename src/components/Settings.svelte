@@ -756,6 +756,22 @@
 			min={1}
 			step={1}
 		/>
+		<SettingsNumberInput
+			label="Playback decrease time"
+			helpText="# of seconds used for the playback rate decrease action"
+			targetStore$={settings$.playerPlaybackRateDecreaseTime$}
+			min={0.05}
+			max={1}
+			step={0.05}
+		/>
+		<SettingsNumberInput
+			label="Playback increase time"
+			helpText="# of seconds used for the playback rate increase action"
+			targetStore$={settings$.playerPlaybackRateIncreaseTime$}
+			min={0.05}
+			max={1}
+			step={0.05}
+		/>
 	</SettingsMenuContent>
 	<SettingsMenuContent settingsMenu={SettingsMenu.EXPORT} bind:openSettingsMenu>
 		<SettingsSelect
@@ -921,6 +937,8 @@
 			<SettingsKeybind key="Alt + z" description={Action.COPY_SUBTITLE} extendDescription={false} />
 			<SettingsKeybind key="Cmd + q" description="Go to previous subtitle" extendDescription={false} />
 			<SettingsKeybind key="Alt + q" description="Go to next subtitle" extendDescription={false} />
+			<SettingsKeybind key="Cmd + k" description={`Decrease playbackrate`} extendDescription={false} />
+			<SettingsKeybind key="Alt + k" description={`Increase playbackrate`} extendDescription={false} />
 			<SettingsKeybind
 				key="Cmd + Arrow Left"
 				description={`Rewind ${$playerRewindTime$} seconds`}

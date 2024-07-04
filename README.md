@@ -53,6 +53,8 @@ pnpm run build:ext
 | <kbd>Alt</kbd> + <kbd>z</kbd>           | Copy active subtitle                     |
 | <kbd>Cmd</kbd> + <kbd>q</kbd>           | Go to previous subtitle                  |
 | <kbd>Alt</kbd> + <kbd>q</kbd>           | Go to next subtitle                      |
+| <kbd>Cmd</kbd> + <kbd>k</kbd>           | Decrease playbackrate                    |
+| <kbd>Alt</kbd> + <kbd>k</kbd>           | Increase playbackrate                    |
 | <kbd>Cmd</kbd> + <kbd>Arrow Left</kbd>  | Rewind                                   |
 | <kbd>Cmd</kbd> + <kbd>Arrow Down</kbd>  | Rewind #2                                |
 | <kbd>Cmd</kbd> + <kbd>Arrow Right</kbd> | Fast-Forward                             |

@@ -121,7 +121,7 @@ export const duration$ = revertWriteable<number>(0);
 
 export const muted$ = revertWriteable<boolean>(false);
 
-export const playbackRate$ = revertWriteable<number>(1);
+export const playbackRate$ = writableNumberStore()('ttu-whispersync-player-playback-rate', 1);
 
 export const playLine$ = revertWriteable<PlayLineData>();
 
@@ -168,6 +168,8 @@ export const settings$ = {
 	playerAltRewindTime$: writableNumberStore()('ttu-whispersync-player-alt-rewind-time'),
 	playerFastForwardTime$: writableNumberStore()('ttu-whispersync-player-fast-forward-time'),
 	playerAltFastForwardTime$: writableNumberStore()('ttu-whispersync-player-alt-fast-forward-time'),
+	playerPlaybackRateDecreaseTime$: writableNumberStore()('ttu-whispersync-player-playback-rate-decrease-time'),
+	playerPlaybackRateIncreaseTime$: writableNumberStore()('ttu-whispersync-player-playback-rate-increase-time'),
 	exportFieldMode$: writableStringStore()('ttu-whispersync-export-field-mode'),
 	exportAudioProcessor$: writableStringStore()('ttu-whispersync-export-audio-processor'),
 	exportAudioFormat$: writableStringStore()('ttu-whispersync-export-audio-format'),
