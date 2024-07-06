@@ -174,26 +174,24 @@
 		updateTextTrack($subtitleChange$);
 	}
 
-	$: if ($playerAutoPauseMode$ !== AutoPauseMode.DISABLED && !$playerEnableDictionaryDetection$) {
-		if (!yomiPopover) {
-			yomiPopover = document.querySelector('.yomichan-popup,.yomichan-float,.yomitan-popup,.yomitan-float');
-		}
+	$: if ($playerAutoPauseMode$ !== AutoPauseMode.DISABLED && !yomiPopover) {
+		yomiPopover = document.querySelector('.yomichan-popup,.yomichan-float,.yomitan-popup,.yomitan-float');
 
-		if (yomiPopover) {
-			dictionaryObserver.observe(yomiPopover, { attributes: true });
-		} else {
+		if (!yomiPopover) {
 			yomiObserver.observe(document.body, { childList: true, subtree: false });
 		}
+	} else {
+		yomiObserver.disconnect();
+	}
 
+	$: if ($playerAutoPauseMode$ !== AutoPauseMode.DISABLED && !$playerEnableDictionaryDetection$) {
+		if (yomiPopover) {
+			dictionaryObserver.observe(yomiPopover, { attributes: true });
+		}
 		if (jpdbPopover) {
 			dictionaryObserver.observe(jpdbPopover, { attributes: true });
 		}
-	} else if (
-		$playerAutoPauseMode$ === AutoPauseMode.DISABLED ||
-		$playerEnableDictionaryDetection$ ||
-		(!jpdbPopover && !yomiPopover)
-	) {
-		yomiObserver.disconnect();
+	} else {
 		dictionaryObserver.disconnect();
 	}
 
@@ -220,9 +218,9 @@
 
 	async function onBlur() {
 		if (
-			$playerAutoPauseMode$ !== AutoPauseMode.STRICT ||
 			$paused$ ||
 			$isRecording$ ||
+			$playerAutoPauseMode$ !== AutoPauseMode.STRICT ||
 			($playerEnableDictionaryDetection$ && isDictionaryDisplayed())
 		) {
 			return;
@@ -234,9 +232,9 @@
 
 	function onFocus() {
 		if (
-			$playerAutoPauseMode$ !== AutoPauseMode.STRICT ||
 			!$paused$ ||
 			!pausedByAutoPause ||
+			$playerAutoPauseMode$ !== AutoPauseMode.STRICT ||
 			(!$playerEnableDictionaryDetection$ && isDictionaryDisplayed())
 		) {
 			return;
@@ -586,9 +584,9 @@
 			$paused$ = true;
 			pausedByAutoPause = true;
 		} else if (
-			state === 'visible' &&
 			$paused$ &&
 			pausedByAutoPause &&
+			state === 'visible' &&
 			($playerEnableDictionaryDetection$ || !isDictionaryDisplayed())
 		) {
 			$paused$ = false;
