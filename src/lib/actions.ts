@@ -255,6 +255,8 @@ export enum Action {
 	EDIT_SUBTITLE = 'Edit subtitle',
 	RESTORE_SUBTITLE = 'Restore original text and time',
 	COPY_SUBTITLE = 'Copy subtitle',
+	PREVIOUS_SUBTITLE = 'Go to previous subtitle',
+	NEXT_SUBTITLE = 'Go to next subtitle',
 	EXPORT_NEW = 'Create new card',
 	EXPORT_UPDATE = 'Update last created card',
 	OPEN_LAST_EXPORTED_CARD = 'Open last exported card',
@@ -359,6 +361,23 @@ export async function executeAction(
 		await navigator.clipboard
 			.writeText(subtitles[0].text)
 			.catch(({ message }) => console.log(`failed to copy subtitle: ${message}`));
+	} else if (!isRecording && (action === Action.PREVIOUS_SUBTITLE || action === Action.NEXT_SUBTITLE)) {
+		const currentSubtitles = [...get(currentSubtitles$).values()];
+
+		let targetSubtitle: Subtitle;
+
+		if (action === Action.PREVIOUS_SUBTITLE) {
+			targetSubtitle = currentSubtitles[Math.max(subtitles[0].subIndex - 1, 0)];
+		} else {
+			targetSubtitle = currentSubtitles[Math.min(subtitles[0].subIndex + 1, currentSubtitles.length - 1)];
+		}
+
+		playLine$.set({
+			action: Action.RESTART_PLAYBACK,
+			subtitles: [targetSubtitle],
+			skipUpdates: settings.skipUpdates,
+			keepPauseState: true,
+		});
 	} else if (
 		!exportCancelController &&
 		(action === Action.EXPORT_NEW || action === Action.EXPORT_UPDATE) &&

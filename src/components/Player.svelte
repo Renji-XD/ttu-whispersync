@@ -283,14 +283,7 @@
 					break;
 				case 'keyq':
 				case 'q':
-					if (targetSubtitle) {
-						subtitles = subtitles || [...$currentSubtitles$.values()];
-
-						targetSubtitle = subtitles[Math.min(targetSubtitle.subIndex + 1, subtitles.length - 1)];
-					}
-
-					action = targetSubtitle ? Action.RESTART_PLAYBACK : Action.NONE;
-					keepPauseState = true;
+					action = Action.NEXT_SUBTITLE;
 
 					break;
 				case 'keyk':
@@ -320,14 +313,7 @@
 					break;
 				case 'keyq':
 				case 'q':
-					if (targetSubtitle) {
-						subtitles = subtitles || [...$currentSubtitles$.values()];
-
-						targetSubtitle = subtitles[Math.max(targetSubtitle.subIndex - 1, 0)];
-					}
-
-					action = targetSubtitle ? Action.RESTART_PLAYBACK : Action.NONE;
-					keepPauseState = true;
+					action = Action.PREVIOUS_SUBTITLE;
 
 					break;
 				case 'keyk':

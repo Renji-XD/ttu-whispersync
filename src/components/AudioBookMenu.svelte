@@ -39,8 +39,10 @@
 		isRecording$,
 		lastError$,
 		lastExportedCardId$,
+		nextSubtitleTitle$,
 		openLastExportedCardTitle$,
 		paused$,
+		previousSubtitleTitle$,
 		readerActionSubtitle$,
 		restartPlaybackTitle$,
 		restoreSubtitleTitle$,
@@ -155,18 +157,26 @@
 	}
 
 	$: if (!$currentSubtitles$.size) {
+		$previousSubtitleTitle$ = 'Subtitle file required';
+		$nextSubtitleTitle$ = 'Subtitle file required';
 		$restartPlaybackTitle$ = 'Subtitle file required';
 		$togglePlayPauseTitle$ = 'Subtitle file required';
 		$togglePlaybackLoopTitle$ = 'Subtitle file required';
 	} else if (!$currentAudioLoaded$) {
+		$previousSubtitleTitle$ = 'Audio file required';
+		$nextSubtitleTitle$ = 'Audio file required';
 		$restartPlaybackTitle$ = 'Audio file required';
 		$togglePlayPauseTitle$ = 'Audio file required';
 		$togglePlaybackLoopTitle$ = 'Audio file required';
 	} else if ($isRecording$) {
+		$previousSubtitleTitle$ = 'Recording in progress';
+		$nextSubtitleTitle$ = 'Recording in progress';
 		$restartPlaybackTitle$ = 'Recording in progress';
 		$togglePlayPauseTitle$ = 'Recording in progress';
 		$togglePlaybackLoopTitle$ = 'Recording in progress';
 	} else {
+		$previousSubtitleTitle$ = Action.PREVIOUS_SUBTITLE;
+		$nextSubtitleTitle$ = Action.NEXT_SUBTITLE;
 		$restartPlaybackTitle$ = Action.RESTART_PLAYBACK;
 		$togglePlayPauseTitle$ = Action.TOGGLE_PLAY_PAUSE;
 		$togglePlaybackLoopTitle$ = Action.TOGGLE_PLAYBACK_LOOP;

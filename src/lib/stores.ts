@@ -79,6 +79,10 @@ export const isRecording$ = writable<boolean>(false);
 
 export const togglePlaybackTitle$ = writable<string>('');
 
+export const previousSubtitleTitle$ = writable<string>('');
+
+export const nextSubtitleTitle$ = writable<string>('');
+
 export const restartPlaybackTitle$ = writable<string>('');
 
 export const togglePlayPauseTitle$ = writable<string>('');

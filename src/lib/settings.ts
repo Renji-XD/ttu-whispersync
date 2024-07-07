@@ -1,6 +1,8 @@
-enum Action {
+export enum Action {
 	NONE = 'None',
 	TOGGLE_PLAYBACK = 'Toggle playback',
+	PREVIOUS_SUBTITLE = 'Go to previous subtitle',
+	NEXT_SUBTITLE = 'Go to next subtitle',
 	RESTART_PLAYBACK = 'Restart playback',
 	TOGGLE_PLAY_PAUSE = 'Toggle play and pause',
 	TOGGLE_PLAYBACK_LOOP = 'Toggle playback loop',
@@ -9,9 +11,11 @@ enum Action {
 	ALIGN_SUBTITLE = 'Align with book text',
 	EDIT_SUBTITLE = 'Edit subtitle',
 	RESTORE_SUBTITLE = 'Restore original text and time',
+	COPY_SUBTITLE = 'Copy subtitle',
 	EXPORT_NEW = 'Create new card',
-	EXPORT_UPDATE = 'Update last card',
-	CANCEL_EXPORT = 'Cancel export',
+	EXPORT_UPDATE = 'Update last created card',
+	OPEN_LAST_EXPORTED_CARD = 'Open last exported card',
+	CANCEL_EXPORT = 'Cancel Export',
 }
 
 const defaultSettings = getDefaultSettings();

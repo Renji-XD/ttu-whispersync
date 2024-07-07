@@ -11,8 +11,10 @@
 		exportNewTitle$,
 		exportUpdateTitle$,
 		isRecording$,
+		nextSubtitleTitle$,
 		openLastExportedCardTitle$,
 		paused$,
+		previousSubtitleTitle$,
 		restartPlaybackTitle$,
 		restoreSubtitleTitle$,
 		settings$,
@@ -31,6 +33,8 @@
 		mdiDatabasePlus,
 		mdiDatabaseSync,
 		mdiOpenInApp,
+		mdiPageNextOutline,
+		mdiPagePreviousOutline,
 		mdiPause,
 		mdiPauseCircleOutline,
 		mdiPlay,
@@ -178,6 +182,23 @@
 				$isRecording$ || $paused$ ? mdiPlayCircleOutline : mdiPauseCircleOutline,
 				getDummySubtitle(0),
 			)}
+			buttonClasses={'h-full hover:opacity-70'}
+		/>
+	{/if}
+	{#if footerActions.has(Action.PREVIOUS_SUBTITLE)}
+		<ActionButton
+			{...getActionButtonProps(
+				Action.PREVIOUS_SUBTITLE,
+				$previousSubtitleTitle$,
+				mdiPagePreviousOutline,
+				subtitle,
+			)}
+			buttonClasses={'h-full hover:opacity-70'}
+		/>
+	{/if}
+	{#if footerActions.has(Action.NEXT_SUBTITLE)}
+		<ActionButton
+			{...getActionButtonProps(Action.NEXT_SUBTITLE, $nextSubtitleTitle$, mdiPageNextOutline, subtitle)}
 			buttonClasses={'h-full hover:opacity-70'}
 		/>
 	{/if}

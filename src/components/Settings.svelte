@@ -52,6 +52,8 @@
 	const { supportsFileSystem, sandboxElement } = getContext<Context>('context');
 	const footerActions = [
 		Action.TOGGLE_PLAYBACK,
+		Action.PREVIOUS_SUBTITLE,
+		Action.NEXT_SUBTITLE,
 		Action.RESTART_PLAYBACK,
 		Action.TOGGLE_PLAY_PAUSE,
 		Action.TOGGLE_PLAYBACK_LOOP,
