@@ -94,7 +94,6 @@
 		readerEnableAutoReload$,
 		readerPreventActionOnSelection$,
 		readerEnableMenuTarget$,
-		readerFooterActions$,
 		readerClickAction$,
 		readerMenuOpenMode$,
 		readerMenuPauseMode$,
@@ -107,6 +106,7 @@
 		ankiSoundField$,
 		ankiSentenceField$,
 		exportAudioProcessor$,
+		actionListOfFooter$,
 		keybindingsEnableTimeFallback$,
 	} = settings$;
 
@@ -139,14 +139,15 @@
 
 	$: $isRecording$ = $exportAudioProcessor$ === AudioProcessor.RECORDER && !!$exportCancelController$;
 
-	$: footerActions = new Set($readerFooterActions$);
+	$: enabledFooterActions = $actionListOfFooter$.filter((action) => action.enabled);
 
 	$: showCancelFooterAction =
-		(footerActions.has(Action.EXPORT_NEW) || footerActions.has(Action.EXPORT_UPDATE)) && !!$exportCancelController$;
+		!!$exportCancelController$ &&
+		!!enabledFooterActions.find(({ action }) => action === Action.EXPORT_NEW || action === Action.EXPORT_UPDATE);
 
-	$: componentContainerElement.style.width = $readerFooterActions$.length
-		? `${2 + 2 * $readerFooterActions$.length + (showCancelFooterAction ? 2 : 0)}rem`
-		: '2rem';
+	$: componentContainerElement.style.width = enabledFooterActions.length
+		? `${1.9 + 1.9 * enabledFooterActions.length + (showCancelFooterAction ? 1.9 : 0)}rem`
+		: '1.9rem';
 
 	$: if (!$currentAudioLoaded$) {
 		$togglePlaybackTitle$ = 'Audio file required';
@@ -824,11 +825,13 @@
 	<Icon path={mdiPlaylistMusicOutline} />
 </button>
 
-{#if footerActions.size}
+{#if enabledFooterActions.length}
 	<ActionButtonList
-		{footerActions}
-		{showCancelFooterAction}
-		subtitle={$currentSubtitles$.get($activeSubtitle$.current || $activeSubtitle$.previous)}
+		isFooter
+		buttonClasses="h-full hover:opacity-70"
+		listItems={$actionListOfFooter$}
+		subtitle={$readerActionSubtitle$ ||
+			$currentSubtitles$.get($activeSubtitle$.current || $activeSubtitle$.previous)}
 	/>
 {/if}
 

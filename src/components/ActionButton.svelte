@@ -16,7 +16,7 @@
 	export let clickHandler: (() => void) | undefined = undefined;
 
 	const dispatch = createEventDispatcher<{
-		executed: void;
+		executed: string;
 	}>();
 </script>
 
@@ -34,7 +34,7 @@
 			mergeSubtitles: false,
 			keepPauseState: false,
 			persistAlignment: true,
-		}).finally(() => dispatch('executed'));
+		}).finally(() => dispatch('executed', action));
 	}}
 >
 	<Icon {path} {iconStyles} />

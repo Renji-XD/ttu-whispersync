@@ -106,6 +106,7 @@
 		subtitlesClickAction$,
 		subtitlesActionsVisibility$,
 		subtitlesActionsVisibilityTime$,
+		actionListOfSubtitles$,
 	} = settings$;
 	const font = $subtitlesCopyFontFamily$
 		? window.localStorage.getItem('fontFamilyGroupOne') || 'Noto Serif JP'
@@ -273,7 +274,14 @@
 							class:show={$subtitlesActionsVisibility$ === SubtitleActionsVisibility.ALWAYS}
 							class:hidden={$subtitlesActionsVisibility$ === SubtitleActionsVisibility.HIDDEN}
 						>
-							<ActionButtonList subtitle={subtitles[displayedSubtitle.index]} {skipUpdates} />
+							<div class="grid">
+								<ActionButtonList
+									hideCancelAction
+									listItems={$actionListOfSubtitles$}
+									subtitle={subtitles[displayedSubtitle.index]}
+									{skipUpdates}
+								/>
+							</div>
 						</div>
 					</div>
 				{/each}

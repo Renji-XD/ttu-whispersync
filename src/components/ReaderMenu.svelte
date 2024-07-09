@@ -2,8 +2,9 @@
 	import ActionButtonList from './ActionButtonList.svelte';
 	import { computePosition, flip, inline, offset, autoUpdate, type Placement } from '@floating-ui/dom';
 	import Icon from './Icon.svelte';
+	import { Action } from '../lib/actions';
 	import type { Context, Subtitle } from '../lib/general';
-	import { currentAudioLoaded$, currentSubtitles$, isRecording$ } from '../lib/stores';
+	import { currentAudioLoaded$, currentSubtitles$, isRecording$, settings$ } from '../lib/stores';
 	import { mdiClose } from '@mdi/js';
 	import { createEventDispatcher, getContext, onDestroy, tick } from 'svelte';
 
@@ -19,6 +20,7 @@
 	}
 
 	const { bookContentElement, isVertical, isPaginated } = getContext<Context>('context');
+	const { actionListOfReader$ } = settings$;
 	const placement: Placement = isVertical ? 'left-start' : 'top-start';
 	const fallbackPlacements: Placement[] = isVertical
 		? ['right-start', 'left-end', 'right-end']
@@ -143,14 +145,17 @@
 	class:hidden={!range}
 	bind:this={popoverElement}
 >
-	<button
-		title="Close menu"
-		class:p-t-xs={isVertical}
-		class:p-b-s={isVertical}
-		class:p-r-s={!isVertical}
-		on:click={onClose}
-	>
+	<button title="Close menu" class:p-y-xs={isVertical} class:p-x-xs={!isVertical} on:click={onClose}>
 		<Icon path={mdiClose} />
 	</button>
-	<ActionButtonList isReaderMenu {subtitle} on:executed={onClose} />
+	<ActionButtonList
+		{subtitle}
+		buttonClasses={isVertical ? 'p-y-xs' : 'p-x-xs'}
+		listItems={$actionListOfReader$}
+		on:executed={({ detail }) => {
+			if (detail === Action.COPY_SUBTITLE) {
+				onClose();
+			}
+		}}
+	/>
 </div>

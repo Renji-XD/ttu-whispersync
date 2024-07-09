@@ -2,7 +2,7 @@
 	"name": "ttu-whispersync",
 	"description": "Listen to audiobooks with ttu ebook-reader",
 	"private": true,
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"type": "module",
 	"scripts": {
 		"dev": "vite -w -c vite.script.config.ts build -m devevlopment",
@@ -20,6 +20,7 @@
 		"@types/chrome": "^0.0.260",
 		"@types/dom-screen-wake-lock": "^1.0.3",
 		"@types/node": "^20.11.19",
+		"@types/sortablejs": "^1.15.8",
 		"@types/wicg-file-system-access": "^2023.10.4",
 		"prettier": "^3.2.5",
 		"svelte": "^4.2.10",
@@ -40,6 +41,7 @@
 		"extendable-media-recorder-wav-encoder": "^7.0.108",
 		"idb": "^8.0.0",
 		"mediainfo.js": "^0.2.1",
+		"sortablejs": "^1.15.2",
 		"srt-parser-2": "^1.2.3",
 		"wavesurfer.js": "^7.7.5"
 	}

@@ -184,6 +184,10 @@ ffmpeg.exe -y -i "path_to_input" -c:v copy -c:a libmp3lame -b:a 128 -map_metadat
 
 -   Currently only books loaded via browser storage source / local browser db are supported - otherwise you will get an error like 'required data for id x not found'. You can still sync the progress etc. to those sources
 
+### Is it possible to change the order of actions?
+
+-   You can configure the list of actions and their order for the reader menu, subtitle list and footer as per your preference via settings. To show the action check the respective checkbox. To change the order hold down your mouse/pointer on the respective action box and move it to the item with which you want to swap the position
+
 ### Limitation for autoscroll in pagination mode
 
 -   In pagination mode it can happen that a subtitle line extends multiple pages in which case the autoscroll behavior is not working properly. This probably can't be fixed but you can try to minimize those occurrences by enabling the "Avoid Page Break" option of ttu

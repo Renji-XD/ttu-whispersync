@@ -1,4 +1,5 @@
 import AudioBookMenu from '../components/AudioBookMenu.svelte';
+import { Action, defaultFooterActionList, type ActionListItem } from '../lib/settings';
 import pageStyles from '../styles.css?inline';
 
 let wasOnReader = false;
@@ -43,6 +44,24 @@ async function observerCallback() {
 
 		if (!bookContentElement || !footerElm || !footerElm.firstElementChild) {
 			return;
+		}
+
+		const footerActions = window.localStorage.getItem('ttu-whispersync-reader-footer-actions');
+
+		if (footerActions) {
+			const actionList: Action[] = JSON.parse(footerActions);
+			const newActionList: ActionListItem[] = [];
+
+			for (let index = 0, { length } = actionList; index < length; index += 1) {
+				const action = actionList[index];
+
+				if (defaultFooterActionList.has(action)) {
+					newActionList.push({ action, enabled: true });
+				}
+			}
+
+			window.localStorage.setItem('ttu-whispersync-action-list-of-footer', JSON.stringify(newActionList));
+			window.localStorage.removeItem('ttu-whispersync-reader-footer-actions');
 		}
 
 		currentBookId = Number.parseInt(site.searchParams.get('id') || '0', 10);

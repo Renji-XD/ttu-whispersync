@@ -12,6 +12,9 @@
 		AudioFormat,
 		AudioProcessor,
 		AutoPauseMode,
+		defaultFooterActionList,
+		defaultReaderActionList,
+		defaultSubtitleActionList,
 		ExportFieldMode,
 		ReaderMenuOpenMode,
 		ReaderMenuPauseMode,
@@ -45,27 +48,12 @@
 	import SettingsNumberInput from './SettingsNumberInput.svelte';
 	import SettingsSelect from './SettingsSelect.svelte';
 	import SettingsTextInput from './SettingsTextInput.svelte';
+	import SortableActionList from './SortableActionList.svelte';
 	import { getContext, tick } from 'svelte';
 	import { get } from 'svelte/store';
 
 	const wakeLockSupported = 'wakeLock' in navigator;
 	const { supportsFileSystem, sandboxElement } = getContext<Context>('context');
-	const footerActions = [
-		Action.TOGGLE_PLAYBACK,
-		Action.PREVIOUS_SUBTITLE,
-		Action.NEXT_SUBTITLE,
-		Action.RESTART_PLAYBACK,
-		Action.TOGGLE_PLAY_PAUSE,
-		Action.TOGGLE_PLAYBACK_LOOP,
-		Action.TOGGLE_BOOKMARK,
-		Action.TOGGLE_MERGE,
-		Action.EDIT_SUBTITLE,
-		Action.RESTORE_SUBTITLE,
-		Action.COPY_SUBTITLE,
-		Action.EXPORT_NEW,
-		Action.EXPORT_UPDATE,
-		Action.OPEN_LAST_EXPORTED_CARD,
-	];
 	const clickActions = [
 		Action.NONE,
 		Action.RESTART_PLAYBACK,
@@ -107,7 +95,6 @@
 		readerLineTextHighlightColor$,
 		readerEnableLineHighlight$,
 		readerEnableAutoScroll$,
-		readerFooterActions$,
 		readerScrollMode$,
 		readerClickAction$,
 		readerMenuOpenMode$,
@@ -139,6 +126,9 @@
 		ankiUpdateSentenceField$,
 		ankiSoundField$,
 		ankiUpdateSoundField$,
+		actionListOfReader$,
+		actionListOfSubtitles$,
+		actionListOfFooter$,
 	} = settings$;
 	const ankiModelFields = new Map<string, string[]>();
 	const ankiSettingsModes: AnkiSettingssMode[] = [AnkiSettingssMode.CREATE, AnkiSettingssMode.UPDATE];
@@ -542,17 +532,6 @@
 				targetStore$={settings$.readerEnableMenuTarget$}
 			/>
 		{/if}
-		<label for={readerFooterActions$.key()}>Footer Actions</label>
-		<select multiple size="3" bind:value={$readerFooterActions$}>
-			{#each footerActions as footerAction (footerAction)}
-				<option class="truncate" title={footerAction} value={footerAction}>
-					{footerAction}
-				</option>
-			{/each}
-		</select>
-		<button title="Remove all" on:click={() => ($readerFooterActions$ = [])}>
-			<Icon path={mdiTrashCan}></Icon>
-		</button>
 		{#if $readerEnableAutoScroll$}
 			<SettingsSelect
 				label="Continuous scroll"
@@ -919,6 +898,19 @@
 				}
 			}}
 		/>
+	</SettingsMenuContent>
+	{#if $readerMenuOpenMode$ !== ReaderMenuOpenMode.DISABLED}
+		<SettingsMenuContent settingsMenu={SettingsMenu.READER_ACTIONS} bind:openSettingsMenu>
+			<SortableActionList defaultActions={defaultReaderActionList} bind:actionList={$actionListOfReader$} />
+		</SettingsMenuContent>
+	{/if}
+	{#if $subtitlesActionsVisibility$ !== SubtitleActionsVisibility.HIDDEN}
+		<SettingsMenuContent settingsMenu={SettingsMenu.SUBTITLE_ACTIONS} bind:openSettingsMenu>
+			<SortableActionList defaultActions={defaultSubtitleActionList} bind:actionList={$actionListOfSubtitles$} />
+		</SettingsMenuContent>
+	{/if}
+	<SettingsMenuContent settingsMenu={SettingsMenu.FOOTER_ACTIONS} bind:openSettingsMenu>
+		<SortableActionList defaultActions={defaultFooterActionList} bind:actionList={$actionListOfFooter$} />
 	</SettingsMenuContent>
 	{#if !$isMobile$}
 		<SettingsMenuContent settingsMenu={SettingsMenu.KEYBINDINGS} bind:openSettingsMenu>

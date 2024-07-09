@@ -13,7 +13,7 @@ import {
 } from './general';
 import type { IDBPDatabase } from 'idb';
 import type { MediaInfo } from 'mediainfo.js';
-import { type Settings } from './settings';
+import type { ActionListItem, Settings } from './settings';
 import { writable, type Subscriber, type Invalidator, type Unsubscriber } from 'svelte/store';
 import { writableBooleanStore } from './writeables/writeable-boolean-store';
 import { writableNumberStore } from './writeables/writeable-number-store';
@@ -140,7 +140,6 @@ export const settings$ = {
 	readerEnableTrackerAutoPause$: writableBooleanStore()('ttu-whispersync-reader-enable-tracker-auto-pause'),
 	readerPreventActionOnSelection$: writableBooleanStore()('ttu-whispersync-reader-prevent-action-on-selection'),
 	readerEnableMenuTarget$: writableBooleanStore()('ttu-whispersync-reader-enable-menu-target'),
-	readerFooterActions$: writeableArrayStore<Action>()('ttu-whispersync-reader-footer-actions'),
 	readerScrollMode$: writableStringStore()('ttu-whispersync-reader-scroll-mode'),
 	readerScrollBehavior$: writableStringStore()('ttu-whispersync-reader-scroll-behavior'),
 	readerClickAction$: writableStringStore()('ttu-whispersync-reader-click-action'),
@@ -195,6 +194,9 @@ export const settings$ = {
 	ankiSoundField$: writableStringStore()('ttu-whispersync-anki-sound-field'),
 	ankiUpdateSoundField$: writableStringStore()('ttu-whispersync-anki-update-sound-field'),
 	ankiEnableOpenInBrowser$: writableBooleanStore()('ttu-whispersync-anki-enable-open-in-browser'),
+	actionListOfReader$: writeableArrayStore<ActionListItem>()('ttu-whispersync-action-list-of-reader'),
+	actionListOfSubtitles$: writeableArrayStore<ActionListItem>()('ttu-whispersync-action-list-of-subtitles'),
+	actionListOfFooter$: writeableArrayStore<ActionListItem>()('ttu-whispersync-action-list-of-footer'),
 	keybindingsEnableTimeFallback$: writableBooleanStore()('ttu-whispersync-keybindings-enable-time-fallback'),
 	matchLineIgnoreRp$: writableBooleanStore()('ttu-whispersync-match-line-ignore-rp'),
 	matchLineSimilarityThreshold$: writableNumberStore()('ttu-whispersync-match-line-similarity-threshold'),

@@ -18,7 +18,54 @@ export enum Action {
 	CANCEL_EXPORT = 'Cancel Export',
 }
 
-const defaultSettings = getDefaultSettings();
+export const defaultReaderActionList = new Map<Action, boolean>([
+	[Action.COPY_SUBTITLE, true],
+	[Action.TOGGLE_PLAYBACK, true],
+	[Action.RESTART_PLAYBACK, true],
+	[Action.TOGGLE_PLAY_PAUSE, true],
+	[Action.TOGGLE_PLAYBACK_LOOP, true],
+	[Action.TOGGLE_BOOKMARK, true],
+	[Action.TOGGLE_MERGE, true],
+	[Action.EDIT_SUBTITLE, true],
+	[Action.RESTORE_SUBTITLE, true],
+	[Action.EXPORT_NEW, true],
+	[Action.EXPORT_UPDATE, true],
+	[Action.OPEN_LAST_EXPORTED_CARD, true],
+]);
+
+export const defaultSubtitleActionList = new Map<Action, boolean>([
+	[Action.RESTART_PLAYBACK, true],
+	[Action.TOGGLE_BOOKMARK, true],
+	[Action.RESTORE_SUBTITLE, true],
+	[Action.TOGGLE_PLAY_PAUSE, true],
+	[Action.TOGGLE_MERGE, true],
+	[Action.EXPORT_NEW, true],
+	[Action.TOGGLE_PLAYBACK_LOOP, true],
+	[Action.EDIT_SUBTITLE, true],
+	[Action.EXPORT_UPDATE, true],
+]);
+
+export const defaultFooterActionList = new Map<Action, boolean>([
+	[Action.TOGGLE_PLAYBACK, true],
+	[Action.PREVIOUS_SUBTITLE, false],
+	[Action.NEXT_SUBTITLE, false],
+	[Action.RESTART_PLAYBACK, false],
+	[Action.TOGGLE_PLAY_PAUSE, false],
+	[Action.TOGGLE_PLAYBACK_LOOP, false],
+	[Action.TOGGLE_BOOKMARK, false],
+	[Action.TOGGLE_MERGE, false],
+	[Action.EDIT_SUBTITLE, false],
+	[Action.RESTORE_SUBTITLE, false],
+	[Action.COPY_SUBTITLE, false],
+	[Action.EXPORT_NEW, false],
+	[Action.EXPORT_UPDATE, false],
+	[Action.OPEN_LAST_EXPORTED_CARD, false],
+]);
+
+export interface ActionListItem {
+	action: Action;
+	enabled: boolean;
+}
 
 export type Settings = {
 	'ttu-whispersync-reader-line-highlight-color': string;
@@ -29,7 +76,6 @@ export type Settings = {
 	'ttu-whispersync-reader-enable-tracker-auto-pause': boolean;
 	'ttu-whispersync-reader-prevent-action-on-selection': boolean;
 	'ttu-whispersync-reader-enable-menu-target': boolean;
-	'ttu-whispersync-reader-footer-actions': Action[];
 	'ttu-whispersync-reader-scroll-mode': ReaderScrollMode;
 	'ttu-whispersync-reader-scroll-behavior': ReaderScrollBehavior;
 	'ttu-whispersync-reader-click-action': Action;
@@ -83,6 +129,9 @@ export type Settings = {
 	'ttu-whispersync-anki-update-sentence-field': string;
 	'ttu-whispersync-anki-sound-field': string;
 	'ttu-whispersync-anki-update-sound-field': string;
+	'ttu-whispersync-action-list-of-reader': ActionListItem[];
+	'ttu-whispersync-action-list-of-subtitles': ActionListItem[];
+	'ttu-whispersync-action-list-of-footer': ActionListItem[];
 	'ttu-whispersync-keybindings-enable-time-fallback': boolean;
 	'ttu-whispersync-match-line-ignore-rp': boolean;
 	'ttu-whispersync-match-line-similarity-threshold': number;
@@ -97,6 +146,9 @@ export enum SettingsMenu {
 	EXPORT = 'Export',
 	ANKI = 'Anki',
 	KEYBINDINGS = 'Keybindings',
+	READER_ACTIONS = 'Reader actions',
+	SUBTITLE_ACTIONS = 'Subtitle actions',
+	FOOTER_ACTIONS = 'Footer actions',
 }
 
 export enum AnkiSettingssMode {
@@ -173,7 +225,6 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-reader-enable-tracker-auto-pause': true,
 		'ttu-whispersync-reader-prevent-action-on-selection': true,
 		'ttu-whispersync-reader-enable-menu-target': true,
-		'ttu-whispersync-reader-footer-actions': [Action.TOGGLE_PLAYBACK],
 		'ttu-whispersync-reader-scroll-mode': ReaderScrollMode.ALWAYS,
 		'ttu-whispersync-reader-scroll-behavior': ReaderScrollBehavior.INSTANT,
 		'ttu-whispersync-reader-click-action': Action.NONE,
@@ -228,6 +279,9 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-anki-sound-field': '',
 		'ttu-whispersync-anki-update-sound-field': '',
 		'ttu-whispersync-keybindings-enable-time-fallback': false,
+		'ttu-whispersync-action-list-of-reader': transformToActionList(defaultReaderActionList),
+		'ttu-whispersync-action-list-of-subtitles': transformToActionList(defaultSubtitleActionList),
+		'ttu-whispersync-action-list-of-footer': transformToActionList(defaultFooterActionList),
 		'ttu-whispersync-match-line-ignore-rp': false,
 		'ttu-whispersync-match-line-similarity-threshold': 0.9,
 		'ttu-whispersync-match-line-max-attempts': 50,
@@ -236,4 +290,19 @@ export function getDefaultSettings(): Settings {
 
 export function getDefaultSetting<T>(key: keyof Settings) {
 	return defaultSettings[key] as T;
+}
+
+const defaultSettings = getDefaultSettings();
+
+function transformToActionList(data: Map<Action, boolean>) {
+	const actionList: ActionListItem[] = [];
+	const entries = [...data.entries()];
+
+	for (let index = 0, { length } = entries; index < length; index += 1) {
+		const [action, enabled] = entries[index];
+
+		actionList.push({ action, enabled });
+	}
+
+	return actionList;
 }
