@@ -892,7 +892,7 @@
 			options={ankiFields}
 			on:click={() => {
 				if (showAnkiCreateSettings) {
-					$ankiUpdateSoundField$ = '';
+					$ankiSoundField$ = '';
 				} else {
 					$ankiUpdateSoundField$ = '';
 				}
