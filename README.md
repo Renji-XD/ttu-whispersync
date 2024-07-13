@@ -9,7 +9,8 @@ A [Violentmonkey](https://violentmonkey.github.io/get-it/) script / Chrome exten
 3. Add https://reader.ttsu.app (and http://localhost:5173 for local development) to the webCorsOriginList of AnkiConnect
 4. You can install the extension as Violentmonkey script by clicking on this [url](https://github.com/Renji-XD/ttu-whispersync/releases/latest/download/ttu-whispersync.user.js) (you need to be online at installation time in order to download required dependencies) or as [unpackaged](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked) extension in a chromium browser by downloading the latest major version from releases or by [building](#development--building) the current version by yourself
 5. Open the reader / reload the tab and click on the icon in the bottom left corner to open the menu and load subtitle/audio files
-6. Configure your experience to your preferences by going to the settings tab
+6. Switch to "Match" Tab, match the subtitle against your book and click on "Save & reload page" to enable full functionality like reader highlighting, reader menu, autoscroll etc. after the page was reloaded
+7. Configure your experience to your preferences by going to the settings tab
 
 ## Development / Building
 

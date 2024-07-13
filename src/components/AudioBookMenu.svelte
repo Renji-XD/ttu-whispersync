@@ -63,7 +63,15 @@
 		between,
 	} from '../lib/util';
 	import Match from './Match.svelte';
-	import { mdiArrowSplitVertical, mdiClose, mdiPlaylistMusicOutline, mdiRepeatOff, mdiSwapHorizontal } from '@mdi/js';
+	import {
+		mdiArrowSplitVertical,
+		mdiClose,
+		mdiHelpCircle,
+		mdiPlaylistMusicOutline,
+		mdiRepeatOff,
+		mdiSwapHorizontal,
+	} from '@mdi/js';
+	import Popover from './Popover.svelte';
 	import ReaderMenu from './ReaderMenu.svelte';
 	import Settings from './Settings.svelte';
 	import { onDestroy, onMount, setContext } from 'svelte';
@@ -865,6 +873,29 @@
 			>
 				<Icon path={mdiClose} />
 			</button>
+			<div title="Getting started" class:m-l-b={isLeftMenu} class:m-r-b={!isLeftMenu}>
+				<Popover>
+					<div slot="icon">
+						<Icon path={mdiHelpCircle} />
+					</div>
+					<ol class="getting-started">
+						<li>Install Anki and configure deck and note type</li>
+						<li>Install AnkiConnect and configure deck and note type</li>
+						<li>Add https://reader.ttsu.app to the webCorsOriginList of AnkiConnect</li>
+						<li>Load subtitle/audio files</li>
+						<li>
+							Switch to "Match" Tab, match the subtitle against your book and click on "Save & reload
+							page" to enable full functionality like reader highlighting, reader menu, autoscroll etc.
+							after the page was reloaded
+						</li>
+						<li>Configure your experience to your preferences by going to the settings tab</li>
+						<li>
+							Read <a href="https://github.com/Renji-XD/ttu-whispersync" target="_blank">FAQ & more</a> for
+							further Information
+						</li>
+					</ol>
+				</Popover>
+			</div>
 			<button
 				title={`Switch menu position to ${isLeftMenu ? 'right' : 'left'}`}
 				class="side-menu-only"
