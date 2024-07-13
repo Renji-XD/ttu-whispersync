@@ -146,6 +146,14 @@ Note: iOS may block the ability to select certain files. For subtitles you there
 
 -   You can find more details by opening the developer tools of your browser (often F12 keybind on desktop) and checking the console tab / output
 
+### What is the bookmark functionality
+
+-   You can bookmark subtitles to "remember" them in order to listen to important lines again or do a bulk export later to not interrupt your session. You can find them by opening the subtitle list menu (main icon in the bottom left corner) and enabling the bookmark filter in the top controls. Playing / Looping via respective top control icon will play all bookmarked lines while skipping the ones in between and skipping the update to your current playback position. You can do a bulk export by clicking on the respective icon in the top controls - this will create a card with respective audio for every single subtitle (and is therefore limited to the create action)
+
+### What is the merge functionality
+
+-   You can flag subtitles for merge to "remember" them in order to listen to important lines again or do a merged export to combine multiple lines into one card. You can find them by opening the subtitle list menu (main icon in the bottom left corner) and enabling the merge filter in the top controls. Playing / Looping via respective top control icon will play all flagged lines while skipping the ones in between and skipping the update to your current playback position. You can do a merge export by clicking on the respective icon in the top controls - this will either create one single new card or update your last card with the content of all flagged lines and their respective audio
+
 ### Is it possible to queue / execute exports in parallel
 
 -   No - there is no export queue implemented. If you e.g. execute an export keybind while an other export is still running it will be simply ignored. If you often want to export close lines it is better to use the bookmark functionality and do a bulk export in the end of your reading/listening session
