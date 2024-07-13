@@ -47,6 +47,7 @@
 			swap: true,
 			swapClass: 'swap',
 			animation: 150,
+			filter: '.disable-sort',
 			store: {
 				get: () => [...processedActions],
 				set: onUpdateActionList,
@@ -106,7 +107,9 @@
 	{#each listItems as listItem (listItem.action)}
 		<div class="sortable-list-item" data-id={listItem.action}>
 			{listItem.action}
-			<input type="checkbox" bind:checked={listItem.enabled} on:change={onUpdateActionList} />
+			<div class="disable-sort">
+				<input type="checkbox" bind:checked={listItem.enabled} on:change={onUpdateActionList} />
+			</div>
 		</div>
 	{/each}
 </div>
