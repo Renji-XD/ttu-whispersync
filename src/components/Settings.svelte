@@ -816,7 +816,7 @@
 		{/if}
 		<SettingsTextInput
 			label="Card tags"
-			helpText="Comma separated list of tags added to the card tag list"
+			helpText="Comma separated list of tags added to the card tag list. Tags in card updates are supported on desktop only"
 			targetStore$={settings$.ankiTagList$}
 		/>
 		<SettingsSelect

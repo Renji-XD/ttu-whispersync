@@ -47,7 +47,6 @@ interface exportCardInput {
 interface exportCardNoteData {
 	fields: Record<string, string>;
 	tags: string[];
-	audio: exportCardAudioField[];
 	id?: number;
 	deckName?: string;
 	modelName?: string;
@@ -63,13 +62,6 @@ interface exportCardOptions {
 interface exportCardDuplicateOptions {
 	checkChildren: boolean;
 	deckName?: string | null;
-}
-
-interface exportCardAudioField {
-	data: string;
-	deleteExisting: boolean;
-	filename: string;
-	fields?: string[];
 }
 
 let permissionGranted = false;
@@ -353,19 +345,16 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 		isUpdate,
 	);
 	const isAnkiconnectAndroid = get(isAnkiconnectAndroid$);
-	const isBlockedUpdated = isUpdate && isAnkiconnectAndroid;
 	const isEmptyKeyFieldAllowed =
 		duplicateScope === AnkiDuplicateMode.DISABLED && get(settings$.ankiAllowEmptyKeyField$);
 
 	let cardToUpdate: RequestNotesInfoResult | undefined;
 
-	if (!isAnkiConfigValid || isBlockedUpdated) {
+	if (!isAnkiConfigValid) {
 		const lastError = get(lastError$);
 
 		return lastError$.set(
-			`${lastError ? `${lastError}; ` : ''}${isAnkiConfigValid ? '' : `Anki ${isUpdate ? 'update' : 'create'} settings are invalid`}${
-				isBlockedUpdated ? `${isAnkiConfigValid ? '' : '; '}Your AnkiConnect does not support updates` : ''
-			}`,
+			`${lastError ? `${lastError}; ` : ''}${isAnkiConfigValid ? '' : `Anki ${isUpdate ? 'update' : 'create'} settings are invalid`}`,
 		);
 	}
 
@@ -431,9 +420,10 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 		const sentenceContent = subtitles.map((subtitle) => subtitle.text.trim()).join('<br/>') || '';
 		const tagList = new Set<string>(cardToUpdate ? cardToUpdate.tags : []);
 		const cardData: exportCardInput = {
-			note: { fields: {}, tags: [], audio: [] },
+			note: { fields: {}, tags: [] },
 		};
 
+		let actionName = '';
 		let audioContent = '';
 		let audioBuffer: ArrayBufferLike | undefined;
 
@@ -525,15 +515,6 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 							},
 						});
 
-						cardData.note.audio = [
-							{
-								data: audioContent,
-								deleteExisting: true,
-								filename: finalFileName,
-								fields: [''],
-							},
-						];
-
 						newFieldValue = getNewFieldValue(
 							ExportFieldMode.AFTER,
 							newFieldValue,
@@ -555,8 +536,14 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 				throw new Error('cannot process note because it is empty');
 			}
 
+			if (isUpdate) {
+				actionName = isAnkiconnectAndroid ? 'updateNoteFields' : 'updateNote';
+			} else {
+				actionName = 'addNote';
+			}
+
 			const result = await request<number | boolean | null>(ankiUrl, {
-				action: isUpdate ? 'updateNote' : 'addNote',
+				action: actionName,
 				params: cardData,
 			});
 

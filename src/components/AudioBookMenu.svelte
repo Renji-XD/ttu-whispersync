@@ -225,7 +225,7 @@
 		$exportCancelTitle$ = Action.CANCEL_EXPORT;
 	} else {
 		$exportNewTitle$ = Action.EXPORT_NEW;
-		$exportUpdateTitle$ = $isAnkiconnectAndroid$ ? 'Device not supported' : Action.EXPORT_UPDATE;
+		$exportUpdateTitle$ = Action.EXPORT_UPDATE;
 		$exportCancelTitle$ = 'Export not started';
 	}
 
@@ -838,6 +838,7 @@
 		isFooter
 		buttonClasses="h-full hover:opacity-70"
 		listItems={$actionListOfFooter$}
+		hideCancelAction={!showCancelFooterAction}
 		subtitle={$readerActionSubtitle$ ||
 			$currentSubtitles$.get($activeSubtitle$.current || $activeSubtitle$.previous)}
 	/>

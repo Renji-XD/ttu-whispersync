@@ -79,7 +79,8 @@ Known issues / missing features are e. g. :
 
 -   worse performance
 -   no filesystem api support
--   no "update last created card" / "open in anki browser" functionality
+-   no "open in anki browser" functionality
+-	no tag update functionality
 -   no duplicate check for creating cards
 -   various iOS quirks
 
@@ -90,8 +91,6 @@ Known issues / missing features are e. g. :
 -   Install and follow instructions for [AnkiconnectAndroid](https://github.com/KamWithK/AnkiconnectAndroid?tab=readme-ov-file#instructions) (if you need multiple hosts for cors use a '\*' character to whitelist all sources)
 -   Install a browser which supports ViolentMonkey or chrome extensions (e. g. [Kiwi](https://play.google.com/store/apps/details?id=com.kiwibrowser.browser))
 -   Install ttu-whispersync as described in [Getting started](#getting-started)
-
-Note: AnkiconnectAndroid is not implementing all required apis for the export. Therefore card creation may take longer and card updates are currently not supported at all (see this open [pr](https://github.com/KamWithK/AnkiconnectAndroid/pull/60))
 
 #### iOS
 
@@ -145,6 +144,10 @@ Note: iOS may block the ability to select certain files. For subtitles you there
 ### "Export(s) failed" details
 
 -   You can find more details by opening the developer tools of your browser (often F12 keybind on desktop) and checking the console tab / output
+
+### Card updates are not working on android
+
+-   Make sure to have AnkiconnectAndroid 1.14 (or higher) installed - previous versions are not supporting the required apis for updates
 
 ### What is the bookmark functionality
 
