@@ -52,6 +52,8 @@
 
 	$: ignoredTags = $matchLineIgnoreRp$ ? allIgnoredElements : singleIgnoredElements;
 
+	$: ignoredTagsSelector = [...ignoredTags].join(',');
+
 	async function onTriggerSelectStartHint() {
 		document.addEventListener('click', onSelectHintElement, { once: true, capture: false });
 
@@ -119,6 +121,7 @@
 			const maxMatchAttempts = Math.min(subtitles.length, $matchLineMaxAttempts$);
 			const originalElementsMap = new Map<HTMLElement, string>();
 			const matchedElementsMap = new Map<HTMLElement, string>();
+			const allIgnoredSelector = [...allIgnoredElements].join(',');
 
 			let currentNodes: Node[] = [];
 			let currentText = '';
@@ -168,7 +171,7 @@
 				const newProgress = caluclatePercentage(currentSubtitleIndex + 1, maxProgress);
 
 				let node = textNodes[currentTextNodeIndex];
-				let nodeParentTag = node.parentElement!.tagName.toLowerCase();
+				let nodeParent = node.parentElement!;
 
 				if (newProgress !== currentProgress) {
 					currentProgress = newProgress;
@@ -176,7 +179,7 @@
 					await new Promise((resolve) => setTimeout(resolve));
 				}
 
-				if (!ignoredTags.has(nodeParentTag)) {
+				if (!nodeParent.closest(ignoredTagsSelector)) {
 					currentText += node.textContent;
 				}
 
@@ -215,15 +218,15 @@
 					}
 
 					node = textNodes[currentTextNodeIndex];
-					nodeParentTag = node.parentElement!.tagName.toLowerCase();
+					nodeParent = node.parentElement!;
 
 					currentTextNodeIndex += 1;
 
-					while (ignoredTags.has(nodeParentTag) && currentTextNodeIndex < textNodeCount) {
+					while (nodeParent.closest(ignoredTagsSelector) && currentTextNodeIndex < textNodeCount) {
 						node = textNodes[currentTextNodeIndex];
-						nodeParentTag = node.parentElement!.tagName.toLowerCase();
+						nodeParent = node.parentElement!;
 
-						if (ignoredTags.has(nodeParentTag)) {
+						if (nodeParent.closest(ignoredTagsSelector)) {
 							currentNodes.push(node);
 						}
 
@@ -241,10 +244,10 @@
 							const nodeToProcess = currentNodes[0];
 							const nodeToProcessTextContent = nodeToProcess.textContent || '';
 							const ignoredTextNode = document.createTextNode(
-								nodeToProcessTextContent.slice(0, bestLineSimiliarityStartIndex),
+								[...nodeToProcessTextContent].slice(0, bestLineSimiliarityStartIndex).join(''),
 							);
 							const remainingTextNode = document.createTextNode(
-								nodeToProcessTextContent.slice(bestLineSimiliarityStartIndex),
+								[...nodeToProcessTextContent].slice(bestLineSimiliarityStartIndex).join(''),
 							);
 
 							nodeToProcess.parentElement!.replaceChild(ignoredTextNode, nodeToProcess);
@@ -256,14 +259,13 @@
 						for (let index = 0, { length } = currentNodes; index < length; index += 1) {
 							const nodeToProcess = currentNodes[index];
 							const nodeToProcessParentElement = nodeToProcess.parentElement!;
-							const nodeToProcessParentElementTag = nodeToProcessParentElement.tagName.toLowerCase();
 							const nodeToProcessTextContent = nodeToProcess.textContent || '';
 							const nodeTextContentLength = [...nodeToProcessTextContent].length;
-							const isIgnoredParent = ignoredTags.has(nodeToProcessParentElementTag);
+							const isIgnoredParent = !!nodeToProcessParentElement.closest(ignoredTagsSelector);
 							const matchedContainer = document.createElement('span');
 							const matchedText = isIgnoredParent
-								? nodeToProcessTextContent.slice(0)
-								: nodeToProcessTextContent.slice(0, charactersToProcess);
+								? [...nodeToProcessTextContent].slice(0).join('')
+								: [...nodeToProcessTextContent].slice(0, charactersToProcess).join('');
 							const matchedTextNode = document.createTextNode(matchedText);
 							const matchedTextLength = [...matchedText].length;
 							const remainingCharacters = nodeTextContentLength - matchedTextLength;
@@ -276,7 +278,7 @@
 								matchedContainer.appendChild(matchedTextNode);
 								nodeToProcessParentElement.replaceChild(matchedContainer, nodeToProcess);
 
-								if (!allIgnoredElements.has(nodeToProcessParentElementTag)) {
+								if (!nodeToProcessParentElement.closest(allIgnoredSelector)) {
 									textInScope += matchedText;
 								}
 							}
@@ -296,7 +298,7 @@
 									const leftOverNode = currentNodes[index];
 									const leftOverNodeContent = leftOverNode.textContent || '';
 									const remainingTextNode = document.createTextNode(
-										leftOverNodeContent.slice(leftOverLength),
+										[...leftOverNodeContent].slice(leftOverLength).join(''),
 									);
 
 									if (!leftOverNodeContent) {
@@ -428,13 +430,14 @@
 
 					if (bookCharacter !== matchCharacter) {
 						throwMatchError(
-							`mismatch on index ${index}, position ${index2}: ${originalContent.slice(
-								Math.max(0, index2 - 10),
-								Math.min(bookTextCharacters.length, index2 + 10),
-							)} | vs | ${matchedContent.slice(
-								Math.max(0, index2 - 10),
-								Math.min(matchedBookTextCharacters.length, index2 + 10),
-							)}`,
+							`mismatch on index ${index}, position ${index2}: ${[...originalContent]
+								.slice(Math.max(0, index2 - 10), Math.min(bookTextCharacters.length, index2 + 10))
+								.join('')} | vs | ${[...matchedContent]
+								.slice(
+									Math.max(0, index2 - 10),
+									Math.min(matchedBookTextCharacters.length, index2 + 10),
+								)
+								.join('')}`,
 							originalElement,
 							matchedElement,
 							ttuParent,
@@ -651,7 +654,7 @@
 		const map = new Map();
 
 		for (let i = 0; i < string1Length - (substringLength - 1); i += 1) {
-			const substring1 = string1.substring(i, i + substringLength);
+			const substring1 = [...string1].slice(i, i + substringLength).join('');
 
 			map.set(substring1, map.has(substring1) ? map.get(substring1) + 1 : 1);
 		}
@@ -659,7 +662,7 @@
 		let match = 0;
 
 		for (let j = 0; j < string2Length - (substringLength - 1); j++) {
-			const substring2 = string2.substring(j, j + substringLength);
+			const substring2 = [...string2].slice(j, j + substringLength).join('');
 			const count = map.has(substring2) ? map.get(substring2) : 0;
 
 			if (count > 0) {
@@ -691,7 +694,7 @@
 			for (let index = bestLineSimiliarityEndIndex; index > currentBestStartIndex; index -= 1) {
 				if (
 					normalizeString(currentSubtitle) ===
-					normalizeString(textForComparison.slice(currentBestStartIndex, index))
+					normalizeString([...textForComparison].slice(currentBestStartIndex, index).join(''))
 				) {
 					bestLineSimiliarityStartIndex = currentBestStartIndex;
 					bestLineSimiliarityEndIndex = index;
@@ -705,7 +708,7 @@
 			for (let index = currentBestStartIndex; index < bestLineSimiliarityEndIndex; index += 1) {
 				const lineSimiliarityToCompare = getSimilarity(
 					currentSubtitle,
-					textForComparison.slice(index, bestLineSimiliarityEndIndex),
+					[...textForComparison].slice(index, bestLineSimiliarityEndIndex).join(''),
 				);
 
 				if (lineSimiliarityToCompare > bestLineSimiliarityValue) {
@@ -727,7 +730,7 @@
 				for (let index = bestLineSimiliarityEndIndex; index > currentBestStartIndex; index -= 1) {
 					const lineSimiliarityToCompare = getSimilarity(
 						currentSubtitle,
-						textForComparison.slice(currentBestStartIndex, index),
+						[...textForComparison].slice(currentBestStartIndex, index).join(''),
 					);
 
 					if (lineSimiliarityToCompare > bestLineSimiliarityValue) {
@@ -756,9 +759,9 @@
 
 			while (characterCount < targetCharacterLength && currentNodes.length) {
 				const nodeToCheck = currentNodes.shift()!;
-				const nodeToCheckParentTag = nodeToCheck.parentElement!.tagName.toLowerCase();
+				const nodeToCheckParent = nodeToCheck.parentElement!;
 
-				characterCount += ignoredTags.has(nodeToCheckParentTag)
+				characterCount += nodeToCheckParent.closest(ignoredTagsSelector)
 					? 0
 					: [...(nodeToCheck.textContent || '')].length;
 
@@ -780,8 +783,8 @@
 
 		for (let index = 0, { length } = currentNodes; index < length; index += 1) {
 			let nodeToCheck = currentNodes[index];
-			let nodeToCheckParentTag = nodeToCheck.parentElement!.tagName.toLowerCase();
-			let nodeToCheckLength = ignoredTags.has(nodeToCheckParentTag)
+			let nodeToCheckParent = nodeToCheck.parentElement!;
+			let nodeToCheckLength = nodeToCheckParent.closest(ignoredTagsSelector)
 				? 0
 				: [...(nodeToCheck.textContent || '')].length;
 
@@ -804,9 +807,9 @@
 
 		while (currentNormalizedTextLength <= currentSubtitleLength && newTextNodeIndex < textNodes.length) {
 			const nodeToCheck = textNodes[newTextNodeIndex];
-			const nodeToCheckParentTag = nodeToCheck.parentElement!.tagName.toLowerCase();
+			const nodeToCheckParent = nodeToCheck.parentElement!;
 
-			if (!ignoredTags.has(nodeToCheckParentTag)) {
+			if (!nodeToCheckParent.closest(ignoredTagsSelector)) {
 				currentText += nodeToCheck.textContent;
 			}
 
