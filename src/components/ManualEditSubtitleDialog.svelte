@@ -104,6 +104,13 @@
 					action = Action.COPY_SUBTITLE;
 
 					break;
+				case 'keyj':
+				case 'j':
+					if ($currentAudioSourceUrl$) {
+						paused = !paused;
+					}
+
+					break;
 				default:
 					stopEvent = false;
 

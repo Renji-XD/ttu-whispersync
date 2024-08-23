@@ -919,7 +919,8 @@
 				helpText="If enabled and no subtitle is currently active the current time is used as fallback to search for the closest subtitle"
 				targetStore$={settings$.keybindingsEnableTimeFallback$}
 			/>
-			<SettingsKeybind key="Cmd + Space" description="Toggle playback" extendDescription={false} />
+			<SettingsKeybind key="Cmd + Space" description={Action.TOGGLE_PLAYBACK} extendDescription={false} />
+			<SettingsKeybind key="Alt + j" description={Action.TOGGLE_PLAYBACK} extendDescription={false} />
 			<SettingsKeybind key="Cmd + d" description={Action.RESTART_PLAYBACK} />
 			<SettingsKeybind key="Alt + d" description={Action.TOGGLE_PLAY_PAUSE} />
 			<SettingsKeybind key="Cmd + l" description={Action.TOGGLE_PLAYBACK_LOOP} />
@@ -929,8 +930,8 @@
 			<SettingsKeybind key="Alt + e" description={Action.EXPORT_UPDATE} />
 			<SettingsKeybind key="Alt + g" description={Action.EDIT_SUBTITLE} extendDescription={false} />
 			<SettingsKeybind key="Alt + z" description={Action.COPY_SUBTITLE} extendDescription={false} />
-			<SettingsKeybind key="Cmd + q" description="Go to previous subtitle" extendDescription={false} />
-			<SettingsKeybind key="Alt + q" description="Go to next subtitle" extendDescription={false} />
+			<SettingsKeybind key="Cmd + q" description={Action.PREVIOUS_SUBTITLE} extendDescription={false} />
+			<SettingsKeybind key="Alt + q" description={Action.NEXT_SUBTITLE} extendDescription={false} />
 			<SettingsKeybind key="Cmd + k" description={`Decrease playbackrate`} extendDescription={false} />
 			<SettingsKeybind key="Alt + k" description={`Increase playbackrate`} extendDescription={false} />
 			<SettingsKeybind

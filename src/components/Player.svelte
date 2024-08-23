@@ -291,6 +291,11 @@
 					adjustPlaybackRateBy($playerPlaybackRateIncreaseTime$);
 
 					break;
+				case 'keyj':
+				case 'j':
+					$paused$ = !$paused$;
+
+					break;
 				default:
 					stopEvent = false;
 					break;

@@ -94,6 +94,11 @@
 					action = Action.COPY_SUBTITLE;
 
 					break;
+				case 'keyj':
+				case 'j':
+					onPause();
+
+					break;
 				default:
 					stopEvent = false;
 
