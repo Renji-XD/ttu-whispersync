@@ -748,7 +748,8 @@
 		}
 
 		const activeTrack = [...audioElement.textTracks].findLast((track) => track.mode !== 'disabled');
-		const activeCues = [...(activeTrack?.activeCues || [])].map((cue) => cue.id);
+
+		let activeCues = [...(activeTrack?.activeCues || [])].map((cue) => cue.id);
 
 		if (activeTrack && !activeCues.length && typeof lastActiveId === 'string' && isIOS) {
 			const fallbackId =
@@ -757,6 +758,18 @@
 
 			if (fallbackId) {
 				activeCues.push(fallbackId);
+			}
+		}
+
+		if ($paused$ && activeCues.length > 1) {
+			const subtitle1 = $currentSubtitles$.get(activeCues[activeCues.length - 2])!;
+			const subtitle2 = $currentSubtitles$.get(activeCues[activeCues.length - 1])!;
+
+			if (
+				(subtitle1.startSeconds >= subtitle2.startSeconds && subtitle1.startSeconds <= subtitle2.endSeconds) ||
+				(subtitle2.startSeconds >= subtitle1.startSeconds && subtitle2.startSeconds <= subtitle1.endSeconds)
+			) {
+				activeCues = [subtitle2.id];
 			}
 		}
 
