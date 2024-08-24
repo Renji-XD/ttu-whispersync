@@ -4,6 +4,8 @@
 	import { getDummySubtitle, type Subtitle } from '../lib/general';
 	import type { ActionListItem } from '../lib/settings';
 	import {
+		altFastForwardTitle$,
+		altRewindTitle$,
 		bookmarkedSubtitles$,
 		duration$,
 		editSubtitleTitle$,
@@ -11,6 +13,7 @@
 		exportCancelTitle$,
 		exportNewTitle$,
 		exportUpdateTitle$,
+		fastForwardTitle$,
 		isRecording$,
 		nextSubtitleTitle$,
 		openLastExportedCardTitle$,
@@ -18,6 +21,7 @@
 		previousSubtitleTitle$,
 		restartPlaybackTitle$,
 		restoreSubtitleTitle$,
+		rewindTitle$,
 		settings$,
 		subtitlesForMerge$,
 		toggleBookmarkTitle$,
@@ -44,6 +48,10 @@
 		mdiRestore,
 		mdiSelect,
 		mdiSelectRemove,
+		mdiSkipBackward,
+		mdiSkipForward,
+		mdiSkipNext,
+		mdiSkipPrevious,
 		mdiStar,
 		mdiStarOutline,
 	} from '@mdi/js';
@@ -116,6 +124,31 @@
 					Action.TOGGLE_PLAYBACK,
 					$togglePlaybackTitle$,
 					$isRecording$ || $paused$ ? mdiPlayCircleOutline : mdiPauseCircleOutline,
+					getDummySubtitle(0),
+				)}
+				on:executed
+			/>
+		{:else if listItem.action === Action.REWIND_ALT}
+			<ActionButton
+				{...getActionButtonProps(Action.REWIND_ALT, $altRewindTitle$, mdiSkipBackward, getDummySubtitle(0))}
+				on:executed
+			/>
+		{:else if listItem.action === Action.REWIND}
+			<ActionButton
+				{...getActionButtonProps(Action.REWIND, $rewindTitle$, mdiSkipPrevious, getDummySubtitle(0))}
+				on:executed
+			/>
+		{:else if listItem.action === Action.FAST_FORWARD}
+			<ActionButton
+				{...getActionButtonProps(Action.FAST_FORWARD, $fastForwardTitle$, mdiSkipNext, getDummySubtitle(0))}
+				on:executed
+			/>
+		{:else if listItem.action === Action.FAST_FORWARD_ALT}
+			<ActionButton
+				{...getActionButtonProps(
+					Action.FAST_FORWARD_ALT,
+					$altFastForwardTitle$,
+					mdiSkipForward,
 					getDummySubtitle(0),
 				)}
 				on:executed

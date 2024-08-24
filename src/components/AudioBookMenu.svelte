@@ -12,6 +12,8 @@
 	import { AudioProcessor, ReaderMenuOpenMode, ReaderMenuPauseMode } from '../lib/settings';
 	import {
 		activeSubtitle$,
+		altFastForwardTitle$,
+		altRewindTitle$,
 		bookData$,
 		bookMatched$,
 		booksDB$,
@@ -33,6 +35,7 @@
 		exportNewTitle$,
 		exportUpdateTitle$,
 		extensionData$,
+		fastForwardTitle$,
 		isAnkiconnectAndroid$,
 		isLoading$,
 		isMobile$,
@@ -46,6 +49,7 @@
 		readerActionSubtitle$,
 		restartPlaybackTitle$,
 		restoreSubtitleTitle$,
+		rewindTitle$,
 		settings$,
 		skipKeyListener$,
 		toggleBookmarkTitle$,
@@ -108,6 +112,10 @@
 		readerMenuOpenTime$,
 		subtitlesGlobalStartPadding$,
 		subtitlesGlobalEndPadding$,
+		playerAltRewindTime$,
+		playerRewindTime$,
+		playerFastForwardTime$,
+		playerAltFastForwardTime$,
 		ankiUrl$,
 		ankiDeck$,
 		ankiModel$,
@@ -159,10 +167,22 @@
 
 	$: if (!$currentAudioLoaded$) {
 		$togglePlaybackTitle$ = 'Audio file required';
+		$rewindTitle$ = 'Audio file required';
+		$altRewindTitle$ = 'Audio file required';
+		$fastForwardTitle$ = 'Audio file required';
+		$altFastForwardTitle$ = 'Audio file required';
 	} else if ($isRecording$) {
 		$togglePlaybackTitle$ = 'Recording in progress';
+		$rewindTitle$ = 'Recording in progress';
+		$altRewindTitle$ = 'Recording in progress';
+		$fastForwardTitle$ = 'Recording in progress';
+		$altFastForwardTitle$ = 'Recording in progress';
 	} else {
 		$togglePlaybackTitle$ = Action.TOGGLE_PLAYBACK;
+		$rewindTitle$ = Action.REWIND;
+		$altRewindTitle$ = Action.REWIND_ALT;
+		$fastForwardTitle$ = Action.FAST_FORWARD;
+		$altFastForwardTitle$ = Action.FAST_FORWARD_ALT;
 	}
 
 	$: if (!$currentSubtitles$.size) {
@@ -841,6 +861,33 @@
 		hideCancelAction={!showCancelFooterAction}
 		subtitle={$readerActionSubtitle$ ||
 			$currentSubtitles$.get($activeSubtitle$.current || $activeSubtitle$.previous)}
+		on:executed={({ detail }) => {
+			if (detail === Action.REWIND_ALT) {
+				executeAction(
+					Action.RESTART_PLAYBACK,
+					getDummySubtitle(Math.max(0, $currentTime$ - $playerAltRewindTime$)),
+					{ keepPauseState: true },
+				);
+			} else if (detail === Action.REWIND) {
+				executeAction(
+					Action.RESTART_PLAYBACK,
+					getDummySubtitle(Math.max(0, $currentTime$ - $playerRewindTime$)),
+					{ keepPauseState: true },
+				);
+			} else if (detail === Action.FAST_FORWARD) {
+				executeAction(
+					Action.RESTART_PLAYBACK,
+					getDummySubtitle(Math.min($duration$, $currentTime$ + $playerFastForwardTime$)),
+					{ keepPauseState: true },
+				);
+			} else if (detail === Action.FAST_FORWARD_ALT) {
+				executeAction(
+					Action.RESTART_PLAYBACK,
+					getDummySubtitle(Math.min($duration$, $currentTime$ + $playerAltFastForwardTime$)),
+					{ keepPauseState: true },
+				);
+			}
+		}}
 	/>
 {/if}
 

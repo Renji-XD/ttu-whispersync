@@ -246,6 +246,10 @@ function getSubtitlesForExport(subtitles: Subtitle[], mergeSubtitles: boolean | 
 export enum Action {
 	NONE = 'None',
 	TOGGLE_PLAYBACK = 'Toggle playback',
+	REWIND = 'Rewind',
+	REWIND_ALT = 'Rewind #2',
+	FAST_FORWARD = 'Fast-Forward',
+	FAST_FORWARD_ALT = 'Fast-Forward #2',
 	RESTART_PLAYBACK = 'Restart playback',
 	TOGGLE_PLAY_PAUSE = 'Toggle play and pause',
 	TOGGLE_PLAYBACK_LOOP = 'Toggle playback loop',

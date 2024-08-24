@@ -1,6 +1,10 @@
 export enum Action {
 	NONE = 'None',
 	TOGGLE_PLAYBACK = 'Toggle playback',
+	REWIND = 'Rewind',
+	REWIND_ALT = 'Rewind #2',
+	FAST_FORWARD = 'Fast-Forward',
+	FAST_FORWARD_ALT = 'Fast-Forward #2',
 	PREVIOUS_SUBTITLE = 'Go to previous subtitle',
 	NEXT_SUBTITLE = 'Go to next subtitle',
 	RESTART_PLAYBACK = 'Restart playback',
@@ -47,6 +51,10 @@ export const defaultSubtitleActionList = new Map<Action, boolean>([
 
 export const defaultFooterActionList = new Map<Action, boolean>([
 	[Action.TOGGLE_PLAYBACK, true],
+	[Action.REWIND_ALT, false],
+	[Action.REWIND, false],
+	[Action.FAST_FORWARD, false],
+	[Action.FAST_FORWARD_ALT, false],
 	[Action.PREVIOUS_SUBTITLE, false],
 	[Action.NEXT_SUBTITLE, false],
 	[Action.RESTART_PLAYBACK, false],

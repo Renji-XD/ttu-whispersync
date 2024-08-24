@@ -79,6 +79,14 @@ export const isRecording$ = writable<boolean>(false);
 
 export const togglePlaybackTitle$ = writable<string>('');
 
+export const rewindTitle$ = writable<string>('');
+
+export const altRewindTitle$ = writable<string>('');
+
+export const fastForwardTitle$ = writable<string>('');
+
+export const altFastForwardTitle$ = writable<string>('');
+
 export const previousSubtitleTitle$ = writable<string>('');
 
 export const nextSubtitleTitle$ = writable<string>('');
