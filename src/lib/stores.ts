@@ -135,6 +135,7 @@ export const settings$ = {
 	readerLineHighlightColor$: writableStringStore()('ttu-whispersync-reader-line-highlight-color'),
 	readerLineTextHighlightColor$: writableStringStore()('ttu-whispersync-reader-line-text-highlight-color'),
 	readerEnableLineHighlight$: writableBooleanStore()('ttu-whispersync-reader-enable-line-highlight'),
+	readerEnableLineTextHighlight$: writableBooleanStore()('ttu-whispersync-reader-enable-line-text-highlight'),
 	readerEnableAutoReload$: writableBooleanStore()('ttu-whispersync-reader-enable-auto-reload'),
 	readerEnableAutoScroll$: writableBooleanStore()('ttu-whispersync-reader-enable-auto-scroll'),
 	readerEnableTrackerAutoPause$: writableBooleanStore()('ttu-whispersync-reader-enable-tracker-auto-pause'),

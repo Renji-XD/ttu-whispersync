@@ -71,6 +71,7 @@ export type Settings = {
 	'ttu-whispersync-reader-line-highlight-color': string;
 	'ttu-whispersync-reader-line-text-highlight-color': string;
 	'ttu-whispersync-reader-enable-line-highlight': boolean;
+	'ttu-whispersync-reader-enable-line-text-highlight': boolean;
 	'ttu-whispersync-reader-enable-auto-reload': boolean;
 	'ttu-whispersync-reader-enable-auto-scroll': boolean;
 	'ttu-whispersync-reader-enable-tracker-auto-pause': boolean;
@@ -220,6 +221,7 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-reader-line-highlight-color': '#fffa82',
 		'ttu-whispersync-reader-line-text-highlight-color': '#000000',
 		'ttu-whispersync-reader-enable-line-highlight': true,
+		'ttu-whispersync-reader-enable-line-text-highlight': true,
 		'ttu-whispersync-reader-enable-auto-reload': true,
 		'ttu-whispersync-reader-enable-auto-scroll': true,
 		'ttu-whispersync-reader-enable-tracker-auto-pause': true,

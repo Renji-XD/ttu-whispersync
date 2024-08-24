@@ -94,6 +94,7 @@
 		readerLineHighlightColor$,
 		readerLineTextHighlightColor$,
 		readerEnableLineHighlight$,
+		readerEnableLineTextHighlight$,
 		readerEnableAutoScroll$,
 		readerScrollMode$,
 		readerClickAction$,
@@ -174,17 +175,40 @@
 		onFetchAnkiData();
 	}
 
-	$: onUpdateColorStylesNode($readerEnableLineHighlight$);
+	$: onUpdateColorStylesNode($readerEnableLineHighlight$, $readerEnableLineTextHighlight$);
 
-	async function onUpdateColorStylesNode(_?: any) {
+	async function onUpdateColorStylesNode(..._: any) {
 		await tick();
 
 		const nodeId = 'ttu-whispersync-color-styles';
-		const textNode = document.createTextNode(
-			`${
-				$readerEnableLineHighlight$ ? `span[class^='ttu-whispersync-line-highlight-'].active,` : ''
-			}span[class^='ttu-whispersync-line-highlight-'].menu-open {color: ${$readerLineTextHighlightColor$};background-color: ${$readerLineHighlightColor$};}`,
-		);
+		const cssContents: string[] = [];
+
+		if ($readerEnableLineHighlight$ && $readerEnableLineTextHighlight$) {
+			cssContents.push(
+				`span[class^='ttu-whispersync-line-highlight-'].active,`,
+				`span[class^='ttu-whispersync-line-highlight-'].menu-open `,
+				`{color: ${$readerLineTextHighlightColor$};background-color: ${$readerLineHighlightColor$};}`,
+			);
+		} else if ($readerEnableLineHighlight$) {
+			cssContents.push(
+				`span[class^='ttu-whispersync-line-highlight-'].active,`,
+				`span[class^='ttu-whispersync-line-highlight-'].menu-open `,
+				`{background-color: ${$readerLineHighlightColor$};}`,
+			);
+		} else if ($readerEnableLineTextHighlight$) {
+			cssContents.push(
+				`span[class^='ttu-whispersync-line-highlight-'].active,`,
+				`span[class^='ttu-whispersync-line-highlight-'].menu-open `,
+				`{color: ${$readerLineTextHighlightColor$};}`,
+			);
+		} else {
+			cssContents.push(
+				`span[class^='ttu-whispersync-line-highlight-'].menu-open `,
+				`{color: ${$readerLineTextHighlightColor$};background-color: ${$readerLineHighlightColor$};}`,
+			);
+		}
+
+		const textNode = document.createTextNode(cssContents.join(''));
 
 		let styleElement = document.getElementById(nodeId);
 
@@ -498,6 +522,11 @@
 			label="Enable line highlight"
 			helpText="If enabled active subtitles will be highlighted in the reader - requires matched book/line and subtitle/audio file"
 			targetStore$={readerEnableLineHighlight$}
+		/>
+		<SettingsCheckbox
+			label="Enable line text highlight"
+			helpText="If enabled text of active subtitles will be highlighted in the reader - requires matched book/line and subtitle/audio file"
+			targetStore$={readerEnableLineTextHighlight$}
 		/>
 		{#if supportsFileSystem}
 			<SettingsCheckbox
