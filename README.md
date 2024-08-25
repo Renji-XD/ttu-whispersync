@@ -42,6 +42,7 @@ pnpm run build:ext
 | Keybind                                 | Description                              |
 | --------------------------------------- | ---------------------------------------- |
 | <kbd>Cmd</kbd> + <kbd>Space</kbd>       | Toggle playback                          |
+| <kbd>Alt</kbd> + <kbd>j</kbd>           | Toggle playback (alt keybind)            |
 | <kbd>Cmd</kbd> + <kbd>d</kbd>           | Restart playback for active line         |
 | <kbd>Alt</kbd> + <kbd>d</kbd>           | Toggle play and pause for active line    |
 | <kbd>Cmd</kbd> + <kbd>l</kbd>           | Toggle playback loop for active line     |
@@ -80,7 +81,7 @@ Known issues / missing features are e. g. :
 -   worse performance
 -   no filesystem api support
 -   no "open in anki browser" functionality
--	no tag update functionality
+-   no tag update functionality
 -   no duplicate check for creating cards
 -   various iOS quirks
 
@@ -127,6 +128,10 @@ Note: iOS may block the ability to select certain files. For subtitles you there
 ### After matching the book it looks different
 
 -   By matching the book the text content is wrapped by helper elements to identify the related subtitle. Depending on the browser this may lead to some layout shifting afterwards and is expected / not really fixable. Whole missing characters or elements can be considered a bug which can be reported under "Issues". You can also try out the "Original" line space mode for matching in case you used a different one before
+
+### Audio file is not loading / loading spinner remains visible
+
+-   Some browser require user interaction in order to fire the required audio load events - so try to click/tap a couple of times on the loading spinner. If you have extensions like uBlock or use browser like brave (with their shield) try to disable them/whitelist the reader and check if the file is now loading
 
 ### What are the differences between the recorder and ffmpeg backend
 
