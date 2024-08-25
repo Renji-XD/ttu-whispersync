@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ConfirmDialog from './ConfirmDialog.svelte';
 	import Icon from './Icon.svelte';
 	import { Action, executeAction } from '../lib/actions';
 	import {
@@ -19,6 +20,7 @@
 		currentAudioSourceUrl$,
 		currentSubtitles$,
 		currentTime$,
+		dialogs$,
 		duration$,
 		exportCancelController$,
 		extensionData$,
@@ -380,6 +382,19 @@
 
 			audioElement.addEventListener('loadeddata', resolve, { once: true, capture: false });
 		});
+
+		await new Promise<boolean>((resolver) =>
+			dialogs$.add({
+				component: ConfirmDialog,
+				props: {
+					dialogHeader: 'Audio',
+					dialogMessage: 'Start audio session',
+					showCancel: false,
+					resolver,
+				},
+			}),
+		);
+
 		const playPromise = new Promise<void>((resolve) => {
 			const playInterval = setInterval(async () => {
 				try {
