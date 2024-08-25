@@ -20,6 +20,7 @@ import type { Subtitle } from './general';
 import { get } from 'svelte/store';
 
 interface VerificationResult {
+	isOutdatedVersion: boolean;
 	isAnkiConfigValid: boolean;
 	ankiFields: string[];
 }
@@ -156,13 +157,24 @@ async function verifyAnkiSettings(
 	isUpdate: boolean,
 ): Promise<VerificationResult> {
 	if (!ankiUrl || !ankiDeck || !ankiModel || (!ankiSentenceField && !ankiSoundField)) {
-		return { isAnkiConfigValid: false, ankiFields: [] };
+		return { isOutdatedVersion: false, isAnkiConfigValid: false, ankiFields: [] };
 	}
 
 	let ankiFields: string[] = [];
+	let isOutdatedVersion = false;
 	let isAnkiConfigValid = true;
 
 	try {
+		isOutdatedVersion = await request<any>(ankiUrl, {
+			action: 'apiReflect',
+			params: {
+				scopes: ['actions'],
+				actions: ['updateNote'],
+			},
+		})
+			.then(() => false)
+			.catch(() => true);
+
 		const [ankiDecks, ankiModels] = await getDecksAndModels(ankiUrl);
 
 		if (!ankiDecks.find((entry) => ankiDeck === entry)) {
@@ -201,10 +213,10 @@ async function verifyAnkiSettings(
 		ankiFields = [];
 	}
 
-	return { isAnkiConfigValid, ankiFields };
+	return { isOutdatedVersion, isAnkiConfigValid, ankiFields };
 }
 
-async function startExport(ankiUrl: string, isAnkiconnectAndroid: boolean) {
+async function startExport(ankiUrl: string, isAnkiconnectAndroid: boolean, isOutdatedVersion: boolean) {
 	if (isAnkiconnectAndroid) {
 		return undefined;
 	}
@@ -215,7 +227,12 @@ async function startExport(ankiUrl: string, isAnkiconnectAndroid: boolean) {
 		return [];
 	});
 
-	if (selectedNotes.length) {
+	if (selectedNotes.length && isOutdatedVersion) {
+		await request<number[]>(ankiUrl, {
+			action: 'guiBrowse',
+			params: { query: 'nid:1' },
+		});
+	} else if (selectedNotes.length) {
 		await request(ankiUrl, {
 			action: 'guiSelectNote',
 			params: {
@@ -241,17 +258,28 @@ function getNewFieldValue(fieldMode: string, existingFieldValue: string, newFiel
 	return value;
 }
 
-async function finalizeExport(ankiUrl: string, note: number | undefined) {
-	if (note) {
-		return request<void>(ankiUrl, {
-			action: 'guiSelectNote',
-			params: {
-				note,
-			},
+async function finalizeExport(ankiUrl: string, note: number | undefined, ankiModel: string | undefined) {
+	if (!note) {
+		return;
+	}
+
+	if (ankiModel) {
+		return request<number[]>(ankiUrl, {
+			action: 'guiBrowse',
+			params: { query: `"note:${ankiModel}"` },
 		}).catch(() => {
 			// no-op
 		});
 	}
+
+	return request<void>(ankiUrl, {
+		action: 'guiSelectNote',
+		params: {
+			note,
+		},
+	}).catch(() => {
+		// no-op
+	});
 }
 
 export function setApiKey(value: string) {
@@ -332,7 +360,7 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 	const ankiSentenceField = get(sentenceFieldStore);
 	const ankiSoundField = get(soundFieldStore);
 	const ankiEnableOpenInBrowser = get(settings$.ankiEnableOpenInBrowser$);
-	const { isAnkiConfigValid, ankiFields } = await verifyAnkiSettings(
+	const { isOutdatedVersion, isAnkiConfigValid, ankiFields } = await verifyAnkiSettings(
 		ankiUrl,
 		deckName,
 		deckStore,
@@ -388,7 +416,7 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 			return lastError$.set(`Failed to get card for update: ${message}`);
 		}
 	}
-	const lastNoteId = await startExport(ankiUrl, isAnkiconnectAndroid);
+	const lastNoteId = await startExport(ankiUrl, isAnkiconnectAndroid, isOutdatedVersion);
 	const baseSubtitleFileName = currentSubtitleFile.name.split(/\.(?=[^\.]+$)/)[0];
 	const baseAudioFileName = currentAudioFile ? currentAudioFile.name.split(/\.(?=[^\.]+$)/)[0] : '';
 
@@ -537,7 +565,7 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 			}
 
 			if (isUpdate) {
-				actionName = isAnkiconnectAndroid ? 'updateNoteFields' : 'updateNote';
+				actionName = isAnkiconnectAndroid || isOutdatedVersion ? 'updateNoteFields' : 'updateNote';
 			} else {
 				actionName = 'addNote';
 			}
@@ -582,7 +610,7 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 	if (handleLastExportedCard && ankiEnableOpenInBrowser) {
 		await openGUIForNote(ankiUrl, lastExportedCardId);
 	} else {
-		await finalizeExport(ankiUrl, lastNoteId);
+		await finalizeExport(ankiUrl, lastNoteId, isOutdatedVersion ? modelName : undefined);
 	}
 
 	if (failures) {
