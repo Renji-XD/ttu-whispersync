@@ -32,6 +32,7 @@
 		exportCancelController$,
 		exportProgress$,
 		extensionData$,
+		filesystemApiEnabled$,
 		hideFooterActions$,
 		isLoading$,
 		isMobile$,
@@ -101,7 +102,7 @@
 	}
 
 	const { subtitlesEnablePersist$, ankiSentenceField$, ankiSoundField$ } = settings$;
-	const { sandboxElement, supportsFileSystem, isIOS } = getContext<Context>('context');
+	const { sandboxElement, isIOS } = getContext<Context>('context');
 	const allowedSubtitleExtensions: FileExtension[] = ['.srt', '.vtt', '.txt'];
 	const allowedAudioExtensions: FileExtension[] = ['.m4a', '.m4b', '.mp3'];
 
@@ -461,7 +462,7 @@
 	async function onSetSubtitleFile() {
 		subtitleFilePopover.hide();
 
-		if (supportsFileSystem) {
+		if ($filesystemApiEnabled$) {
 			$skipKeyListener$ = true;
 			$isLoading$ = true;
 			$lastError$ = '';
@@ -506,7 +507,7 @@
 	async function onSetAudioFile() {
 		audioFilePopover.hide();
 
-		if (supportsFileSystem) {
+		if ($filesystemApiEnabled$) {
 			$skipKeyListener$ = true;
 			$isLoading$ = true;
 			$lastError$ = '';
@@ -592,7 +593,7 @@
 		$lastError$ = '';
 		$paused$ = true;
 
-		if (supportsFileSystem) {
+		if ($filesystemApiEnabled$) {
 			try {
 				if (key === 'lastSubtitle') {
 					await $booksDB$.delete('handle', [$extensionData$.title, 'subtitle']);

@@ -31,6 +31,8 @@ export interface SettingsStore<T> {
 
 export const isMobile$ = writable<boolean>(false);
 
+export const filesystemApiEnabled$ = writable<boolean>(false);
+
 export const isLoading$ = revertWriteable<boolean>(true);
 
 export const lastError$ = revertWriteable<string>('');
@@ -147,6 +149,7 @@ export const settings$ = {
 	readerEnableLineHighlight$: writableBooleanStore()('ttu-whispersync-reader-enable-line-highlight'),
 	readerEnableLineTextHighlight$: writableBooleanStore()('ttu-whispersync-reader-enable-line-text-highlight'),
 	readerEnableAutoReload$: writableBooleanStore()('ttu-whispersync-reader-enable-auto-reload'),
+	readerEnableFilesystemApi$: writableBooleanStore()('ttu-whispersync-reader-enable-filesystem-api'),
 	readerEnableAutoScroll$: writableBooleanStore()('ttu-whispersync-reader-enable-auto-scroll'),
 	readerEnableTrackerAutoPause$: writableBooleanStore()('ttu-whispersync-reader-enable-tracker-auto-pause'),
 	readerPreventActionOnSelection$: writableBooleanStore()('ttu-whispersync-reader-prevent-action-on-selection'),

@@ -36,6 +36,7 @@
 		exportUpdateTitle$,
 		extensionData$,
 		fastForwardTitle$,
+		filesystemApiEnabled$,
 		hideFooterActions$,
 		isAnkiconnectAndroid$,
 		isLoading$,
@@ -105,6 +106,7 @@
 		navigator.platform === 'iPod';
 	const {
 		readerEnableAutoReload$,
+		readerEnableFilesystemApi$,
 		readerPreventActionOnSelection$,
 		readerEnableMenuTarget$,
 		readerClickAction$,
@@ -145,6 +147,8 @@
 	let resizeTimer: number | undefined;
 
 	$isMobile$ = navigator.maxTouchPoints > 0;
+
+	$: $filesystemApiEnabled$ = supportsFileSystem && $readerEnableFilesystemApi$;
 
 	$: isLeftMenu = $currentMenuPosition$ === 'left';
 
@@ -469,7 +473,7 @@
 			const [audioBook, subtitle, audioHandle, subtitleHandle] = await Promise.all([
 				$booksDB$.get('audioBook', book.title),
 				$booksDB$.get('subtitle', book.title),
-				...(supportsFileSystem
+				...($filesystemApiEnabled$
 					? [
 							$booksDB$.get('handle', [book.title, 'audioBook']),
 							$booksDB$.get('handle', [book.title, 'subtitle']),
@@ -536,7 +540,7 @@
 			!$currentSubtitleFile$ && $extensionData$.lastSubtitle ? $extensionData$.lastSubtitle : undefined;
 		const lastAudio = !$currentAudioSourceUrl$ && $extensionData$.lastAudio ? $extensionData$.lastAudio : undefined;
 
-		if (!supportsFileSystem || (!lastSubtitle && !lastAudio)) {
+		if (!$filesystemApiEnabled$ || (!lastSubtitle && !lastAudio)) {
 			return;
 		}
 
@@ -552,12 +556,13 @@
 						props: {
 							dialogHeader: 'Reopen files',
 							dialogMessage: 'Click confirm to reopen files',
+							isFileReopen: supportsFileSystem,
 							resolver,
 						},
 					}),
 				);
 
-				if (!wasCanceled) {
+				if (!wasCanceled && $filesystemApiEnabled$) {
 					return initializeFiles(false);
 				}
 

@@ -32,6 +32,7 @@
 		currentSubtitles$,
 		duration$,
 		exportCancelController$,
+		filesystemApiEnabled$,
 		isLoading$,
 		isMobile$,
 		lastError$,
@@ -533,11 +534,18 @@
 			helpText="If enabled text of active subtitles will be highlighted in the reader - requires matched book/line and subtitle/audio file"
 			targetStore$={readerEnableLineTextHighlight$}
 		/>
-		{#if supportsFileSystem}
+		{#if $filesystemApiEnabled$}
 			<SettingsCheckbox
 				label="Enable auto reload"
 				helpText="If enabled the reader will attempt to reload last used files from filesystem automatically without the need for opening the side menu"
 				targetStore$={settings$.readerEnableAutoReload$}
+			/>
+		{/if}
+		{#if supportsFileSystem}
+			<SettingsCheckbox
+				label="Enable filesystem api"
+				helpText="If enabled the reader will use the filsystem api for storing and reading files"
+				targetStore$={settings$.readerEnableFilesystemApi$}
 			/>
 		{/if}
 		<SettingsCheckbox
