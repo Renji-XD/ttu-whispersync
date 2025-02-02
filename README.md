@@ -133,6 +133,14 @@ Note: iOS may block the ability to select certain files. For subtitles you there
 
 -   Some browser require user interaction in order to fire the required audio load events - so try to click/tap a couple of times on the loading spinner. If you have extensions like uBlock or use browser like brave (with their shield) try to disable them/whitelist the reader and check if the file is now loading
 
+### Files are not loading after the "Reopen Files" confirmation dialog / loading spinner remains visible
+
+-   Your browser may have unsupported implementations (e. g. Arc Browser) for the required apis. Disable the filesystem api via respective setting and reload the page to switch to manual file selection. In case you can't access the confirmation dialog or settings menu you can set the option manually by executing following code snippet in the browser devtools console (typically F12 key) and reloading the page: `window.localStorage.setItem('ttu-whispersync-reader-enable-filesystem-api',0)`
+
+### Files are not reloading with "Enable auto reload"
+
+-   You may have disabled the "Enable filesystem api" option during file import. Dropping the subtitle and audiofile and reloading them should add the required data and should auto load the files on the next page reload
+
 ### What are the differences between the recorder and ffmpeg backend
 
 -   The recorder backend will create audio clips by recording the system audio. Therefore it needs to play the audio parts in real time and without muted sound. To avoid issues the main controls of the script will be disabled during this duration. The recorder only supports mp3 as export format. Editing subtitles is only availabe as basic functionality. On browsers like Firefox you may encounter unresponsiveness during the mp3 conversion compared to Chrome
@@ -153,6 +161,10 @@ Note: iOS may block the ability to select certain files. For subtitles you there
 ### Card updates are not working on android
 
 -   Make sure to have AnkiconnectAndroid 1.14 (or higher) installed - previous versions are not supporting the required apis for updates
+
+### Exported covers have a different file extension
+
+-   Your browser may not support creating images in the requested format and therefore fallbacked to the png image format
 
 ### What is the bookmark functionality
 
