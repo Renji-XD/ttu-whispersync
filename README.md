@@ -61,6 +61,7 @@ pnpm run build:ext
 | <kbd>Cmd</kbd> + <kbd>Arrow Down</kbd>  | Rewind #2                                |
 | <kbd>Cmd</kbd> + <kbd>Arrow Right</kbd> | Fast-Forward                             |
 | <kbd>Cmd</kbd> + <kbd>Arrow Up</kbd>    | Fast-Forward #2                          |
+| <kbd>Alt</kbd> + <kbd>h</kbd>           | Toggle visibility of footer actions      |
 
 ## FAQ
 
