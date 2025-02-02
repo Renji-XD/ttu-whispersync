@@ -16,6 +16,7 @@
 		defaultReaderActionList,
 		defaultSubtitleActionList,
 		ExportFieldMode,
+		ImageFormat,
 		ReaderMenuOpenMode,
 		ReaderMenuPauseMode,
 		ReaderScrollBehavior,
@@ -116,6 +117,7 @@
 		playerAltFastForwardTime$,
 		exportAudioProcessor$,
 		exportAudioFormat$,
+		exportCoverFormat$,
 		ankiDuplicateMode$,
 		ankiUrl$,
 		ankiKey$,
@@ -127,12 +129,15 @@
 		ankiUpdateSentenceField$,
 		ankiSoundField$,
 		ankiUpdateSoundField$,
+		ankiCoverField$,
+		ankiUpdateCoverField$,
 		actionListOfReader$,
 		actionListOfSubtitles$,
 		actionListOfFooter$,
 	} = settings$;
 	const ankiModelFields = new Map<string, string[]>();
 	const ankiSettingsModes: AnkiSettingssMode[] = [AnkiSettingssMode.CREATE, AnkiSettingssMode.UPDATE];
+	const imageFormats = [ImageFormat.AUTO, ImageFormat.JPEG, ImageFormat.PNG, ImageFormat.WEBP];
 
 	let ankiSettingsMode = AnkiSettingssMode.CREATE;
 	let openSettingsMenu = SettingsMenu.NONE;
@@ -812,6 +817,12 @@
 			min={64}
 			step={10}
 		/>
+		<SettingsSelect
+			label="Image Format"
+			helpText="Image format used for exported cover (.png fallback)"
+			targetStore$={exportCoverFormat$}
+			options={imageFormats}
+		/>
 		{#if $exportAudioProcessor$ === AudioProcessor.FFMPEG}
 			<SettingsCheckbox
 				label="Enable FFMPEG log"
@@ -924,6 +935,20 @@
 					$ankiSoundField$ = '';
 				} else {
 					$ankiUpdateSoundField$ = '';
+				}
+			}}
+		/>
+		<SettingsSelect
+			label="Cover field"
+			buttonTitle="Clear field"
+			targetStore$={showAnkiCreateSettings ? ankiCoverField$ : ankiUpdateCoverField$}
+			buttonIcon={mdiTrashCan}
+			options={ankiFields}
+			on:click={() => {
+				if (showAnkiCreateSettings) {
+					$ankiCoverField$ = '';
+				} else {
+					$ankiUpdateCoverField$ = '';
 				}
 			}}
 		/>

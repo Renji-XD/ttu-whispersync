@@ -121,6 +121,7 @@ export type Settings = {
 	'ttu-whispersync-export-audio-processor': AudioProcessor;
 	'ttu-whispersync-export-audio-format': AudioFormat;
 	'ttu-whispersync-export-audio-bitrate': number;
+	'ttu-whispersync-export-cover-format': ImageFormat;
 	'ttu-whispersync-enable-ffmpeg-log': boolean;
 	'ttu-whispersync-anki-add-subtitle-tag': boolean;
 	'ttu-whispersync-anki-add-audio-tag': boolean;
@@ -138,6 +139,8 @@ export type Settings = {
 	'ttu-whispersync-anki-update-sentence-field': string;
 	'ttu-whispersync-anki-sound-field': string;
 	'ttu-whispersync-anki-update-sound-field': string;
+	'ttu-whispersync-anki-cover-field': string;
+	'ttu-whispersync-anki-update-cover-field': string;
 	'ttu-whispersync-action-list-of-reader': ActionListItem[];
 	'ttu-whispersync-action-list-of-subtitles': ActionListItem[];
 	'ttu-whispersync-action-list-of-footer': ActionListItem[];
@@ -211,6 +214,13 @@ export enum AudioFormat {
 	OPUS = 'opus',
 }
 
+export enum ImageFormat {
+	AUTO = 'auto',
+	JPEG = 'jpeg',
+	PNG = 'png',
+	WEBP = 'webp',
+}
+
 export enum ExportFieldMode {
 	BEFORE = 'Insert before',
 	AFTER = 'Insert after',
@@ -271,6 +281,7 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-export-audio-processor': AudioProcessor.RECORDER,
 		'ttu-whispersync-export-audio-format': AudioFormat.MP3,
 		'ttu-whispersync-export-audio-bitrate': 128,
+		'ttu-whispersync-export-cover-format': ImageFormat.AUTO,
 		'ttu-whispersync-enable-ffmpeg-log': false,
 		'ttu-whispersync-anki-add-subtitle-tag': false,
 		'ttu-whispersync-anki-add-audio-tag': false,
@@ -288,6 +299,8 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-anki-update-sentence-field': '',
 		'ttu-whispersync-anki-sound-field': '',
 		'ttu-whispersync-anki-update-sound-field': '',
+		'ttu-whispersync-anki-cover-field': '',
+		'ttu-whispersync-anki-update-cover-field': '',
 		'ttu-whispersync-keybindings-enable-time-fallback': false,
 		'ttu-whispersync-action-list-of-reader': transformToActionList(defaultReaderActionList),
 		'ttu-whispersync-action-list-of-subtitles': transformToActionList(defaultSubtitleActionList),

@@ -1,8 +1,9 @@
-import { AnkiDuplicateMode, AudioProcessor, ExportFieldMode } from './settings';
+import { AnkiDuplicateMode, AudioProcessor, ExportFieldMode, ImageFormat } from './settings';
 import { caluclatePercentage, throwIfAborted } from './util';
 import { cleanFiles, getAudio } from './ffmpeg';
 import {
 	currentAudioFile$,
+	currentCoverUrl$,
 	currentSubtitleFile$,
 	exportCancelController$,
 	exportProgress$,
@@ -154,6 +155,8 @@ async function verifyAnkiSettings(
 	sentenceFieldStore: SettingsStore<string>,
 	ankiSoundField: string,
 	soundFieldStore: SettingsStore<string>,
+	ankiCoverField: string,
+	coverFieldStore: SettingsStore<string>,
 	isUpdate: boolean,
 ): Promise<VerificationResult> {
 	if (!ankiUrl || !ankiDeck || !ankiModel || (!ankiSentenceField && !ankiSoundField)) {
@@ -203,6 +206,12 @@ async function verifyAnkiSettings(
 
 				isAnkiConfigValid = false;
 			}
+
+			if (ankiCoverField && !ankiFields.find((field) => field === ankiCoverField)) {
+				coverFieldStore.set('');
+
+				isAnkiConfigValid = false;
+			}
 		}
 	} catch ({ message }: any) {
 		resetAnkiSettings(isUpdate);
@@ -242,6 +251,44 @@ async function startExport(ankiUrl: string, isAnkiconnectAndroid: boolean, isOut
 	}
 
 	return selectedNotes[selectedNotes.length - 1];
+}
+
+async function createFileNameHash(encoder: TextEncoder, name: string) {
+	const data = encoder.encode(name);
+	const hashBuffer = await window.crypto.subtle.digest('SHA-1', data);
+	const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+	return hashArray
+		.map((b) => b.toString(16).padStart(2, '0'))
+		.join('')
+		.trim();
+}
+
+function getCoverData(coverFormat: string) {
+	return new Promise<string[]>((resolve, reject) => {
+		const canvas = document.createElement('canvas');
+		const img = document.querySelector<HTMLImageElement>('#ttu-whispersync-cover');
+
+		if (!img) {
+			return reject(new Error('cover element not found'));
+		}
+
+		canvas.width = img.naturalWidth;
+		canvas.height = img.naturalHeight;
+
+		const ctx = canvas.getContext('2d');
+
+		if (!ctx) {
+			return reject(new Error('canvas context undefined'));
+		}
+
+		ctx.drawImage(img, 0, 0);
+
+		const result = canvas.toDataURL(coverFormat);
+		const ext = result.match(/data:image\/(?<ext>.+);/)?.groups?.ext || 'jpeg';
+
+		resolve([result.split(',')[1], ext]);
+	});
 }
 
 function getNewFieldValue(fieldMode: string, existingFieldValue: string, newFieldValue: string) {
@@ -315,6 +362,7 @@ export function resetAnkiSettings(isUpdate: boolean) {
 		settings$.ankiModel$.set('');
 		settings$.ankiSentenceField$.set('');
 		settings$.ankiSoundField$.set('');
+		settings$.ankiCoverField$.set('');
 	}
 
 	permissionGranted = false;
@@ -338,8 +386,10 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 	exportCancelController$.set(abortController);
 
 	const currentAudioFile = get(currentAudioFile$);
+	const currentCoverUrl = get(currentCoverUrl$);
 	const exportAudioFormat = get(settings$.exportAudioFormat$);
 	const exportAudioBitrate = get(settings$.exportAudioBitrate$);
+	const exportCoverFormat = get(settings$.exportCoverFormat$);
 	const exportFieldMode = get(settings$.exportFieldMode$);
 	const ankiAddSubtitleTag = get(settings$.ankiAddSubtitleTag$);
 	const ankiAddAudioTag = get(settings$.ankiAddAudioTag$);
@@ -354,11 +404,13 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 	const modelStore = useUpdateStores ? settings$.ankiUpdateModel$ : settings$.ankiModel$;
 	const sentenceFieldStore = useUpdateStores ? settings$.ankiUpdateSentenceField$ : settings$.ankiSentenceField$;
 	const soundFieldStore = useUpdateStores ? settings$.ankiUpdateSoundField$ : settings$.ankiSoundField$;
+	const coverFieldStore = useUpdateStores ? settings$.ankiUpdateCoverField$ : settings$.ankiCoverField$;
 	const ankiUrl = get(settings$.ankiUrl$);
 	const deckName = get(deckStore);
 	const modelName = get(modelStore);
 	const ankiSentenceField = get(sentenceFieldStore);
 	const ankiSoundField = get(soundFieldStore);
+	const ankiCoverField = get(coverFieldStore);
 	const ankiEnableOpenInBrowser = get(settings$.ankiEnableOpenInBrowser$);
 	const { isOutdatedVersion, isAnkiConfigValid, ankiFields } = await verifyAnkiSettings(
 		ankiUrl,
@@ -370,6 +422,8 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 		sentenceFieldStore,
 		ankiSoundField,
 		soundFieldStore,
+		ankiCoverField,
+		coverFieldStore,
 		isUpdate,
 	);
 	const isAnkiconnectAndroid = get(isAnkiconnectAndroid$);
@@ -422,20 +476,45 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 
 	let failures = 0;
 	let audioFilePrefix = '';
+	let coverFilePrefix = '';
+	let coverExtension = '';
+	let coverContent = '';
 	let lastExportedCardId = 0;
 
 	try {
 		const encoder = new TextEncoder();
-		const data = encoder.encode(baseAudioFileName);
-		const hashBuffer = await window.crypto.subtle.digest('SHA-1', data);
-		const hashArray = Array.from(new Uint8Array(hashBuffer));
 
-		audioFilePrefix = hashArray
-			.map((b) => b.toString(16).padStart(2, '0'))
-			.join('')
-			.trim();
+		audioFilePrefix = await createFileNameHash(encoder, baseAudioFileName);
+		coverFilePrefix = await createFileNameHash(encoder, `${baseAudioFileName}_cover`);
 	} catch (_) {
 		audioFilePrefix = baseSubtitleFileName;
+	}
+
+	try {
+		if (currentCoverUrl && ankiCoverField) {
+			if (exportCoverFormat === ImageFormat.AUTO) {
+				coverContent = await fetch(currentCoverUrl)
+					.then((response) => {
+						if (!response.ok) {
+							throw new Error('Failed to fetch cover');
+						}
+
+						return response.blob();
+					})
+					.then((blob) => {
+						coverExtension = blob.type.replace('image/', '') || 'jpeg';
+
+						return blob.arrayBuffer();
+					})
+					.then((blobBuffer) => {
+						return Buffer.from(blobBuffer).toString('base64');
+					});
+			} else {
+				[coverContent, coverExtension] = await getCoverData(`image/${exportCoverFormat}`);
+			}
+		}
+	} catch ({ message }: any) {
+		return lastError$.set(`Failed to get cover: ${message}`);
 	}
 
 	lastExportedCardId$.set(0);
@@ -525,13 +604,30 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 				const field = ankiFields[index2];
 				const processAsSentenceField = field === ankiSentenceField && sentenceContent;
 				const processAsAudioField = field === ankiSoundField && audioContent;
+				const processAsCoverField = field === ankiCoverField && coverContent;
 				const existingFieldValue = cardToUpdate ? cardToUpdate.fields[field]?.value || '' : '';
 
-				if (processAsSentenceField || processAsAudioField) {
+				if (processAsSentenceField || processAsAudioField || processAsCoverField) {
 					let newFieldValue = '';
 
 					if (processAsSentenceField) {
 						newFieldValue += sentenceContent;
+					}
+
+					if (processAsCoverField) {
+						const finalFileName = await request<string>(ankiUrl, {
+							action: 'storeMediaFile',
+							params: {
+								data: coverContent,
+								filename: `${coverFilePrefix}.${coverExtension}`,
+							},
+						});
+
+						newFieldValue = getNewFieldValue(
+							ExportFieldMode.AFTER,
+							newFieldValue,
+							`<img src="${finalFileName}">`,
+						);
 					}
 
 					if (processAsAudioField) {

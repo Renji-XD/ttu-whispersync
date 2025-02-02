@@ -861,7 +861,7 @@
 <div class="flex m-y-s">
 	<button title={changeAudioTitle} disabled={!!$exportCancelController$} on:click={onSetAudioFile}>
 		{#if $currentCoverUrl$}
-			<img class="cover" src={$currentCoverUrl$} alt="cover" on:load={imageLoaded} />
+			<img id="ttu-whispersync-cover" class="cover" src={$currentCoverUrl$} alt="cover" on:load={imageLoaded} />
 		{:else}
 			<div class="cover">
 				<svg
