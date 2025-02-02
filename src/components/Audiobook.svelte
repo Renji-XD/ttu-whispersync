@@ -32,6 +32,7 @@
 		exportCancelController$,
 		exportProgress$,
 		extensionData$,
+		hideFooterActions$,
 		isLoading$,
 		isMobile$,
 		isRecording$,
@@ -63,6 +64,8 @@
 		mdiDeleteClock,
 		mdiDeleteSweep,
 		mdiEqual,
+		mdiEyeOffOutline,
+		mdiEyeOutline,
 		mdiFileArrowLeftRightOutline,
 		mdiFilePlusOutline,
 		mdiFloppy,
@@ -141,6 +144,8 @@
 	$: audioActionAvailable = $currentAudioLoaded$ && hasListItems && !$isRecording$;
 
 	$: durationHours = $duration$ ? Math.floor($duration$ / 3600) : 999;
+
+	$: toggleHideFooterActionsTitle = $hideFooterActions$ ? 'Show footer actions' : 'Hide footer actions';
 
 	$: if ($exportCancelController$) {
 		changeSubtitleTitle = 'Export in progress';
@@ -1039,6 +1044,9 @@
 			</button>
 		</div>
 		<div class="flex justify-between w-full m-t-s header-icons">
+			<button title={toggleHideFooterActionsTitle} on:click={() => ($hideFooterActions$ = !$hideFooterActions$)}>
+				<Icon path={$hideFooterActions$ ? mdiEyeOutline : mdiEyeOffOutline} />
+			</button>
 			<button
 				title={exportNewTitle}
 				disabled={!canExportNew}
@@ -1066,9 +1074,6 @@
 				path={mdiOpenInApp}
 				buttonClasses=""
 			/>
-			<button class="invisible">
-				<Icon path={mdiFloppy} />
-			</button>
 			<button class="invisible">
 				<Icon path={mdiFloppy} />
 			</button>

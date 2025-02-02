@@ -36,6 +36,7 @@
 		exportUpdateTitle$,
 		extensionData$,
 		fastForwardTitle$,
+		hideFooterActions$,
 		isAnkiconnectAndroid$,
 		isLoading$,
 		isMobile$,
@@ -161,7 +162,9 @@
 		!!$exportCancelController$ &&
 		!!enabledFooterActions.find(({ action }) => action === Action.EXPORT_NEW || action === Action.EXPORT_UPDATE);
 
-	$: componentContainerElement.style.width = enabledFooterActions.length
+	$: showFooterActions = enabledFooterActions.length && !$hideFooterActions$;
+
+	$: componentContainerElement.style.width = showFooterActions
 		? `${1.9 + 1.9 * enabledFooterActions.length + (showCancelFooterAction ? 1.9 : 0)}rem`
 		: '1.9rem';
 
@@ -329,6 +332,11 @@
 				case 'KeyZ':
 				case 'z':
 					action = Action.COPY_SUBTITLE;
+					break;
+				case 'KeyH':
+				case 'h':
+					action = Action.NONE;
+					$hideFooterActions$ = !$hideFooterActions$;
 					break;
 				default:
 					action = Action.NONE;
@@ -853,7 +861,7 @@
 	<Icon path={mdiPlaylistMusicOutline} />
 </button>
 
-{#if enabledFooterActions.length}
+{#if showFooterActions}
 	<ActionButtonList
 		isFooter
 		buttonClasses="h-full hover:opacity-70"

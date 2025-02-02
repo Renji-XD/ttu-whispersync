@@ -115,6 +115,8 @@ export const exportCancelTitle$ = writable<string>('');
 
 export const currentMenuPosition$ = writableStringStore()('ttu-whispersync-menu-position', 'left');
 
+export const hideFooterActions$ = writableBooleanStore()('ttu-whispersync-hide-footer-actions', false);
+
 export const currentTab$ = revertWriteable<Tabs>(Tabs.AUDIOBOOK);
 
 export const bookmarkedSubtitles$ = revertWriteable<Set<string>>(new Set<string>());

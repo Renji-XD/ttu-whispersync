@@ -1008,6 +1008,11 @@
 				description={`Fast-Forward ${$playerAltFastForwardTime$} seconds`}
 				extendDescription={false}
 			/>
+			<SettingsKeybind
+				key="Alt + h"
+				description={`Toggle visibility of footer actions`}
+				extendDescription={false}
+			/>
 		</SettingsMenuContent>
 	{/if}
 </div>
