@@ -151,6 +151,7 @@
 	let actionTimeIndex = -1;
 	let originalCurrentTime = -1;
 	let originalPlaybackRate = -1;
+	let skipNextCue = false;
 	let originalMuted: boolean | undefined;
 	let displayedPlaybackrate = $playbackRate$;
 	let recorderSuccess: undefined | ((audioBuffer: ArrayBuffer | undefined) => void);
@@ -551,6 +552,7 @@
 		recorderFailure = undefined;
 
 		if (originalCurrentTime > -1) {
+			skipNextCue = true;
 			setTime(originalCurrentTime);
 		}
 
@@ -621,6 +623,7 @@
 			originalCurrentTime = -1;
 			originalPlaybackRate = -1;
 			originalMuted = undefined;
+			skipNextCue = false;
 		}
 
 		if (
@@ -737,7 +740,7 @@
 
 		updateCSSClasses(id);
 
-		if (originalCurrentTime === -1 && $readerEnableAutoScroll$) {
+		if (originalCurrentTime === -1 && $readerEnableAutoScroll$ && !skipNextCue) {
 			document.dispatchEvent(
 				new CustomEvent('ttu-action', {
 					detail: {
@@ -748,6 +751,10 @@
 					},
 				}),
 			);
+		}
+
+		if (skipNextCue) {
+			skipNextCue = false;
 		}
 
 		if ($playerEnableSubtitleCopy$) {
