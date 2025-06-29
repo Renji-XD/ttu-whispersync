@@ -130,8 +130,16 @@ export async function initializeFFMPEG() {
 			wasmURL: blobUrls[1],
 			classWorkerURL: blobUrls[2],
 		});
-	} catch ({ message }: any) {
+	} catch (error: any) {
 		settings$.exportAudioProcessor$.set(AudioProcessor.RECORDER);
+
+		let message = 'Unknown error';
+
+		if (typeof error === 'string') {
+			message = error;
+		} else if (error?.message) {
+			message = error.message;
+		}
 
 		throw new Error(`Error loading FFMPEG - ${message}`);
 	} finally {
