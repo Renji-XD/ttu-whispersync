@@ -23,12 +23,16 @@
 		restoreSubtitleTitle$,
 		rewindTitle$,
 		settings$,
+		showBookmarkedSubtitlesOnly$,
+		showSubtitlesForMergeOnly$,
 		subtitlesForMerge$,
 		toggleBookmarkTitle$,
 		toggleMergeTitle$,
 		togglePlayPauseTitle$,
 		togglePlaybackLoopTitle$,
 		togglePlaybackTitle$,
+		toggleShowBookmarkedSubtitlesTitle$,
+		toggleShowSubtitlesForMergeTitle$,
 	} from '../lib/stores';
 	import { between } from '../lib/util';
 	import {
@@ -37,6 +41,10 @@
 		mdiContentCopy,
 		mdiDatabasePlus,
 		mdiDatabaseSync,
+		mdiFilter,
+		mdiFilterMultiple,
+		mdiFilterMultipleOutline,
+		mdiFilterOutline,
 		mdiOpenInApp,
 		mdiPageNextOutline,
 		mdiPagePreviousOutline,
@@ -68,7 +76,11 @@
 
 	$: bookmarkPath = subtitle && $bookmarkedSubtitles$.has(subtitle.id) ? mdiStar : mdiStarOutline;
 
+	$: toggleShowBookmarkedPath = $showBookmarkedSubtitlesOnly$ ? mdiFilter : mdiFilterOutline;
+
 	$: mergePath = subtitle && $subtitlesForMerge$.has(subtitle.id) ? mdiSelectRemove : mdiSelect;
+
+	$: toggleShowForMergePath = $showSubtitlesForMergeOnly$ ? mdiFilterMultiple : mdiFilterMultipleOutline;
 
 	$: showCancelAction =
 		!hideCancelAction &&
@@ -191,9 +203,29 @@
 				{...getActionButtonProps(Action.TOGGLE_BOOKMARK, $toggleBookmarkTitle$, bookmarkPath, subtitle)}
 				on:executed
 			/>
+		{:else if listItem.action === Action.TOGGLE_SHOW_BOOKMARKED}
+			<ActionButton
+				{...getActionButtonProps(
+					Action.TOGGLE_SHOW_BOOKMARKED,
+					$toggleShowBookmarkedSubtitlesTitle$,
+					toggleShowBookmarkedPath,
+					getDummySubtitle(0),
+				)}
+				on:executed
+			/>
 		{:else if listItem.action === Action.TOGGLE_MERGE}
 			<ActionButton
 				{...getActionButtonProps(Action.TOGGLE_MERGE, $toggleMergeTitle$, mergePath, subtitle)}
+				on:executed
+			/>
+		{:else if listItem.action === Action.TOGGLE_SHOW_FOR_MERGE}
+			<ActionButton
+				{...getActionButtonProps(
+					Action.TOGGLE_SHOW_FOR_MERGE,
+					$toggleShowSubtitlesForMergeTitle$,
+					toggleShowForMergePath,
+					getDummySubtitle(0),
+				)}
 				on:executed
 			/>
 		{:else if listItem.action === Action.EDIT_SUBTITLE}

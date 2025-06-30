@@ -26,6 +26,8 @@ import {
 	booksDB$,
 	canExportToAnki$,
 	bookMatched$,
+	showBookmarkedSubtitlesOnly$,
+	showSubtitlesForMergeOnly$,
 } from './stores';
 import { get, type Writable } from 'svelte/store';
 import { allIgnoredElements, between, getLineCSSSelectorForId, parseHTML, toTimeStamp } from './util';
@@ -254,7 +256,9 @@ export enum Action {
 	TOGGLE_PLAY_PAUSE = 'Toggle play and pause',
 	TOGGLE_PLAYBACK_LOOP = 'Toggle playback loop',
 	TOGGLE_BOOKMARK = 'Toggle bookmark',
+	TOGGLE_SHOW_BOOKMARKED = 'Toggle menu bookmark filter',
 	TOGGLE_MERGE = 'Toggle for merge',
+	TOGGLE_SHOW_FOR_MERGE = 'Toggle menu merge filter',
 	ALIGN_SUBTITLE = 'Align with book text',
 	EDIT_SUBTITLE = 'Edit subtitle',
 	RESTORE_SUBTITLE = 'Restore original text and time',
@@ -353,8 +357,12 @@ export async function executeAction(
 		});
 	} else if (action === Action.TOGGLE_BOOKMARK) {
 		executeFilterAction(bookmarkedSubtitles$, subtitles[0].id);
+	} else if (action === Action.TOGGLE_SHOW_BOOKMARKED) {
+		showBookmarkedSubtitlesOnly$.set(!get(showBookmarkedSubtitlesOnly$));
 	} else if (action === Action.TOGGLE_MERGE) {
 		executeFilterAction(subtitlesForMerge$, subtitles[0].id);
+	} else if (action === Action.TOGGLE_SHOW_FOR_MERGE) {
+		showSubtitlesForMergeOnly$.set(!get(showSubtitlesForMergeOnly$));
 	} else if (!exportCancelController && action === Action.EDIT_SUBTITLE) {
 		await executeEditSubtitle(subtitles[0]);
 	} else if (!exportCancelController && action === Action.ALIGN_SUBTITLE && get(bookMatched$).matchedBy) {

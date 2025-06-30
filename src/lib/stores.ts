@@ -1,4 +1,3 @@
-import type { Action } from './actions';
 import type { BooksDB, BooksDBData, ExtensionData } from './db';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import {
@@ -101,7 +100,11 @@ export const togglePlaybackLoopTitle$ = writable<string>('');
 
 export const toggleBookmarkTitle$ = writable<string>('');
 
+export const toggleShowBookmarkedSubtitlesTitle$ = writable<string>('');
+
 export const toggleMergeTitle$ = writable<string>('');
+
+export const toggleShowSubtitlesForMergeTitle$ = writable<string>('');
 
 export const editSubtitleTitle$ = writable<string>('');
 
@@ -121,7 +124,11 @@ export const hideFooterActions$ = writableBooleanStore()('ttu-whispersync-hide-f
 
 export const currentTab$ = revertWriteable<Tabs>(Tabs.AUDIOBOOK);
 
+export const showBookmarkedSubtitlesOnly$ = writable<boolean>(false);
+
 export const bookmarkedSubtitles$ = revertWriteable<Set<string>>(new Set<string>());
+
+export const showSubtitlesForMergeOnly$ = writable<boolean>(false);
 
 export const subtitlesForMerge$ = revertWriteable<Set<string>>(new Set<string>());
 

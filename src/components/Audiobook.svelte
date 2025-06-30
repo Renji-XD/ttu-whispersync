@@ -41,8 +41,12 @@
 		openLastExportedCardTitle$,
 		paused$,
 		settings$,
+		showBookmarkedSubtitlesOnly$,
+		showSubtitlesForMergeOnly$,
 		skipKeyListener$,
 		subtitlesForMerge$,
+		toggleShowBookmarkedSubtitlesTitle$,
+		toggleShowSubtitlesForMergeTitle$,
 	} from '../lib/stores';
 	import {
 		allIgnoredElements,
@@ -121,16 +125,12 @@
 	let resetPlaybackPositionTitle = '';
 	let alignSubtitlesTitle = '';
 	let restoreSubtitlesTitle = '';
-	let bookmarkTitle = '';
-	let subtitlesForMergeTitle = '';
 	let playPauseActionTitle = '';
 	let loopSubtitleActionTitle = '';
 	let exportNewTitle = '';
 	let exportUpdateTitle = '';
 	let canExportNew = false;
 	let canExportUpdate = false;
-	let showBookmarkedSubtitlesOnly = false;
-	let showSubtitlesForMergeOnly = false;
 	let currentHours = 0;
 	let currentMinutes = 0;
 	let currentSeconds = 0;
@@ -138,7 +138,7 @@
 	let imageLoaded: () => void;
 	let subtitles: Subtitle[] = [];
 
-	$: updateSubtitleList($currentSubtitles$, showBookmarkedSubtitlesOnly, showSubtitlesForMergeOnly);
+	$: updateSubtitleList($currentSubtitles$, $showBookmarkedSubtitlesOnly$, $showSubtitlesForMergeOnly$);
 
 	$: hasListItems = subtitles.length > 0;
 
@@ -175,7 +175,7 @@
 	} else if (!$bookMatched$.matchedBy) {
 		alignSubtitlesTitle = 'Matched book required';
 	} else {
-		alignSubtitlesTitle = `Align${showBookmarkedSubtitlesOnly || showSubtitlesForMergeOnly ? ' selected' : ' all'} subtitles with book text`;
+		alignSubtitlesTitle = `Align${$showBookmarkedSubtitlesOnly$ || $showSubtitlesForMergeOnly$ ? ' selected' : ' all'} subtitles with book text`;
 	}
 
 	$: if (!$currentSubtitles$.size) {
@@ -185,15 +185,15 @@
 	} else if (!hasListItems) {
 		restoreSubtitlesTitle = 'No subtitle matches current filter';
 	} else {
-		restoreSubtitlesTitle = `Restore original time and text for${showBookmarkedSubtitlesOnly || showSubtitlesForMergeOnly ? ' selected' : ' all'} subtitles`;
+		restoreSubtitlesTitle = `Restore original time and text for${$showBookmarkedSubtitlesOnly$ || $showSubtitlesForMergeOnly$ ? ' selected' : ' all'} subtitles`;
 	}
 
 	$: if (!$currentSubtitles$.size) {
-		bookmarkTitle = 'Subtitle file required';
-		subtitlesForMergeTitle = 'Subtitle file required';
+		$toggleShowBookmarkedSubtitlesTitle$ = 'Subtitle file required';
+		$toggleShowSubtitlesForMergeTitle$ = 'Subtitle file required';
 	} else {
-		bookmarkTitle = showBookmarkedSubtitlesOnly ? 'Show all subtitles' : 'Show only bookmarked subtitles';
-		subtitlesForMergeTitle = showSubtitlesForMergeOnly ? 'Show all subtitles' : 'Show only subtitles for merge';
+		$toggleShowBookmarkedSubtitlesTitle$ = Action.TOGGLE_SHOW_BOOKMARKED;
+		$toggleShowSubtitlesForMergeTitle$ = Action.TOGGLE_SHOW_FOR_MERGE;
 	}
 
 	$: if (!$currentSubtitles$.size) {
@@ -208,7 +208,7 @@
 	} else if (!hasListItems) {
 		playPauseActionTitle = 'No subtitle matches current filter';
 		loopSubtitleActionTitle = 'No subtitle matches current filter';
-	} else if (!showBookmarkedSubtitlesOnly && !showSubtitlesForMergeOnly) {
+	} else if (!$showBookmarkedSubtitlesOnly$ && !$showSubtitlesForMergeOnly$) {
 		playPauseActionTitle = 'Bookmark or merge filter required';
 		loopSubtitleActionTitle = 'Bookmark or merge filter required';
 	} else {
@@ -242,10 +242,10 @@
 		canExportNew = false;
 		canExportUpdate = false;
 	} else {
-		if (showSubtitlesForMergeOnly) {
+		if ($showSubtitlesForMergeOnly$) {
 			exportNewTitle = 'Merge selected subtitles and create new Card for selected subtitles';
 			canExportNew = true;
-		} else if (showBookmarkedSubtitlesOnly) {
+		} else if ($showBookmarkedSubtitlesOnly$) {
 			exportNewTitle = 'Create new cards for selected subtitles';
 			canExportNew = true;
 		} else {
@@ -253,7 +253,7 @@
 			canExportNew = false;
 		}
 
-		if (showSubtitlesForMergeOnly) {
+		if ($showSubtitlesForMergeOnly$) {
 			exportUpdateTitle = 'Merge selected subtitles and update last card';
 			canExportUpdate = true;
 		} else {
@@ -262,17 +262,17 @@
 		}
 	}
 
-	$: if (showBookmarkedSubtitlesOnly) {
+	$: if ($showBookmarkedSubtitlesOnly$) {
 		updateSubtitleList($bookmarkedSubtitles$);
 	}
 
-	$: if (showSubtitlesForMergeOnly) {
+	$: if ($showSubtitlesForMergeOnly$) {
 		updateSubtitleList($subtitlesForMerge$);
 	}
 
 	$: if ($currentSubtitleFile$) {
-		showBookmarkedSubtitlesOnly = false;
-		showSubtitlesForMergeOnly = false;
+		$showBookmarkedSubtitlesOnly$ = false;
+		$showSubtitlesForMergeOnly$ = false;
 	}
 
 	$: if (!$currentAudioSourceUrl$) {
@@ -832,8 +832,8 @@
 	async function updateSubtitleList(..._: any[]) {
 		subtitles = [...$currentSubtitles$.values()].filter(
 			(subtitle) =>
-				(!showBookmarkedSubtitlesOnly || $bookmarkedSubtitles$.has(subtitle.id)) &&
-				(!showSubtitlesForMergeOnly || $subtitlesForMerge$.has(subtitle.id)),
+				(!$showBookmarkedSubtitlesOnly$ || $bookmarkedSubtitles$.has(subtitle.id)) &&
+				(!$showSubtitlesForMergeOnly$ || $subtitlesForMerge$.has(subtitle.id)),
 		);
 
 		await tick();
@@ -1016,29 +1016,29 @@
 				<Icon path={mdiRestore} />
 			</button>
 			<button
-				title={bookmarkTitle}
+				title={$toggleShowBookmarkedSubtitlesTitle$}
 				disabled={!$currentSubtitles$.size}
-				on:click={() => (showBookmarkedSubtitlesOnly = !showBookmarkedSubtitlesOnly)}
+				on:click={() => ($showBookmarkedSubtitlesOnly$ = !$showBookmarkedSubtitlesOnly$)}
 			>
-				<Icon path={showBookmarkedSubtitlesOnly ? mdiStar : mdiStarOutline} />
+				<Icon path={$showBookmarkedSubtitlesOnly$ ? mdiStar : mdiStarOutline} />
 			</button>
 			<button
-				title={subtitlesForMergeTitle}
+				title={$toggleShowSubtitlesForMergeTitle$}
 				disabled={!$currentSubtitles$.size}
-				on:click={() => (showSubtitlesForMergeOnly = !showSubtitlesForMergeOnly)}
+				on:click={() => ($showSubtitlesForMergeOnly$ = !$showSubtitlesForMergeOnly$)}
 			>
-				<Icon path={showSubtitlesForMergeOnly ? mdiSelectRemove : mdiSelect} />
+				<Icon path={$showSubtitlesForMergeOnly$ ? mdiSelectRemove : mdiSelect} />
 			</button>
 			<button
 				title={playPauseActionTitle}
-				disabled={!audioActionAvailable || (!showBookmarkedSubtitlesOnly && !showSubtitlesForMergeOnly)}
+				disabled={!audioActionAvailable || (!$showBookmarkedSubtitlesOnly$ && !$showSubtitlesForMergeOnly$)}
 				on:click={() => executeAction(Action.TOGGLE_PLAY_PAUSE, subtitles, { skipUpdates: true })}
 			>
 				<Icon path={mdiPlayPause} />
 			</button>
 			<button
 				title={loopSubtitleActionTitle}
-				disabled={!audioActionAvailable || (!showBookmarkedSubtitlesOnly && !showSubtitlesForMergeOnly)}
+				disabled={!audioActionAvailable || (!$showBookmarkedSubtitlesOnly$ && !$showSubtitlesForMergeOnly$)}
 				on:click={() => executeAction(Action.TOGGLE_PLAYBACK_LOOP, subtitles, { skipUpdates: true })}
 			>
 				<Icon path={mdiRefresh} />
@@ -1053,7 +1053,7 @@
 				disabled={!canExportNew}
 				on:click={() =>
 					executeAction(Action.EXPORT_NEW, subtitles, {
-						mergeSubtitles: showSubtitlesForMergeOnly,
+						mergeSubtitles: $showSubtitlesForMergeOnly$,
 					})}
 			>
 				<Icon path={mdiDatabasePlus} />
@@ -1174,7 +1174,7 @@
 				</button>
 			</div>
 			<Subtitles
-				skipUpdates={showBookmarkedSubtitlesOnly || showSubtitlesForMergeOnly}
+				skipUpdates={$showBookmarkedSubtitlesOnly$ || $showSubtitlesForMergeOnly$}
 				{subtitles}
 				bind:this={subtitleListElement}
 			/>
