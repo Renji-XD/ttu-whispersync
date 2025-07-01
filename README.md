@@ -179,9 +179,17 @@ Note: iOS may block the ability to select certain files. For subtitles you there
 
 -   No - there is no export queue implemented. If you e.g. execute an export keybind while an other export is still running it will be simply ignored. If you often want to export close lines it is better to use the bookmark functionality and do a bulk export in the end of your reading/listening session
 
+### Can i rebind the Keybindings?
+
+-   No - the extension is external to the ttu website and therefore has static keybinds in order to avoid collisions with reader keybinds (which are also static)
+
 ### Keybind 'X' is not executed
 
 -   Note that most of the keybinds are only executed for the current most recent active subtitle. If none exist no action will be executed but you can still do so with the reader / subtitle actions. For exports see also the [previous](#is-it-possible-to-queue--execute-exports-in-parallel) point. Alternatively you can enable the "Enable time fallback" setting under keybindings which search through the whole list for the closest subtitle on the current playback position
+
+### The player does not auto pause when a dictionary popup is open
+
+-   As extensions cannot access each other directly there is often no direct way to tell if the popup is open or not - therefore ttu-whispersync applies some technical workarounds for attempting to detect those states. Based on the nature of workarounds they may or they may not work - depending on used browser and device. Also make sure to disable dictionary detection for those cases and tryi to explicitly tap into the dictionary popup as some devices may not report the required focus loss event otherwise
 
 ### The reader menu / action list is not opening - only my popup dictionary
 
