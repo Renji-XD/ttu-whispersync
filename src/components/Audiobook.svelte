@@ -1054,6 +1054,14 @@
 				on:click={() =>
 					executeAction(Action.EXPORT_NEW, subtitles, {
 						mergeSubtitles: $showSubtitlesForMergeOnly$,
+					}).finally(() => {
+						if ($showSubtitlesForMergeOnly$) {
+							updateSubtitleList(
+								$currentSubtitles$,
+								$showBookmarkedSubtitlesOnly$,
+								$showSubtitlesForMergeOnly$,
+							);
+						}
 					})}
 			>
 				<Icon path={mdiDatabasePlus} />
@@ -1064,6 +1072,14 @@
 				on:click={() =>
 					executeAction(Action.EXPORT_UPDATE, subtitles, {
 						mergeSubtitles: true,
+					}).finally(() => {
+						if ($showSubtitlesForMergeOnly$) {
+							updateSubtitleList(
+								$currentSubtitles$,
+								$showBookmarkedSubtitlesOnly$,
+								$showSubtitlesForMergeOnly$,
+							);
+						}
 					})}
 			>
 				<Icon path={mdiDatabaseSync} />

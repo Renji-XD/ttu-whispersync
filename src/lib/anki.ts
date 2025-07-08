@@ -13,6 +13,7 @@ import {
 	paused$,
 	playLine$,
 	settings$,
+	subtitlesForMerge$,
 	type SettingsStore,
 } from './stores';
 
@@ -368,7 +369,7 @@ export function resetAnkiSettings(isUpdate: boolean) {
 	permissionGranted = false;
 }
 
-export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: boolean) {
+export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: boolean, isMerge: boolean) {
 	const abortController = new AbortController();
 	const currentSubtitleFile = get(currentSubtitleFile$);
 	const isFFMPEG = get(settings$.exportAudioProcessor$) === AudioProcessor.FFMPEG;
@@ -711,6 +712,8 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 
 	if (failures) {
 		lastError$.set(`${failures} Export(s) failed`);
+	} else if (isMerge && get(settings$.exportEnableMergeSelectionAutoClear$)) {
+		subtitlesForMerge$.set(new Set<string>());
 	}
 }
 

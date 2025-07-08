@@ -199,6 +199,9 @@ export const settings$ = {
 	exportAudioFormat$: writableStringStore()('ttu-whispersync-export-audio-format'),
 	exportAudioBitrate$: writableNumberStore()('ttu-whispersync-export-audio-bitrate'),
 	exportCoverFormat$: writableStringStore()('ttu-whispersync-export-cover-format'),
+	exportEnableMergeSelectionAutoClear$: writableBooleanStore()(
+		'ttu-whispersync-export-enable-merge-selection-auto-clear',
+	),
 	enableFFMPEGLog$: writableBooleanStore()('ttu-whispersync-enable-ffmpeg-log'),
 	ankiAddSubtitleTag$: writableBooleanStore()('ttu-whispersync-anki-add-subtitle-tag'),
 	ankiAddAudioTag$: writableBooleanStore()('ttu-whispersync-anki-add-audio-tag'),

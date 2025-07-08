@@ -116,6 +116,7 @@
 		playerAltRewindTime$,
 		playerFastForwardTime$,
 		playerAltFastForwardTime$,
+		exportEnableMergeSelectionAutoClear$,
 		exportAudioProcessor$,
 		exportAudioFormat$,
 		exportCoverFormat$,
@@ -830,6 +831,11 @@
 			helpText="Image format used for exported cover (.png fallback)"
 			targetStore$={exportCoverFormat$}
 			options={imageFormats}
+		/>
+		<SettingsCheckbox
+			label="Enable merge selection auto clear after export"
+			helpText="If enabled the current selection of subtitles for a merge will be automatically cleared after a successfull merge export or update"
+			targetStore$={exportEnableMergeSelectionAutoClear$}
 		/>
 		{#if $exportAudioProcessor$ === AudioProcessor.FFMPEG}
 			<SettingsCheckbox

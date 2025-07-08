@@ -131,6 +131,7 @@ export type Settings = {
 	'ttu-whispersync-export-audio-format': AudioFormat;
 	'ttu-whispersync-export-audio-bitrate': number;
 	'ttu-whispersync-export-cover-format': ImageFormat;
+	'ttu-whispersync-export-enable-merge-selection-auto-clear': boolean;
 	'ttu-whispersync-enable-ffmpeg-log': boolean;
 	'ttu-whispersync-anki-add-subtitle-tag': boolean;
 	'ttu-whispersync-anki-add-audio-tag': boolean;
@@ -292,6 +293,7 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-export-audio-format': AudioFormat.MP3,
 		'ttu-whispersync-export-audio-bitrate': 128,
 		'ttu-whispersync-export-cover-format': ImageFormat.AUTO,
+		'ttu-whispersync-export-enable-merge-selection-auto-clear': false,
 		'ttu-whispersync-enable-ffmpeg-log': false,
 		'ttu-whispersync-anki-add-subtitle-tag': false,
 		'ttu-whispersync-anki-add-audio-tag': false,

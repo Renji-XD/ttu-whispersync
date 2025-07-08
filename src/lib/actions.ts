@@ -398,6 +398,7 @@ export async function executeAction(
 		await exportToAnki(
 			getSubtitlesForExport(subtitles, settings.mergeSubtitles),
 			action === Action.EXPORT_UPDATE,
+			settings.mergeSubtitles || false,
 		).finally(() => {
 			exportProgress$.set(0);
 			exportCancelController$.set(undefined);

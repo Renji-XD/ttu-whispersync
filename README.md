@@ -175,6 +175,10 @@ Note: iOS may block the ability to select certain files. For subtitles you there
 
 -   You can flag subtitles for merge to "remember" them in order to listen to important lines again or do a merged export to combine multiple lines into one card. You can find them by opening the subtitle list menu (main icon in the bottom left corner) and enabling the merge filter in the top controls. Playing / Looping via respective top control icon will play all flagged lines while skipping the ones in between and skipping the update to your current playback position. You can do a merge export by clicking on the respective icon in the top controls - this will either create one single new card or update your last card with the content of all flagged lines and their respective audio
 
+### Do the export / update keybinds / subtitle / reader / footer actions respect the merge / bookmark filter?
+
+-   No - exports / updates executed in this way will always be executed for the subtitle context it was called on. To avoid wrongly exported / missing data merge / bookmark exports / updates are only available via the audiobook menu buttons on the right side of the cover (with respective filters enabled)
+
 ### Is it possible to queue / execute exports in parallel
 
 -   No - there is no export queue implemented. If you e.g. execute an export keybind while an other export is still running it will be simply ignored. If you often want to export close lines it is better to use the bookmark functionality and do a bulk export in the end of your reading/listening session
