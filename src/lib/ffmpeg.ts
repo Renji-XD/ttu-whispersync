@@ -9,6 +9,8 @@ import { settings$ } from './stores';
 
 const ffmpeg = new FFmpeg();
 const isChromeExtension = !!window.chrome && !!chrome.runtime && chrome.runtime.id;
+const isTampermonkeyScript = !!window.GM_info && window.GM_info.scriptHandler === 'Tampermonkey';
+const tamperMonkeyCacheKey = 'ttu-whispersync-tampermonkey';
 const libMap = new Map<string, string>([
 	['ogg', 'libvorbis'],
 	['opus', 'opus'],
@@ -16,35 +18,90 @@ const libMap = new Map<string, string>([
 ]);
 const chapterTimeMatchRegex = /chapter.+start (\d+\.\d+), end/i;
 const chapterLabelMatchRegex = /title.+:(.+)/i;
+const externalResources = new Map([
+	[
+		'ffmpeg-core.wasm',
+		{
+			url: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm',
+			version: '0.12.6',
+		},
+	],
+]);
 
 let lastParsedChapter: AudioChapter = { key: '', label: '', startSeconds: 0, startText: '' };
 let parsedChapters: AudioChapter[] = [];
 let waitForChapter = true;
 
-function toBlobURL(url: string, type: string) {
-	return fetch(url)
-		.then((response) => {
+async function toBlobURL(fileName: string, url: string, type: string) {
+	const isExternalTamperMonkeyResource = isTampermonkeyScript && externalResources.has(fileName);
+
+	let fileBuffer: ArrayBuffer | undefined;
+
+	if (isExternalTamperMonkeyResource) {
+		try {
+			const tamperMonkeyCache = await caches.open(tamperMonkeyCacheKey);
+			const cacheResources = await tamperMonkeyCache.keys();
+			const resourcesToDelete: Request[] = [];
+
+			for (const resource of cacheResources) {
+				if (resource.url === url) {
+					const response = await tamperMonkeyCache.match(resource.url);
+
+					fileBuffer = await response?.arrayBuffer();
+				} else if (resource.url.endsWith(fileName)) {
+					resourcesToDelete.push(resource);
+				}
+			}
+
+			await Promise.allSettled(
+				resourcesToDelete.map((resourceToDelete) => tamperMonkeyCache.delete(resourceToDelete)),
+			);
+		} catch ({ message }: any) {
+			throw new Error(`Failed to get cached data for ${fileName}: ${message}`);
+		}
+	}
+
+	if (!fileBuffer) {
+		fileBuffer = await fetch(url).then(async (response) => {
 			if (!response.ok) {
 				throw new Error(`Failed to download from ${url}`);
 			}
 
-			return response.arrayBuffer();
-		})
-		.then((buffer: ArrayBuffer) => {
-			const blob = new Blob([buffer], { type });
+			if (isExternalTamperMonkeyResource) {
+				try {
+					const tamperMonkeyCache = await caches.open(tamperMonkeyCacheKey);
 
-			return URL.createObjectURL(blob);
+					await tamperMonkeyCache.add(url);
+				} catch (_) {
+					// no-op
+				}
+			}
+
+			return response.arrayBuffer();
 		});
+	}
+
+	if (!fileBuffer) {
+		throw new Error(`Failed to get data for ${fileName}`);
+	}
+
+	return URL.createObjectURL(new Blob([fileBuffer], { type }));
 }
 
 function getUrl(fileName: string, type = 'text/javascript') {
 	if (fileName === ffmpegWorker) {
-		return toBlobURL(ffmpegWorker, type);
+		return toBlobURL(fileName, ffmpegWorker, type);
 	}
 
-	return isChromeExtension
-		? toBlobURL(chrome.runtime.getURL(`src/assets/js/${fileName}`), type)
-		: window.GM_getResourceURL(fileName);
+	if (isChromeExtension) {
+		return toBlobURL(fileName, chrome.runtime.getURL(`src/assets/js/${fileName}`), type);
+	} else if (!externalResources.has(fileName) || window.GM_info.scriptHandler === 'Violentmonkey') {
+		return window.GM_getResourceURL(fileName);
+	} else if (externalResources.has(fileName)) {
+		return toBlobURL(fileName, externalResources.get(fileName)!.url, type);
+	}
+
+	throw new Error(`No data found for resource ${fileName}`);
 }
 
 function handleFFMPEGLogForChapterData(event: { type: string; message: string }) {
@@ -291,7 +348,7 @@ export async function getAudio(
 			await ffmpeg.exec(ffmpegArguments);
 		}
 
-		const file = (await ffmpeg.readFile(finalOutput)) as Buffer;
+		const file = (await ffmpeg.readFile(finalOutput)) as unknown as Buffer;
 
 		buffer = file.buffer;
 	} catch (error: any) {

@@ -22,7 +22,7 @@ npm install --global pnpm
 pnpm install
 
 # Start Violentmonkey script development file watcher and auto rebuild
-pnpm run dev
+pnpm run dev:vm
 
 # Start extension development
 pnpm run dev:ext

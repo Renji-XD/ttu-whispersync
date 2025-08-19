@@ -27,3 +27,5 @@ dist.crx
 dist.pem
 
 violent_monkey/*
+
+tamper_monkey/*

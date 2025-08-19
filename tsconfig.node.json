@@ -6,5 +6,11 @@
 		"moduleResolution": "bundler",
 		"strict": true
 	},
-	"include": ["vite.ext.config.ts", "vite.script.config.ts", "src/manifest.config.ts", "package.json"]
+	"include": [
+		"vite.ext.config.ts",
+		"vite.tm.script.config.ts",
+		"vite.vm.script.config.ts",
+		"src/manifest.config.ts",
+		"package.json"
+	]
 }

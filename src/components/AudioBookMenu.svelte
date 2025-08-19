@@ -923,7 +923,7 @@
 	bind:this={menuElement}
 	on:wheel|passive|stopPropagation
 >
-	<div class="flex justify-between right-menu p-4" class:left-menu={isLeftMenu}>
+	<div class="flex justify-between right-menu p-4 break-all" class:left-menu={isLeftMenu}>
 		<button on:click={() => ($lastError$ = '')}>{loadError || $lastError$}</button>
 		<div class="flex right-menu" class:left-menu={isLeftMenu}>
 			<button

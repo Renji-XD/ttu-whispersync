@@ -5,10 +5,12 @@
 	"version": "1.0.12",
 	"type": "module",
 	"scripts": {
-		"dev": "vite -w -c vite.script.config.ts build -m devevlopment",
+		"dev:tm": "vite -w -c vite.tm.script.config.ts build -m devevlopment",
+		"dev:vm": "vite -w -c vite.vm.script.config.ts build -m devevlopment",
 		"dev:ext": "vite -c vite.ext.config.ts",
-		"build": "vite -c vite.script.config.ts build",
-		"build:dev": "vite -c vite.script.config.ts build -m devevlopment",
+		"build": "vite -c vite.tm.script.config.ts build && vite -c vite.vm.script.config.ts build",
+		"build:all": "vite -c vite.tm.script.config.ts build && vite -c vite.vm.script.config.ts build && vite -c vite.ext.config.ts build",
+		"build:dev": "vite -c vite.tm.script.config.ts build -m devevlopment && vite -c vite.vm.script.config.ts build -m devevlopment",
 		"build:ext": "vite -c vite.ext.config.ts build",
 		"check": "svelte-check --tsconfig ./tsconfig.json"
 	},
