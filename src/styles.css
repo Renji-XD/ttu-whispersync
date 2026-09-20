@@ -464,3 +464,25 @@
 		text-align: center;
 	}
 }
+
+.ttu-whispersync-container .keybind-button {
+	text-align: center;
+	width: 100%;
+}
+
+.ttu-whispersync-container .keybind-button.capturing {
+	font-style: italic;
+	opacity: 0.7;
+}
+
+.ttu-whispersync-container .keybind-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.ttu-whispersync-container .keybind-reset {
+	grid-column: 1/4;
+	display: flex;
+	justify-content: end;
+}

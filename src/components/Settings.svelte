@@ -7,6 +7,12 @@
 	import { type Subtitle, type Context, type EventWithElement } from '../lib/general';
 	import { setMediaInfoInstance } from '../lib/mediaInfo';
 	import {
+		KeybindCommand,
+		mergeKeybindings,
+		type Keybind,
+		type KeybindingItem,
+	} from '../lib/keybindings';
+	import {
 		AnkiDuplicateMode,
 		AnkiSettingssMode,
 		AudioFormat,
@@ -136,6 +142,7 @@
 		actionListOfReader$,
 		actionListOfSubtitles$,
 		actionListOfFooter$,
+		keybindingList$,
 	} = settings$;
 	const ankiModelFields = new Map<string, string[]>();
 	const ankiSettingsModes: AnkiSettingssMode[] = [AnkiSettingssMode.CREATE, AnkiSettingssMode.UPDATE];
@@ -163,6 +170,15 @@
 			? [AudioFormat.MP3, AudioFormat.OGG, AudioFormat.OPUS]
 			: [AudioFormat.MP3];
 
+	$: keybindings = mergeKeybindings($keybindingList$);
+
+	$: keybindSuffixes = {
+		[KeybindCommand.REWIND]: ` ${$playerRewindTime$} seconds`,
+		[KeybindCommand.REWIND_ALT]: ` ${$playerAltRewindTime$} seconds`,
+		[KeybindCommand.FAST_FORWARD]: ` ${$playerFastForwardTime$} seconds`,
+		[KeybindCommand.FAST_FORWARD_ALT]: ` ${$playerAltFastForwardTime$} seconds`,
+	} as Record<KeybindCommand, string>;
+
 	$: showAnkiCreateSettings = ankiSettingsMode === AnkiSettingssMode.CREATE;
 
 	$: if ($playerAutoPauseMode$ === AutoPauseMode.DISABLED) {
@@ -183,6 +199,18 @@
 	}
 
 	$: onUpdateColorStylesNode($readerEnableLineHighlight$, $readerEnableLineTextHighlight$);
+
+	function onKeybindChange(event: CustomEvent<{ command: KeybindCommand; keybind: Keybind | undefined }>) {
+		const { command, keybind } = event.detail;
+
+		$keybindingList$ = keybindings.map((item: KeybindingItem) =>
+			item.command === command ? { command, keybind } : item,
+		);
+	}
+
+	function onResetKeybindings() {
+		keybindingList$.reset();
+	}
 
 	async function onUpdateColorStylesNode(..._: any) {
 		await tick();
@@ -987,46 +1015,18 @@
 				helpText="If enabled and no subtitle is currently active the current time is used as fallback to search for the closest subtitle"
 				targetStore$={settings$.keybindingsEnableTimeFallback$}
 			/>
-			<SettingsKeybind key="Cmd + Space" description={Action.TOGGLE_PLAYBACK} extendDescription={false} />
-			<SettingsKeybind key="Alt + j" description={Action.TOGGLE_PLAYBACK} extendDescription={false} />
-			<SettingsKeybind key="Cmd + d" description={Action.RESTART_PLAYBACK} />
-			<SettingsKeybind key="Alt + d" description={Action.TOGGLE_PLAY_PAUSE} />
-			<SettingsKeybind key="Cmd + l" description={Action.TOGGLE_PLAYBACK_LOOP} />
-			<SettingsKeybind key="Cmd + b" description={Action.TOGGLE_BOOKMARK} />
-			<SettingsKeybind key="Cmd + m" description={Action.TOGGLE_MERGE} />
-			<SettingsKeybind key="Cmd + e" description={Action.EXPORT_NEW} />
-			<SettingsKeybind key="Alt + e" description={Action.EXPORT_UPDATE} />
-			<SettingsKeybind key="Alt + g" description={Action.EDIT_SUBTITLE} extendDescription={false} />
-			<SettingsKeybind key="Alt + z" description={Action.COPY_SUBTITLE} extendDescription={false} />
-			<SettingsKeybind key="Cmd + q" description={Action.PREVIOUS_SUBTITLE} extendDescription={false} />
-			<SettingsKeybind key="Alt + q" description={Action.NEXT_SUBTITLE} extendDescription={false} />
-			<SettingsKeybind key="Cmd + k" description={`Decrease playbackrate`} extendDescription={false} />
-			<SettingsKeybind key="Alt + k" description={`Increase playbackrate`} extendDescription={false} />
-			<SettingsKeybind
-				key="Cmd + Arrow Left"
-				description={`Rewind ${$playerRewindTime$} seconds`}
-				extendDescription={false}
-			/>
-			<SettingsKeybind
-				key="Cmd + Arrow Down"
-				description={`Rewind ${$playerAltRewindTime$} seconds`}
-				extendDescription={false}
-			/>
-			<SettingsKeybind
-				key="Cmd + Arrow Right"
-				description={`Fast-Forward ${$playerFastForwardTime$} seconds`}
-				extendDescription={false}
-			/>
-			<SettingsKeybind
-				key="Cmd + Arrow Up"
-				description={`Fast-Forward ${$playerAltFastForwardTime$} seconds`}
-				extendDescription={false}
-			/>
-			<SettingsKeybind
-				key="Alt + h"
-				description={`Toggle visibility of footer actions`}
-				extendDescription={false}
-			/>
+			{#each keybindings as item (item.command)}
+				<SettingsKeybind
+					command={item.command}
+					keybind={item.keybind}
+					{keybindings}
+					descriptionSuffix={keybindSuffixes[item.command] || ''}
+					on:change={onKeybindChange}
+				/>
+			{/each}
+			<div class="keybind-reset">
+				<button class="btn" on:click={onResetKeybindings}>Restore default keybindings</button>
+			</div>
 		</SettingsMenuContent>
 	{/if}
 </div>

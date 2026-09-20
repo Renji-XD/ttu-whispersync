@@ -1,3 +1,5 @@
+import { getDefaultKeybindings, type KeybindingItem } from './keybindings';
+
 export enum Action {
 	NONE = 'None',
 	TOGGLE_PLAYBACK = 'Toggle playback',
@@ -155,6 +157,7 @@ export type Settings = {
 	'ttu-whispersync-action-list-of-subtitles': ActionListItem[];
 	'ttu-whispersync-action-list-of-footer': ActionListItem[];
 	'ttu-whispersync-keybindings-enable-time-fallback': boolean;
+	'ttu-whispersync-keybindings-list': KeybindingItem[];
 	'ttu-whispersync-match-line-ignore-rp': boolean;
 	'ttu-whispersync-match-line-similarity-threshold': number;
 	'ttu-whispersync-match-line-max-attempts': number;
@@ -314,6 +317,7 @@ export function getDefaultSettings(): Settings {
 		'ttu-whispersync-anki-cover-field': '',
 		'ttu-whispersync-anki-update-cover-field': '',
 		'ttu-whispersync-keybindings-enable-time-fallback': false,
+		'ttu-whispersync-keybindings-list': getDefaultKeybindings(),
 		'ttu-whispersync-action-list-of-reader': transformToActionList(defaultReaderActionList),
 		'ttu-whispersync-action-list-of-subtitles': transformToActionList(defaultSubtitleActionList),
 		'ttu-whispersync-action-list-of-footer': transformToActionList(defaultFooterActionList),

@@ -11,9 +11,11 @@
 		type SubtitleChange,
 		type EventWithElement,
 	} from '../lib/general';
+	import { KeybindCommand, resolveKeybindCommand } from '../lib/keybindings';
 	import { startRecording, stopRecording } from '../lib/recorder';
 	import { AutoPauseMode, ReaderMenuOpenMode } from '../lib/settings';
 	import {
+		activeKeybindings$,
 		activeSubtitle$,
 		booksDB$,
 		currentAudioLoaded$,
@@ -248,121 +250,96 @@
 	}
 
 	function onKeyDown(event: KeyboardEvent) {
-		if (
-			$skipKeyListener$ ||
-			event.repeat ||
-			!(event.ctrlKey || event.metaKey || event.altKey) ||
-			!$currentAudioLoaded$ ||
-			$isRecording$
-		) {
+		if ($skipKeyListener$ || event.repeat || !$currentAudioLoaded$ || $isRecording$) {
 			return;
 		}
 
-		const actionKey = (event.code || event.key || '').toLowerCase();
+		const command = resolveKeybindCommand(event, $activeKeybindings$);
+
+		if (!command) {
+			return;
+		}
+
 		const prioritizedSubtitle =
 			$readerEnableMenuTarget$ && $readerMenuOpenMode$ !== ReaderMenuOpenMode.DISABLED
 				? $readerActionSubtitle$
 				: undefined;
 
 		let action = Action.NONE;
-		let stopEvent = true;
 		let keepPauseState = false;
 		let targetSubtitle =
 			prioritizedSubtitle || $currentSubtitles$.get($activeSubtitle$.current || $activeSubtitle$.previous);
-		let subtitles: Subtitle[] | undefined;
 
 		if (!targetSubtitle && $keybindingsEnableTimeFallback$) {
-			subtitles = [...$currentSubtitles$.values()];
+			const subtitles = [...$currentSubtitles$.values()];
 
 			targetSubtitle = subtitles.findLast((subtitle) => $currentTime$ >= subtitle.startSeconds);
 		}
 
-		if (event.altKey) {
-			switch (actionKey) {
-				case 'keyd':
-				case 'd':
-					action = targetSubtitle ? Action.TOGGLE_PLAY_PAUSE : Action.NONE;
+		switch (command) {
+			case KeybindCommand.TOGGLE_PLAYBACK:
+				$paused$ = !$paused$;
 
-					break;
-				case 'keyq':
-				case 'q':
-					action = Action.NEXT_SUBTITLE;
+				break;
+			case KeybindCommand.RESTART_PLAYBACK:
+				action = targetSubtitle ? Action.RESTART_PLAYBACK : Action.NONE;
 
-					break;
-				case 'keyk':
-				case 'k':
-					adjustPlaybackRateBy($playerPlaybackRateIncreaseTime$);
+				break;
+			case KeybindCommand.TOGGLE_PLAY_PAUSE:
+				action = targetSubtitle ? Action.TOGGLE_PLAY_PAUSE : Action.NONE;
 
-					break;
-				case 'keyj':
-				case 'j':
-					$paused$ = !$paused$;
+				break;
+			case KeybindCommand.TOGGLE_PLAYBACK_LOOP:
+				action = targetSubtitle ? Action.TOGGLE_PLAYBACK_LOOP : Action.NONE;
 
-					break;
-				default:
-					stopEvent = false;
-					break;
-			}
-		} else {
-			switch (actionKey) {
-				case 'space':
-				case ' ':
-					$paused$ = !$paused$;
+				break;
+			case KeybindCommand.PREVIOUS_SUBTITLE:
+				action = Action.PREVIOUS_SUBTITLE;
 
-					break;
-				case 'keyd':
-				case 'd':
-					action = targetSubtitle ? Action.RESTART_PLAYBACK : Action.NONE;
+				break;
+			case KeybindCommand.NEXT_SUBTITLE:
+				action = Action.NEXT_SUBTITLE;
 
-					break;
-				case 'keyl':
-				case 'l':
-					action = targetSubtitle ? Action.TOGGLE_PLAYBACK_LOOP : Action.NONE;
-					break;
-				case 'keyq':
-				case 'q':
-					action = Action.PREVIOUS_SUBTITLE;
+				break;
+			case KeybindCommand.INCREASE_PLAYBACK_RATE:
+				adjustPlaybackRateBy($playerPlaybackRateIncreaseTime$);
 
-					break;
-				case 'keyk':
-				case 'k':
-					adjustPlaybackRateBy(-$playerPlaybackRateDecreaseTime$);
+				break;
+			case KeybindCommand.DECREASE_PLAYBACK_RATE:
+				adjustPlaybackRateBy(-$playerPlaybackRateDecreaseTime$);
 
-					break;
-				case 'arrowleft':
-					targetSubtitle = getDummySubtitle(Math.max(0, $currentTime$ - $playerRewindTime$));
-					action = Action.RESTART_PLAYBACK;
-					keepPauseState = true;
+				break;
+			case KeybindCommand.REWIND:
+				targetSubtitle = getDummySubtitle(Math.max(0, $currentTime$ - $playerRewindTime$));
+				action = Action.RESTART_PLAYBACK;
+				keepPauseState = true;
 
-					break;
-				case 'arrowdown':
-					targetSubtitle = getDummySubtitle(Math.max(0, $currentTime$ - $playerAltRewindTime$));
-					action = Action.RESTART_PLAYBACK;
-					keepPauseState = true;
+				break;
+			case KeybindCommand.REWIND_ALT:
+				targetSubtitle = getDummySubtitle(Math.max(0, $currentTime$ - $playerAltRewindTime$));
+				action = Action.RESTART_PLAYBACK;
+				keepPauseState = true;
 
-					break;
-				case 'arrowright':
-					targetSubtitle = getDummySubtitle(Math.min($duration$, $currentTime$ + $playerFastForwardTime$));
-					action = Action.RESTART_PLAYBACK;
-					keepPauseState = true;
+				break;
+			case KeybindCommand.FAST_FORWARD:
+				targetSubtitle = getDummySubtitle(Math.min($duration$, $currentTime$ + $playerFastForwardTime$));
+				action = Action.RESTART_PLAYBACK;
+				keepPauseState = true;
 
-					break;
-				case 'arrowup':
-					targetSubtitle = getDummySubtitle(Math.min($duration$, $currentTime$ + $playerAltFastForwardTime$));
-					action = Action.RESTART_PLAYBACK;
-					keepPauseState = true;
+				break;
+			case KeybindCommand.FAST_FORWARD_ALT:
+				targetSubtitle = getDummySubtitle(Math.min($duration$, $currentTime$ + $playerAltFastForwardTime$));
+				action = Action.RESTART_PLAYBACK;
+				keepPauseState = true;
 
-					break;
-				default:
-					stopEvent = false;
-					break;
-			}
+				break;
+			default:
+				// handled by another component - do not swallow the event
+				return;
 		}
 
-		if (stopEvent) {
-			event.preventDefault();
-			event.stopPropagation();
-		}
+		event.preventDefault();
+		event.stopPropagation();
 
 		executeAction(action, targetSubtitle, { keepPauseState });
 	}

@@ -3,8 +3,10 @@
 	import DialogTemplate from './DialogTemplate.svelte';
 	import Icon from './Icon.svelte';
 	import { Action, executeAction } from '../lib/actions';
+	import { KeybindCommand, resolveKeybindCommand } from '../lib/keybindings';
 	import type { Context, EditSubtitleResult, Subtitle } from '../lib/general';
 	import {
+		activeKeybindings$,
 		bookMatched$,
 		currentAudioSourceUrl$,
 		currentSubtitles$,
@@ -77,80 +79,55 @@
 	$: durationHours = $currentAudioSourceUrl$ ? Math.floor(duration / 3600) : 999;
 
 	function onKeyDown(event: KeyboardEvent) {
-		if (isLoading || $isRecording$ || event.repeat || !(event.ctrlKey || event.metaKey || event.altKey)) {
+		if (isLoading || $isRecording$ || event.repeat) {
 			return;
 		}
 
-		const actionKey = (event.code || event.key || '').toLowerCase();
+		const command = resolveKeybindCommand(event, $activeKeybindings$);
+
+		if (!command) {
+			return;
+		}
 
 		let action = Action.NONE;
-		let stopEvent = true;
 
-		if (event.altKey) {
-			switch (actionKey) {
-				case 'keyd':
-				case 'd':
-					action = $currentAudioSourceUrl$ ? Action.TOGGLE_PLAY_PAUSE : Action.NONE;
+		switch (command) {
+			case KeybindCommand.TOGGLE_PLAYBACK:
+				if ($currentAudioSourceUrl$) {
+					paused = !paused;
+				}
 
-					break;
-				case 'keye':
-				case 'e':
-					pauseReset();
-					action = Action.EXPORT_UPDATE;
+				break;
+			case KeybindCommand.TOGGLE_PLAY_PAUSE:
+			case KeybindCommand.RESTART_PLAYBACK:
+				action = $currentAudioSourceUrl$ ? Action.TOGGLE_PLAY_PAUSE : Action.NONE;
 
-					break;
-				case 'keyz':
-				case 'z':
-					action = Action.COPY_SUBTITLE;
+				break;
+			case KeybindCommand.EXPORT_NEW:
+				pauseReset();
+				action = Action.EXPORT_NEW;
 
-					break;
-				case 'keyj':
-				case 'j':
-					if ($currentAudioSourceUrl$) {
-						paused = !paused;
-					}
+				break;
+			case KeybindCommand.EXPORT_UPDATE:
+				pauseReset();
+				action = Action.EXPORT_UPDATE;
 
-					break;
-				default:
-					stopEvent = false;
+				break;
+			case KeybindCommand.COPY_SUBTITLE:
+				action = Action.COPY_SUBTITLE;
 
-					break;
-			}
-		} else {
-			switch (actionKey) {
-				case 'space':
-				case ' ':
-					if ($currentAudioSourceUrl$) {
-						paused = !paused;
-					}
+				break;
+			case KeybindCommand.OPEN_LAST_EXPORTED_CARD:
+				action = Action.OPEN_LAST_EXPORTED_CARD;
 
-					break;
-				case 'keyd':
-				case 'd':
-					action = $currentAudioSourceUrl$ ? Action.TOGGLE_PLAY_PAUSE : Action.NONE;
-
-					break;
-				case 'keye':
-				case 'e':
-					pauseReset();
-					action = Action.EXPORT_NEW;
-
-					break;
-				case 'keyo':
-				case 'o':
-					action = Action.OPEN_LAST_EXPORTED_CARD;
-
-					break;
-				default:
-					stopEvent = false;
-					break;
-			}
+				break;
+			default:
+				// not handled while the edit dialog is open - do not swallow the event
+				return;
 		}
 
-		if (stopEvent) {
-			event.preventDefault();
-			event.stopPropagation();
-		}
+		event.preventDefault();
+		event.stopPropagation();
 
 		if (action === Action.TOGGLE_PLAY_PAUSE) {
 			onReplay();
