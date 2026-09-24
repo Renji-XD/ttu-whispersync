@@ -74,6 +74,11 @@ export interface AudioResult {
 	audioSourceUrl: string;
 }
 
+export interface AudioRange {
+	startSeconds: number;
+	endSeconds: number;
+}
+
 export interface PlayLineData {
 	action: string;
 	subtitles: Subtitle[];
@@ -123,4 +128,25 @@ export function getDummySubtitle(startSeconds: number, endSeconds = 0): Subtitle
 		text: '',
 		subIndex: -1,
 	};
+}
+
+/**
+ * Collapses subtitles into the audio ranges to play or cut - consecutive lines share one continuous range so the
+ * audio flows through their boundaries, while gaps in the selection stay separate ranges
+ */
+export function getAudioRanges(subtitles: Subtitle[]) {
+	const ranges: AudioRange[] = [];
+
+	for (let index = 0, { length } = subtitles; index < length; index += 1) {
+		const { startSeconds, endSeconds, subIndex } = subtitles[index];
+		const lastRange = ranges[ranges.length - 1];
+
+		if (lastRange && subIndex === subtitles[index - 1].subIndex + 1) {
+			lastRange.endSeconds = Math.max(lastRange.endSeconds, endSeconds);
+		} else {
+			ranges.push({ startSeconds, endSeconds });
+		}
+	}
+
+	return ranges;
 }
