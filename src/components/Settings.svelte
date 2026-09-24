@@ -117,6 +117,7 @@
 		playerFastForwardTime$,
 		playerAltFastForwardTime$,
 		exportEnableMergeSelectionAutoClear$,
+		exportEnableSilenceTrim$,
 		exportAudioProcessor$,
 		exportAudioFormat$,
 		exportCoverFormat$,
@@ -836,6 +837,19 @@
 			label="Enable merge selection auto clear after export"
 			helpText="If enabled the current selection of subtitles for a merge will be automatically cleared after a successfull merge export or update"
 			targetStore$={exportEnableMergeSelectionAutoClear$}
+		/>
+		<SettingsCheckbox
+			label="Remove long silence on export"
+			helpText="If enabled a silence between consecutive merged subtitles longer than the threshold is shortened to the threshold length"
+			targetStore$={settings$.exportEnableSilenceTrim$}
+		/>
+		<SettingsNumberInput
+			label="Silence threshold (seconds)"
+			helpText="Longest silence kept between consecutive merged subtitles - longer silences are shortened to this length"
+			disabled={!$exportEnableSilenceTrim$}
+			targetStore$={settings$.exportSilenceThreshold$}
+			min={0}
+			step={0.5}
 		/>
 		{#if $exportAudioProcessor$ === AudioProcessor.FFMPEG}
 			<SettingsCheckbox

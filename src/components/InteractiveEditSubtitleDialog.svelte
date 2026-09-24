@@ -3,7 +3,7 @@
 	import DialogTemplate from './DialogTemplate.svelte';
 	import Icon from './Icon.svelte';
 	import { Action, executeAction } from '../lib/actions';
-	import { getDummySubtitle, type EditSubtitleResult, type Subtitle } from '../lib/general';
+	import type { EditSubtitleResult, Subtitle } from '../lib/general';
 	import { getAudio } from '../lib/ffmpeg';
 	import {
 		bookMatched$,
@@ -233,10 +233,10 @@
 			}
 
 			const audioBuffer = await getAudio($currentAudioFile$, [
-				getDummySubtitle(
-					subtitleRegions[0].startSeconds,
-					subtitleRegions[subtitleRegions.length - 1].endSeconds,
-				),
+				{
+					startSeconds: subtitleRegions[0].startSeconds,
+					endSeconds: subtitleRegions[subtitleRegions.length - 1].endSeconds,
+				},
 			]);
 
 			if (!audioBuffer) {

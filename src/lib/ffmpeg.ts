@@ -1,4 +1,4 @@
-import { type AudioChapter, type Subtitle, getAudioRanges } from './general';
+import type { AudioChapter, AudioRange } from './general';
 import { AudioFormat, AudioProcessor } from './settings';
 import { throwIfAborted, toTimeString } from './util';
 
@@ -265,7 +265,7 @@ export async function getChapterData(audioFile: File) {
 
 export async function getAudio(
 	audioFile: File,
-	subtitles: Subtitle[],
+	ranges: AudioRange[],
 	executeCleanFiles = true,
 	abortSignal: AbortSignal | undefined = undefined,
 	audioFormat = 'mp3',
@@ -274,7 +274,6 @@ export async function getAudio(
 ) {
 	const fileExtension = audioFile.name.split('.').pop();
 	const enableFFMPEGLog = get(settings$.enableFFMPEGLog$);
-	const ranges = getAudioRanges(subtitles);
 	const finalOutput = ranges.length === 1 ? `audio_output_0.${audioFormat}` : `audio_output.${audioFormat}`;
 
 	let failure = '';

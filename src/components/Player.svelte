@@ -608,7 +608,7 @@
 
 		await tick();
 
-		const { action, subtitles, skipUpdates, keepPauseState } = data;
+		const { action, subtitles, skipUpdates, keepPauseState, maxSilenceSeconds } = data;
 		const { startSeconds } = subtitles[0];
 		const executeAction = action !== Action.RESTART_PLAYBACK;
 
@@ -650,7 +650,7 @@
 			}
 		}
 
-		actionRanges = executeAction ? getAudioRanges(subtitles) : [];
+		actionRanges = executeAction ? getAudioRanges(subtitles, maxSilenceSeconds) : [];
 		actionRangeIndex = executeAction ? 0 : -1;
 		isLoopAction = executeAction ? action === Action.TOGGLE_PLAYBACK_LOOP : false;
 

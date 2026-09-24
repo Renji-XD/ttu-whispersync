@@ -202,6 +202,8 @@ export const settings$ = {
 	exportEnableMergeSelectionAutoClear$: writableBooleanStore()(
 		'ttu-whispersync-export-enable-merge-selection-auto-clear',
 	),
+	exportEnableSilenceTrim$: writableBooleanStore()('ttu-whispersync-export-enable-silence-trim'),
+	exportSilenceThreshold$: writableNumberStore()('ttu-whispersync-export-silence-threshold'),
 	enableFFMPEGLog$: writableBooleanStore()('ttu-whispersync-enable-ffmpeg-log'),
 	ankiAddSubtitleTag$: writableBooleanStore()('ttu-whispersync-anki-add-subtitle-tag'),
 	ankiAddAudioTag$: writableBooleanStore()('ttu-whispersync-anki-add-audio-tag'),

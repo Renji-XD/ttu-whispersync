@@ -63,6 +63,15 @@ pnpm run build:ext
 | <kbd>Cmd</kbd> + <kbd>Arrow Up</kbd>    | Fast-Forward #2                          |
 | <kbd>Alt</kbd> + <kbd>h</kbd>           | Toggle visibility of footer actions      |
 
+## Merged exports
+
+Consecutive lines of a merge selection are played and cut as one continuous clip, so the audio
+flows through the line boundaries with the natural pauses between them. Lines that are not
+consecutive stay separate pieces joined together. "Remove long silence on export" (off by
+default) shortens any pause between consecutive lines that is longer than the "Silence
+threshold" (3 seconds by default) to exactly that length. It only applies to exports - playing
+a selection always keeps the full pauses.
+
 ## FAQ
 
 ### How to create subtitles for audio files
