@@ -1,3 +1,7 @@
+# Current Development Status
+
+Please note that ttu-whispersync is currently not actively worked on. Feel free to report further bugs / feature requests and / or open pull requests but don't expect (timely) responses on them
+
 # ttu-whispersync
 
 A [Violentmonkey](https://violentmonkey.github.io/get-it/) script / Chrome extension for listening to audiobooks with ttu ebook-reader
