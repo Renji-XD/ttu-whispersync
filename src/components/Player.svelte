@@ -3,7 +3,9 @@
 	import Icon from './Icon.svelte';
 	import { Action, executeAction } from '../lib/actions';
 	import {
+		type AudioRange,
 		type Context,
+		getAudioRanges,
 		getDummySubtitle,
 		type PlayLineData,
 		type PointerEventWithElement,
@@ -144,11 +146,10 @@
 	let playbackRatesPopover: Popover;
 	let visibilityState: DocumentVisibilityState;
 	let progressToolTip = '';
-	let actionStartTimes: number[] = [];
-	let actionEndTimes: number[] = [];
+	let actionRanges: AudioRange[] = [];
 	let pausedByAutoPause = false;
 	let isLoopAction = false;
-	let actionTimeIndex = -1;
+	let actionRangeIndex = -1;
 	let originalCurrentTime = -1;
 	let originalPlaybackRate = -1;
 	let skipNextCue = false;
@@ -441,29 +442,27 @@
 
 			recorderFailure?.(new AbortError('user aborted'));
 
-			actionStartTimes = [];
-			actionEndTimes = [];
-			actionTimeIndex = -1;
+			actionRanges = [];
+			actionRangeIndex = -1;
 			isLoopAction = false;
 			$paused$ = true;
 
 			return resetRecorderContext();
-		} else if (actionTimeIndex > -1 && $currentTime$ > actionEndTimes[actionTimeIndex]) {
-			const endReached = actionTimeIndex === actionEndTimes.length - 1;
+		} else if (actionRangeIndex > -1 && $currentTime$ > actionRanges[actionRangeIndex].endSeconds) {
+			const endReached = actionRangeIndex === actionRanges.length - 1;
 			const restartLoop = isLoopAction && endReached;
 			const executeAction = restartLoop || !endReached;
-			const oldActionTimeIndex = actionTimeIndex;
+			const oldActionRangeIndex = actionRangeIndex;
 
-			actionTimeIndex = -1;
+			actionRangeIndex = -1;
 
 			if (executeAction) {
-				actionTimeIndex = restartLoop ? 0 : oldActionTimeIndex + 1;
+				actionRangeIndex = restartLoop ? 0 : oldActionRangeIndex + 1;
 
-				return setTime(actionStartTimes[actionTimeIndex]);
+				return setTime(actionRanges[actionRangeIndex].startSeconds);
 			}
 
-			actionStartTimes = [];
-			actionEndTimes = [];
+			actionRanges = [];
 			isLoopAction = false;
 			$paused$ = true;
 
@@ -609,7 +608,7 @@
 
 		await tick();
 
-		const { action, subtitles, skipUpdates, keepPauseState } = data;
+		const { action, subtitles, skipUpdates, keepPauseState, maxSilenceSeconds } = data;
 		const { startSeconds } = subtitles[0];
 		const executeAction = action !== Action.RESTART_PLAYBACK;
 
@@ -651,9 +650,8 @@
 			}
 		}
 
-		actionStartTimes = executeAction ? subtitles.map((subtitle) => subtitle.startSeconds) : [];
-		actionEndTimes = executeAction ? subtitles.map((subtitle) => subtitle.endSeconds) : [];
-		actionTimeIndex = executeAction ? 0 : -1;
+		actionRanges = executeAction ? getAudioRanges(subtitles, maxSilenceSeconds) : [];
+		actionRangeIndex = executeAction ? 0 : -1;
 		isLoopAction = executeAction ? action === Action.TOGGLE_PLAYBACK_LOOP : false;
 
 		setTime(startSeconds);

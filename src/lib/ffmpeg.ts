@@ -1,4 +1,4 @@
-import type { AudioChapter, Subtitle } from './general';
+import type { AudioChapter, AudioRange } from './general';
 import { AudioFormat, AudioProcessor } from './settings';
 import { throwIfAborted, toTimeString } from './util';
 
@@ -265,7 +265,7 @@ export async function getChapterData(audioFile: File) {
 
 export async function getAudio(
 	audioFile: File,
-	subtitles: Subtitle[],
+	ranges: AudioRange[],
 	executeCleanFiles = true,
 	abortSignal: AbortSignal | undefined = undefined,
 	audioFormat = 'mp3',
@@ -274,7 +274,7 @@ export async function getAudio(
 ) {
 	const fileExtension = audioFile.name.split('.').pop();
 	const enableFFMPEGLog = get(settings$.enableFFMPEGLog$);
-	const finalOutput = subtitles.length === 1 ? `audio_output_0.${audioFormat}` : `audio_output.${audioFormat}`;
+	const finalOutput = ranges.length === 1 ? `audio_output_0.${audioFormat}` : `audio_output.${audioFormat}`;
 
 	let failure = '';
 	let filterInput = '';
@@ -286,20 +286,20 @@ export async function getAudio(
 			ffmpeg.on('log', handleFFMPEGLog);
 		}
 
-		for (let index = 0, { length } = subtitles; index < length; index += 1) {
+		for (let index = 0, { length } = ranges; index < length; index += 1) {
 			throwIfAborted(abortSignal);
 
-			const subtitle = subtitles[index];
+			const range = ranges[index];
 			const output = `audio_output_${index}.${audioFormat}`;
 			const ffmpegArguments = [
 				'-hide_banner',
 				'-y',
 				'-ss',
-				`${subtitle.startSeconds}`,
+				`${range.startSeconds}`,
 				'-i',
 				`audio_input.${fileExtension}`,
 				'-t',
-				`${subtitle.endSeconds - subtitle.startSeconds}`,
+				`${range.endSeconds - range.startSeconds}`,
 				...(audioFormat === AudioFormat.OPUS ? ['-strict', '-2'] : []),
 				'-vn',
 				'-acodec',
@@ -321,10 +321,10 @@ export async function getAudio(
 			await ffmpeg.exec(ffmpegArguments);
 		}
 
-		if (subtitles.length > 1) {
+		if (ranges.length > 1) {
 			mergeInputs.push('-filter_complex');
 
-			filterInput = `${filterInput}concat=n=${subtitles.length}:v=0:a=1`;
+			filterInput = `${filterInput}concat=n=${ranges.length}:v=0:a=1`;
 
 			const ffmpegArguments = [
 				'-hide_banner',

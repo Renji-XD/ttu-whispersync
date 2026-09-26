@@ -18,7 +18,7 @@ import {
 } from './stores';
 
 import { Action } from './actions';
-import type { Subtitle } from './general';
+import { type Subtitle, getAudioRanges } from './general';
 import { get } from 'svelte/store';
 
 interface VerificationResult {
@@ -390,6 +390,9 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 	const currentCoverUrl = get(currentCoverUrl$);
 	const exportAudioFormat = get(settings$.exportAudioFormat$);
 	const exportAudioBitrate = get(settings$.exportAudioBitrate$);
+	const maxSilenceSeconds = get(settings$.exportEnableSilenceTrim$)
+		? get(settings$.exportSilenceThreshold$)
+		: Infinity;
 	const exportCoverFormat = get(settings$.exportCoverFormat$);
 	const exportFieldMode = get(settings$.exportFieldMode$);
 	const ankiAddSubtitleTag = get(settings$.ankiAddSubtitleTag$);
@@ -540,7 +543,7 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 				if (isFFMPEG) {
 					audioBuffer = await getAudio(
 						currentAudioFile,
-						subtitles,
+						getAudioRanges(subtitles, maxSilenceSeconds),
 						false,
 						abortController.signal,
 						exportAudioFormat,
@@ -552,6 +555,7 @@ export async function exportToAnki(subtitlesToExport: Subtitle[][], isUpdate: bo
 						playLine$.set({
 							subtitles,
 							action: Action.TOGGLE_PLAY_PAUSE,
+							maxSilenceSeconds,
 							recorderSuccess,
 							recorderFailure,
 						}),

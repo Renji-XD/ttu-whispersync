@@ -74,11 +74,17 @@ export interface AudioResult {
 	audioSourceUrl: string;
 }
 
+export interface AudioRange {
+	startSeconds: number;
+	endSeconds: number;
+}
+
 export interface PlayLineData {
 	action: string;
 	subtitles: Subtitle[];
 	skipUpdates?: boolean;
 	keepPauseState?: boolean;
+	maxSilenceSeconds?: number;
 	recorderSuccess?: (audioBuffer: ArrayBuffer | undefined) => void;
 	recorderFailure?: (error: any) => void;
 }
@@ -123,4 +129,29 @@ export function getDummySubtitle(startSeconds: number, endSeconds = 0): Subtitle
 		text: '',
 		subIndex: -1,
 	};
+}
+
+/**
+ * Collapses subtitles into the audio ranges to play or cut - consecutive lines share one continuous range so the
+ * audio flows through their boundaries, while gaps in the selection stay separate ranges. A silence between
+ * consecutive lines longer than maxSilenceSeconds is shortened to that length, split evenly around the cut
+ */
+export function getAudioRanges(subtitles: Subtitle[], maxSilenceSeconds = Infinity) {
+	const ranges: AudioRange[] = [];
+
+	for (let index = 0, { length } = subtitles; index < length; index += 1) {
+		const { startSeconds, endSeconds, subIndex } = subtitles[index];
+		const lastRange = ranges[ranges.length - 1];
+
+		if (!lastRange || subIndex !== subtitles[index - 1].subIndex + 1) {
+			ranges.push({ startSeconds, endSeconds });
+		} else if (startSeconds - lastRange.endSeconds > maxSilenceSeconds) {
+			lastRange.endSeconds += maxSilenceSeconds / 2;
+			ranges.push({ startSeconds: startSeconds - maxSilenceSeconds / 2, endSeconds });
+		} else {
+			lastRange.endSeconds = Math.max(lastRange.endSeconds, endSeconds);
+		}
+	}
+
+	return ranges;
 }
