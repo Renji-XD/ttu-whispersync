@@ -13,7 +13,8 @@ import {
 import type { IDBPDatabase } from 'idb';
 import type { MediaInfo } from 'mediainfo.js';
 import type { ActionListItem, Settings } from './settings';
-import { writable, type Subscriber, type Invalidator, type Unsubscriber } from 'svelte/store';
+import { mergeKeybindings, type KeybindingItem } from './keybindings';
+import { derived, writable, type Subscriber, type Invalidator, type Unsubscriber } from 'svelte/store';
 import { writableBooleanStore } from './writeables/writeable-boolean-store';
 import { writableNumberStore } from './writeables/writeable-number-store';
 import { writeableArrayStore } from './writeables/writeable-object-store';
@@ -225,7 +226,14 @@ export const settings$ = {
 	actionListOfSubtitles$: writeableArrayStore<ActionListItem>()('ttu-whispersync-action-list-of-subtitles'),
 	actionListOfFooter$: writeableArrayStore<ActionListItem>()('ttu-whispersync-action-list-of-footer'),
 	keybindingsEnableTimeFallback$: writableBooleanStore()('ttu-whispersync-keybindings-enable-time-fallback'),
+	keybindingList$: writeableArrayStore<KeybindingItem>()('ttu-whispersync-keybindings-list'),
 	matchLineIgnoreRp$: writableBooleanStore()('ttu-whispersync-match-line-ignore-rp'),
 	matchLineSimilarityThreshold$: writableNumberStore()('ttu-whispersync-match-line-similarity-threshold'),
 	matchLineMaxAttempts$: writableNumberStore()('ttu-whispersync-match-line-max-attempts'),
 };
+
+/**
+ * Stored keybindings reconciled with the current defaults - use this for matching key events
+ * so that a list persisted by an older version still resolves every known command.
+ */
+export const activeKeybindings$ = derived(settings$.keybindingList$, (keybindings) => mergeKeybindings(keybindings));

@@ -5,12 +5,14 @@
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import Dialogs from './Dialogs.svelte';
 	import Icon from './Icon.svelte';
+	import { KeybindCommand, resolveKeybindCommand } from '../lib/keybindings';
 	import { Action, executeAction } from '../lib/actions';
 	import { setBooksDB } from '../lib/db';
 	import { setAudioContext, setSubtitleContext, updateAudio, updateSubtitles, verifyPermissions } from '../lib/files';
 	import { type Context, Tabs, type Subtitle, getDummySubtitle } from '../lib/general';
 	import { AudioProcessor, ReaderMenuOpenMode, ReaderMenuPauseMode } from '../lib/settings';
 	import {
+		activeKeybindings$,
 		activeSubtitle$,
 		altFastForwardTitle$,
 		altRewindTitle$,
@@ -303,17 +305,22 @@
 	});
 
 	function onKeyDown(event: KeyboardEvent) {
-		if ($skipKeyListener$ || event.repeat || !(event.ctrlKey || event.metaKey || event.altKey)) {
+		if ($skipKeyListener$ || event.repeat) {
 			return;
 		}
 
-		const actionKey = event.code || event.key?.toLowerCase();
+		const command = resolveKeybindCommand(event, $activeKeybindings$);
+
+		if (!command) {
+			return;
+		}
+
 		const prioritizedSubtitle =
 			$readerEnableMenuTarget$ && $readerMenuOpenMode$ !== ReaderMenuOpenMode.DISABLED
 				? $readerActionSubtitle$
 				: undefined;
 
-		let action;
+		let action: Action;
 		let targetSubtitle =
 			prioritizedSubtitle || $currentSubtitles$.get($activeSubtitle$.current || $activeSubtitle$.previous);
 
@@ -323,60 +330,44 @@
 			targetSubtitle = subtitles.findLast((subtitle) => $currentTime$ >= subtitle.startSeconds);
 		}
 
-		if (event.altKey) {
-			switch (actionKey) {
-				case 'KeyE':
-				case 'e':
-					action = Action.EXPORT_UPDATE;
-					break;
-				case 'KeyG':
-				case 'g':
-					action = Action.EDIT_SUBTITLE;
-					break;
-				case 'KeyZ':
-				case 'z':
-					action = Action.COPY_SUBTITLE;
-					break;
-				case 'KeyH':
-				case 'h':
-					action = Action.NONE;
-					$hideFooterActions$ = !$hideFooterActions$;
-					break;
-				default:
-					action = Action.NONE;
-					break;
-			}
-		} else {
-			switch (actionKey) {
-				case 'KeyB':
-				case 'b':
-					action = Action.TOGGLE_BOOKMARK;
-					break;
-				case 'KeyM':
-				case 'm':
-					action = Action.TOGGLE_MERGE;
-					break;
-				case 'KeyE':
-				case 'e':
-					action = Action.EXPORT_NEW;
-					break;
-				case 'KeyO':
-				case 'o':
-					targetSubtitle = getDummySubtitle(0);
-					action = Action.OPEN_LAST_EXPORTED_CARD;
-					break;
-				default:
-					action = Action.NONE;
-					break;
-			}
-		}
-
-		if (action === Action.NONE) {
-			return;
+		switch (command) {
+			case KeybindCommand.TOGGLE_BOOKMARK:
+				action = Action.TOGGLE_BOOKMARK;
+				break;
+			case KeybindCommand.TOGGLE_MERGE:
+				action = Action.TOGGLE_MERGE;
+				break;
+			case KeybindCommand.EDIT_SUBTITLE:
+				action = Action.EDIT_SUBTITLE;
+				break;
+			case KeybindCommand.COPY_SUBTITLE:
+				action = Action.COPY_SUBTITLE;
+				break;
+			case KeybindCommand.EXPORT_NEW:
+				action = Action.EXPORT_NEW;
+				break;
+			case KeybindCommand.EXPORT_UPDATE:
+				action = Action.EXPORT_UPDATE;
+				break;
+			case KeybindCommand.OPEN_LAST_EXPORTED_CARD:
+				targetSubtitle = getDummySubtitle(0);
+				action = Action.OPEN_LAST_EXPORTED_CARD;
+				break;
+			case KeybindCommand.TOGGLE_FOOTER_ACTIONS:
+				action = Action.NONE;
+				$hideFooterActions$ = !$hideFooterActions$;
+				break;
+			default:
+				// handled by another component - do not swallow the event
+				return;
 		}
 
 		event.preventDefault();
 		event.stopPropagation();
+
+		if (action === Action.NONE) {
+			return;
+		}
 
 		executeAction(action, targetSubtitle);
 	}

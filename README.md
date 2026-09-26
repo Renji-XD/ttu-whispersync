@@ -43,10 +43,18 @@ pnpm run build:ext
 
 ## Keybindings
 
+All keybindings are configurable under "Settings" -> "Keybindings": click the shortcut of a
+command and press the combination you want. <kbd>Backspace</kbd> unbinds a command,
+<kbd>Escape</kbd> cancels the capture and every shortcut needs at least one of
+<kbd>Ctrl</kbd>, <kbd>Alt</kbd>/<kbd>Option</kbd> or <kbd>Cmd</kbd>. Shortcuts that are
+already used by another command, or that the OS/browser is known to swallow, are flagged
+with a warning icon. "Restore default keybindings" resets the whole list.
+
+The defaults below use <kbd>Cmd</kbd> on macOS and <kbd>Ctrl</kbd> on other platforms.
+
 | Keybind                                 | Description                              |
 | --------------------------------------- | ---------------------------------------- |
-| <kbd>Cmd</kbd> + <kbd>Space</kbd>       | Toggle playback                          |
-| <kbd>Alt</kbd> + <kbd>j</kbd>           | Toggle playback (alt keybind)            |
+| <kbd>Alt</kbd> + <kbd>j</kbd>           | Toggle playback                          |
 | <kbd>Cmd</kbd> + <kbd>d</kbd>           | Restart playback for active line         |
 | <kbd>Alt</kbd> + <kbd>d</kbd>           | Toggle play and pause for active line    |
 | <kbd>Cmd</kbd> + <kbd>l</kbd>           | Toggle playback loop for active line     |
@@ -66,6 +74,8 @@ pnpm run build:ext
 | <kbd>Cmd</kbd> + <kbd>Arrow Right</kbd> | Fast-Forward                             |
 | <kbd>Cmd</kbd> + <kbd>Arrow Up</kbd>    | Fast-Forward #2                          |
 | <kbd>Alt</kbd> + <kbd>h</kbd>           | Toggle visibility of footer actions      |
+
+On macOS <kbd>Alt</kbd> is the <kbd>Option</kbd> key.
 
 ## FAQ
 
@@ -189,7 +199,7 @@ Note: iOS may block the ability to select certain files. For subtitles you there
 
 ### Can i rebind the Keybindings?
 
--   No - the extension is external to the ttu website and therefore has static keybinds in order to avoid collisions with reader keybinds (which are also static)
+-   Yes - open "Settings" -> "Keybindings", click the shortcut next to a command and press the combination you want to use. Since the extension is external to the ttu website you have to avoid collisions with the (static) reader keybinds yourself - conflicts within the extension itself are flagged for you
 
 ### Keybind 'X' is not executed
 

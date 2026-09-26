@@ -3,9 +3,11 @@
 	import DialogTemplate from './DialogTemplate.svelte';
 	import Icon from './Icon.svelte';
 	import { Action, executeAction } from '../lib/actions';
+	import { KeybindCommand, resolveKeybindCommand } from '../lib/keybindings';
 	import { getDummySubtitle, type EditSubtitleResult, type Subtitle } from '../lib/general';
 	import { getAudio } from '../lib/ffmpeg';
 	import {
+		activeKeybindings$,
 		bookMatched$,
 		currentAudioFile$,
 		currentSubtitles$,
@@ -68,75 +70,51 @@
 	});
 
 	function onKeyDown(event: KeyboardEvent) {
-		if (isLoading || event.repeat || !(event.ctrlKey || event.metaKey || event.altKey)) {
+		if (isLoading || event.repeat) {
 			return;
 		}
 
-		const actionKey = (event.code || event.key || '').toLowerCase();
+		const command = resolveKeybindCommand(event, $activeKeybindings$);
+
+		if (!command) {
+			return;
+		}
 
 		let action = Action.NONE;
-		let stopEvent = true;
 
-		if (event.altKey) {
-			switch (actionKey) {
-				case 'keyd':
-				case 'd':
-					action = Action.TOGGLE_PLAY_PAUSE;
+		switch (command) {
+			case KeybindCommand.TOGGLE_PLAYBACK:
+				onPause();
 
-					break;
-				case 'keye':
-				case 'e':
-					action = Action.EXPORT_UPDATE;
+				break;
+			case KeybindCommand.TOGGLE_PLAY_PAUSE:
+			case KeybindCommand.RESTART_PLAYBACK:
+				action = Action.TOGGLE_PLAY_PAUSE;
 
-					break;
-				case 'keyz':
-				case 'z':
-					action = Action.COPY_SUBTITLE;
+				break;
+			case KeybindCommand.EXPORT_NEW:
+				action = Action.EXPORT_NEW;
 
-					break;
-				case 'keyj':
-				case 'j':
-					onPause();
+				break;
+			case KeybindCommand.EXPORT_UPDATE:
+				action = Action.EXPORT_UPDATE;
 
-					break;
-				default:
-					stopEvent = false;
+				break;
+			case KeybindCommand.COPY_SUBTITLE:
+				action = Action.COPY_SUBTITLE;
 
-					break;
-			}
-		} else {
-			switch (actionKey) {
-				case 'space':
-				case ' ':
-					onPause();
+				break;
+			case KeybindCommand.OPEN_LAST_EXPORTED_CARD:
+				action = Action.OPEN_LAST_EXPORTED_CARD;
 
-					break;
-				case 'keyd':
-				case 'd':
-					action = Action.TOGGLE_PLAY_PAUSE;
-
-					break;
-				case 'keye':
-				case 'e':
-					action = Action.EXPORT_NEW;
-
-					break;
-				case 'keyo':
-				case 'o':
-					action = Action.OPEN_LAST_EXPORTED_CARD;
-
-					break;
-				default:
-					stopEvent = false;
-
-					break;
-			}
+				break;
+			default:
+				// not handled while the edit dialog is open - do not swallow the event
+				return;
 		}
 
-		if (stopEvent) {
-			event.preventDefault();
-			event.stopPropagation();
-		}
+		event.preventDefault();
+		event.stopPropagation();
 
 		if (action === Action.TOGGLE_PLAY_PAUSE) {
 			onPlayActiveSubtitle();
