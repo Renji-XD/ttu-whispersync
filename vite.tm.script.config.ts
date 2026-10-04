@@ -17,15 +17,16 @@ const header = `// ==UserScript==
 // @icon https://raw.githubusercontent.com/Renji-XD/ttu-whispersync/main/src/assets/icons/icon64.png
 // @grant       GM_getResourceURL
 // @author      Renji-xD
-// @homepageURL https://github.com/Geniusssmit/ttu-whispersync
+// @homepageURL https://github.com/Renji-XD/ttu-whispersync
 // @resource mediaInfo https://cdn.jsdelivr.net/npm/mediainfo.js@0.2.1/dist/MediaInfoModule.wasm
 // @resource ffmpeg-core.js https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js
 // @match       https://reader.ttsu.app/*
 // @match       http://localhost:5173/*
 // @run-at      document-idle
 // @noframes
-// @updateURL   none
-// @supportURL  https://github.com/Geniusssmit/ttu-whispersync/issues
+// @updateURL	https://github.com/Renji-XD/ttu-whispersync/releases/latest/download/ttu-whispersync.tm.user.js
+// @downloadURL https://github.com/Renji-XD/ttu-whispersync/releases/latest/download/ttu-whispersync.tm.user.js
+// @supportURL  https://github.com/Renji-XD/ttu-whispersync/issues
 // ==/UserScript==`;
 
 const __filename = fileURLToPath(import.meta.url);

@@ -1,5 +1,3 @@
-> **Maintenance fork:** this fork contains the fixes documented in [docs/review-fixes.md](docs/review-fixes.md). Run `pnpm install --frozen-lockfile`, `pnpm test`, `pnpm check`, and `pnpm build:all`. Install the generated `tamper_monkey/ttu-whispersync.tm.user.js`, `violent_monkey/ttu-whispersync.user.js`, or load the `dist/` folder as an unpacked Chrome extension. Disable the original installation first. Fork userscripts use manual updates so an upstream release cannot silently replace these fixes. The upstream installation links below refer to the original project.
-
 # Current Development Status
 
 Please note that ttu-whispersync is currently not actively worked on. Feel free to report further bugs / feature requests and / or open pull requests but don't expect (timely) responses on them

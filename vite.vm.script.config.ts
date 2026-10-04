@@ -24,9 +24,9 @@ const header = `// ==UserScript==
 // @run-at      document-idle
 // @noframes
 // @grant       GM_getResourceURL
-// @updateURL   none
-// @supportURL  https://github.com/Geniusssmit/ttu-whispersync/issues
-// @homepageURL https://github.com/Geniusssmit/ttu-whispersync
+// @downloadURL https://github.com/Renji-XD/ttu-whispersync/releases/latest/download/ttu-whispersync.user.js
+// @supportURL  https://github.com/Renji-XD/ttu-whispersync/issues
+// @homepageURL https://github.com/Renji-XD/ttu-whispersync
 // ==/UserScript==`;
 
 const __filename = fileURLToPath(import.meta.url);

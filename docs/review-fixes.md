@@ -49,7 +49,7 @@ Base: Renji-XD/ttu-whispersync commit `cfca4f69543d032f4807c39b3c38736d1475b2c0`
 ## Items intentionally not treated as confirmed defects
 
 - Playback-position persistence on each timeupdate is frequent, but the review provided no measurement of storage/network pressure or reader-side sync behavior. Throttling would change progress durability and is deferred until measured; pausing, seeking, and closing a tab must not lose the last position.
-- `-write_xing 0` for other audio formats and the `\p{punct}` expression were not shown to fail; they were retained.
+- `-write_xing 0` for other audio formats was not shown to fail and was retained. The earlier review also retained `\p{punct}`; version 1.0.14 subsequently replaced that character-counting condition so book and subtitle lengths use the same normalization.
 - File reload taking precedence over locally persisted subtitles is described as fallback behavior in the existing setting. It was not changed as part of this review.
 
 ## Verification
