@@ -63,21 +63,22 @@
 	}
 
 	function updatePosition() {
-		if (!range) {
+		const currentRange = range;
+		if (!currentRange) {
 			return;
 		}
 
 		computePosition(
 			{
-				getBoundingClientRect: () => range.getBoundingClientRect(),
+				getBoundingClientRect: () => currentRange.getBoundingClientRect(),
 				// @ts-expect-error
 				getClientRects: () => {
 					if (!isPaginated) {
-						return range.getClientRects();
+						return currentRange.getClientRects();
 					}
 
 					const rect1 = getReferencePoints();
-					const clientRects = [...range.getClientRects()];
+					const clientRects = [...currentRange.getClientRects()];
 					const visibleRects = clientRects.filter(
 						(rect2) =>
 							rect2.bottom > rect1.top &&

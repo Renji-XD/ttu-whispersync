@@ -15,7 +15,7 @@ const header = `// ==UserScript==
 // @namespace   https://github.com/Renji-XD
 // @match       https://reader.ttsu.app/*
 // @match       http://localhost:5173/*
-// @version     1.0.12
+// @version     1.0.13
 // @description Listen to audiobooks with ttu ebook-reader
 // @icon https://raw.githubusercontent.com/Renji-XD/ttu-whispersync/main/src/assets/icons/icon64.png
 // @resource mediaInfo https://cdn.jsdelivr.net/npm/mediainfo.js@0.2.1/dist/MediaInfoModule.wasm
@@ -24,9 +24,9 @@ const header = `// ==UserScript==
 // @run-at      document-idle
 // @noframes
 // @grant       GM_getResourceURL
-// @downloadURL https://github.com/Renji-XD/ttu-whispersync/releases/latest/download/ttu-whispersync.user.js
-// @supportURL  https://github.com/Renji-XD/ttu-whispersync/issues
-// @homepageURL https://github.com/Renji-XD/ttu-whispersync
+// @updateURL   none
+// @supportURL  https://github.com/Geniusssmit/ttu-whispersync/issues
+// @homepageURL https://github.com/Geniusssmit/ttu-whispersync
 // ==/UserScript==`;
 
 const __filename = fileURLToPath(import.meta.url);

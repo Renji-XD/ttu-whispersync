@@ -1,22 +1,24 @@
+import { throwIfAborted } from './util';
 import * as lamejs from '@breezystack/lamejs';
 
 import { MediaRecorder as Recorder, register } from 'extendable-media-recorder';
 
 import { connect } from 'extendable-media-recorder-wav-encoder';
 
-const audioStreams = new WeakMap<HTMLAudioElement, MediaStream>();
+const audioStreams = new WeakMap<HTMLAudioElement, { stream: MediaStream; context: AudioContext }>();
 
 let registeredRecorder = false;
 let mediaRecorder: MediaRecorder | undefined;
 let audioBlobs: Blob[] = [];
+let stopPromise: Promise<ArrayBuffer | undefined> | undefined;
 
 function convertChannelData(value: number) {
 	const convertedValue = value < 0 ? value * 32768 : value * 32767;
 
-	return Math.max(-32768, Math.min(32768, convertedValue));
+	return Math.max(-32768, Math.min(32767, convertedValue));
 }
 
-export async function startRecording(audioElement: HTMLAudioElement) {
+export async function startRecording(audioElement: HTMLAudioElement, signal?: AbortSignal) {
 	if (!audioElement) {
 		throw new Error('Audio element not defined');
 	}
@@ -31,9 +33,10 @@ export async function startRecording(audioElement: HTMLAudioElement) {
 		registeredRecorder = true;
 	}
 
-	let stream = audioStreams.get(audioElement);
+	throwIfAborted(signal);
+	let audio = audioStreams.get(audioElement);
 
-	if (!stream) {
+	if (!audio) {
 		const audioContext = new AudioContext();
 		const source = audioContext.createMediaElementSource(audioElement);
 
@@ -43,12 +46,15 @@ export async function startRecording(audioElement: HTMLAudioElement) {
 
 		source.connect(streamDestination);
 
-		stream = streamDestination.stream;
+		audio = { stream: streamDestination.stream, context: audioContext };
 
-		audioStreams.set(audioElement, stream);
+		audioStreams.set(audioElement, audio);
 	}
 
-	mediaRecorder = new Recorder(stream, {
+	await audio.context.resume();
+	throwIfAborted(signal);
+	audioBlobs = [];
+	mediaRecorder = new Recorder(audio.stream, {
 		mimeType: 'audio/wav',
 	}) as MediaRecorder;
 
@@ -60,7 +66,8 @@ export async function startRecording(audioElement: HTMLAudioElement) {
 }
 
 export function stopRecording(kbps: number, canceled = false) {
-	return new Promise<ArrayBuffer | undefined>((resolve, reject) => {
+	if (stopPromise) return stopPromise;
+	stopPromise = new Promise<ArrayBuffer | undefined>((resolve, reject) => {
 		if (!mediaRecorder) {
 			return resolve(undefined);
 		}
@@ -70,16 +77,18 @@ export function stopRecording(kbps: number, canceled = false) {
 				return resolve(undefined);
 			}
 
+			let audioContext: AudioContext | undefined;
 			try {
+				audioContext = new AudioContext();
 				const mp3Data = [];
 				const sampleBlockSize = 1152;
 				const mimeType = mediaRecorder.mimeType;
-				const audioContext = new AudioContext();
 				const audioBlob = new Blob(audioBlobs, { type: mimeType });
 				const blobBuffer = await audioBlob.arrayBuffer();
 				const audioBuffer = await audioContext.decodeAudioData(blobBuffer);
 				const leftChannelData = audioBuffer.getChannelData(0);
-				const rightChannelData = audioBuffer.getChannelData(1);
+				const rightChannelData =
+					audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : leftChannelData;
 				const leftChannel = new Int16Array(leftChannelData.length);
 				const rightChannel = new Int16Array(rightChannelData.length);
 				const mp3Encoder = new lamejs.Mp3Encoder(audioBuffer.numberOfChannels, audioBuffer.sampleRate, kbps);
@@ -114,12 +123,26 @@ export function stopRecording(kbps: number, canceled = false) {
 				}
 			} catch ({ message }: any) {
 				reject(new Error(`Failed to stop recorder - ${message}`));
+			} finally {
+				await audioContext?.close().catch(() => {});
 			}
 		});
 
-		mediaRecorder.stop();
+		if (mediaRecorder.state === 'inactive') resolve(undefined);
+		else mediaRecorder.stop();
 	}).finally(() => {
 		mediaRecorder = undefined;
 		audioBlobs = [];
+		stopPromise = undefined;
 	});
+	return stopPromise;
+}
+
+export function releaseRecordingAudio(audioElement: HTMLAudioElement) {
+	const audio = audioStreams.get(audioElement);
+	if (audio) {
+		for (const track of audio.stream.getTracks()) track.stop();
+		void audio.context.close().catch(() => {});
+		audioStreams.delete(audioElement);
+	}
 }

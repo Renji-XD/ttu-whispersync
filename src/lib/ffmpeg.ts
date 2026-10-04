@@ -1,5 +1,5 @@
 import type { AudioChapter, Subtitle } from './general';
-import { AudioFormat, AudioProcessor } from './settings';
+import { AudioFormat } from './settings';
 import { throwIfAborted, toTimeString } from './util';
 
 import { FFmpeg } from '@ffmpeg/ffmpeg';
@@ -17,7 +17,7 @@ const libMap = new Map<string, string>([
 	['mp3', 'libmp3lame'],
 ]);
 const chapterTimeMatchRegex = /chapter.+start (\d+\.\d+), end/i;
-const chapterLabelMatchRegex = /title.+:(.+)/i;
+const chapterLabelMatchRegex = /^\s*title\s*:\s*(.+)$/i;
 const externalResources = new Map([
 	[
 		'ffmpeg-core.wasm',
@@ -71,7 +71,7 @@ async function toBlobURL(fileName: string, url: string, type: string) {
 				try {
 					const tamperMonkeyCache = await caches.open(tamperMonkeyCacheKey);
 
-					await tamperMonkeyCache.add(url);
+					await tamperMonkeyCache.put(url, response.clone());
 				} catch (_) {
 					// no-op
 				}
@@ -188,8 +188,6 @@ export async function initializeFFMPEG() {
 			classWorkerURL: blobUrls[2],
 		});
 	} catch (error: any) {
-		settings$.exportAudioProcessor$.set(AudioProcessor.RECORDER);
-
 		let message = 'Unknown error';
 
 		if (typeof error === 'string') {
@@ -198,7 +196,7 @@ export async function initializeFFMPEG() {
 			message = error.message;
 		}
 
-		throw new Error(`Error loading FFMPEG - ${message}`);
+		throw new Error(`Error loading FFMPEG - ${message}. Retry or select the Recorder backend in settings.`);
 	} finally {
 		for (let index = 0, { length } = blobUrls; index < length; index += 1) {
 			URL.revokeObjectURL(blobUrls[index]);
@@ -318,7 +316,8 @@ export async function getAudio(
 
 			filterInput += `[${index}:a]`;
 
-			await ffmpeg.exec(ffmpegArguments);
+			const exitCode = await ffmpeg.exec(ffmpegArguments);
+			if (exitCode !== 0) throw new Error(`FFmpeg exited with code ${exitCode}`);
 		}
 
 		if (subtitles.length > 1) {
@@ -345,7 +344,8 @@ export async function getAudio(
 				console.log(ffmpegArguments);
 			}
 
-			await ffmpeg.exec(ffmpegArguments);
+			const exitCode = await ffmpeg.exec(ffmpegArguments);
+			if (exitCode !== 0) throw new Error(`FFmpeg exited with code ${exitCode}`);
 		}
 
 		const file = (await ffmpeg.readFile(finalOutput)) as unknown as Buffer;

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { FileInstance, EventWithElement, FileResult } from '../lib/dropzone';
+	import { getFileExtension } from '../lib/util';
 	import { createEventDispatcher } from 'svelte';
 
 	export let disabled = false;
@@ -29,7 +30,7 @@
 
 	$: containerStyles = `width: ${width}; height: ${height};`;
 
-	$: formats = fileFormats.length ? new Set<FileExtension>(fileFormats) : new Set<FileExtension>();
+	$: formats = new Set<FileExtension>(fileFormats.map((format) => format.toLowerCase() as FileExtension));
 
 	$: accept = accepts ? accepts : [...formats].join(',') || '*';
 
@@ -59,7 +60,7 @@
 
 		for (let index = 0, { length } = files; index < length; index += 1) {
 			const file = extendFile(files[index], '/');
-			const extension: FileExtension = `.${file.name.split('.').pop()}`;
+			const extension: FileExtension = getFileExtension(file.name);
 
 			try {
 				if (
@@ -68,6 +69,8 @@
 					!oldFiles.find((oldFile) => oldFile === file)
 				) {
 					result.files.push({ file, extension });
+				} else if ((formats.size && !formats.has(extension)) || (formatRegex && !formatRegex.test(file.type))) {
+					result.errors.push(`Unsupported file type: ${file.name}`);
 				}
 			} catch ({ message }: any) {
 				result.errors.push(`Error on file ${file.name} - ${message}`);
@@ -163,12 +166,13 @@
 	async function processEntry(entry: FileSystemHandle | FileSystemEntry, currentPath = '/') {
 		const result: FileResult = { files: [], errors: [] };
 
-		if (entry instanceof FileSystemFileHandle) {
-			const extension: FileExtension = `.${entry.name.split('.').pop()}`;
+		if (typeof FileSystemFileHandle !== 'undefined' && entry instanceof FileSystemFileHandle) {
+			const extension: FileExtension = getFileExtension(entry.name);
 
 			let isSameEntry = false;
 
 			if (formats.size && !formats.has(extension)) {
+				result.errors.push(`Unsupported file type: ${entry.name}`);
 				return result;
 			}
 
@@ -201,9 +205,10 @@
 
 			return result;
 		} else if (isFileSystemFileEntry(entry)) {
-			const extension: FileExtension = `.${entry.name.split('.').pop()}`;
+			const extension: FileExtension = getFileExtension(entry.name);
 
 			if (formats.size && !formats.has(extension)) {
+				result.errors.push(`Unsupported file type: ${entry.name}`);
 				return result;
 			}
 
@@ -222,7 +227,7 @@
 				.catch(({ message }) => result.errors.push(`Error reading file ${entry.name} - ${message}`));
 
 			return result;
-		} else if (entry instanceof FileSystemDirectoryHandle) {
+		} else if (typeof FileSystemDirectoryHandle !== 'undefined' && entry instanceof FileSystemDirectoryHandle) {
 			const iterator = entry.entries();
 
 			let entries = await iterator.next().catch(({ message }) => {
@@ -241,7 +246,7 @@
 				result.errors.push(...results.errors);
 
 				if (!result.files.length || multiple) {
-					const length = multiple ? results.files.length : 1;
+					const length = multiple ? results.files.length : Math.min(1, results.files.length);
 
 					for (let index = 0; index < length; index++) {
 						result.files.push(results.files[index]);
@@ -309,7 +314,7 @@
 					result.errors.push(...results.errors);
 
 					if (!result.files.length || multiple) {
-						const length = multiple ? results.files.length : 1;
+						const length = multiple ? results.files.length : Math.min(1, results.files.length);
 
 						for (let index = 0; index < length; index++) {
 							result.files.push(results.files[index]);

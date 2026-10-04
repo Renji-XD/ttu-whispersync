@@ -127,6 +127,9 @@ async function executeAlignSubtitle(subtitles: Subtitle[], persistAlignment: boo
 		for (let index = 0, { length } = subtitles; index < length; index += 1) {
 			const subtitle = currentSubtitles.get(subtitles[index].id)!;
 			const elements = book.querySelectorAll<HTMLSpanElement>(getLineCSSSelectorForId(subtitle.id));
+			if (!elements.length) {
+				continue;
+			}
 
 			let text = '';
 
@@ -135,11 +138,11 @@ async function executeAlignSubtitle(subtitles: Subtitle[], persistAlignment: boo
 				const parentTag = (element.parentElement?.tagName || '').toLowerCase();
 
 				if (!allIgnoredElements.has(parentTag)) {
-					text += element.innerText.trim();
+					text += element.textContent || '';
 				}
 			}
 
-			if (text !== subtitle.originalText) {
+			if (text !== subtitle.text) {
 				subtitle.text = text;
 
 				currentSubtitles.set(subtitle.id, subtitle);
@@ -403,7 +406,7 @@ export async function executeAction(
 			exportProgress$.set(0);
 			exportCancelController$.set(undefined);
 		});
-	} else if (!exportCancelController) {
+	} else if (!exportCancelController && action === Action.OPEN_LAST_EXPORTED_CARD) {
 		await openGUIForNote(get(settings$.ankiUrl$));
 	} else if (exportCancelController && !exportCancelController.signal.aborted && action === Action.CANCEL_EXPORT) {
 		exportCancelController.abort('user aborted');

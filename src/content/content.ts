@@ -2,50 +2,58 @@ import AudioBookMenu from '../components/AudioBookMenu.svelte';
 import { Action, defaultFooterActionList, type ActionListItem } from '../lib/settings';
 import pageStyles from '../styles.css?inline';
 
-let wasOnReader = false;
-let currentBookId = 0;
-let componentMenu: AudioBookMenu;
+let componentMenu: AudioBookMenu | undefined;
+let componentContainerElement: HTMLDivElement | undefined;
+let currentBookId: number | undefined;
+let currentBookContent: HTMLDivElement | null = null;
+let pendingMount: AbortController | undefined;
 let observerTimer: number | undefined;
 
-async function observerCallback() {
-	if (observerTimer) {
-		return;
-	}
-
-	observerTimer = window.setTimeout(() => (observerTimer = undefined), 1000);
-
+function getReaderBookId() {
 	const site = new URL(window.location.href);
-	const isOnReader =
-		site.href.startsWith('https://reader.ttsu.app/b') || site.href.startsWith('http://localhost:5173/b')
-			? site.searchParams.has('id')
-			: false;
+	if (
+		!['https://reader.ttsu.app', 'http://localhost:5173'].includes(site.origin) ||
+		!site.pathname.startsWith('/b') ||
+		!site.searchParams.has('id')
+	)
+		return undefined;
+	const id = Number(site.searchParams.get('id'));
+	return Number.isInteger(id) && id > 0 ? id : undefined;
+}
 
-	if (isOnReader && !wasOnReader) {
-		wasOnReader = true;
+function scheduleUpdate() {
+	// Coalesce mutations but always process the latest DOM and route.
+	if (observerTimer !== undefined) return;
+	observerTimer = window.setTimeout(() => {
+		observerTimer = undefined;
+		void reconcileReader();
+	}, 100);
+}
 
-		let bookContentElement = document.querySelector<HTMLDivElement>('.book-content');
+async function reconcileReader() {
+	const bookId = getReaderBookId();
+	const bookContentElement = document.querySelector<HTMLDivElement>('.book-content');
+	if (
+		bookId !== currentBookId ||
+		bookContentElement !== currentBookContent ||
+		(componentMenu && !componentContainerElement?.isConnected)
+	) {
+		pendingMount?.abort();
+		pendingMount = undefined;
+		componentMenu?.$destroy();
+		componentMenu = undefined;
+		componentContainerElement?.remove();
+		componentContainerElement = undefined;
+		currentBookId = bookId;
+		currentBookContent = bookContentElement;
+	}
+	if (bookId === undefined || !bookContentElement || componentMenu || pendingMount) return;
+	const footerElm = document.querySelector<HTMLDivElement>('.z-10.flex.h-8.w-full');
+	if (!footerElm?.firstElementChild) return;
 
-		await new Promise<void>((resolve) => {
-			if (bookContentElement) {
-				return resolve();
-			}
-
-			const waitForBookContentElement = setInterval(() => {
-				bookContentElement = document.querySelector<HTMLDivElement>('.book-content');
-
-				if (bookContentElement) {
-					clearInterval(waitForBookContentElement);
-					resolve();
-				}
-			}, 500);
-		});
-
-		const footerElm = document.querySelector<HTMLDivElement>('.z-10.flex.h-8.w-full');
-
-		if (!bookContentElement || !footerElm || !footerElm.firstElementChild) {
-			return;
-		}
-
+	const controller = new AbortController();
+	pendingMount = controller;
+	try {
 		const footerActions = window.localStorage.getItem('ttu-whispersync-reader-footer-actions');
 
 		if (footerActions) {
@@ -64,10 +72,8 @@ async function observerCallback() {
 			window.localStorage.removeItem('ttu-whispersync-reader-footer-actions');
 		}
 
-		currentBookId = Number.parseInt(site.searchParams.get('id') || '0', 10);
-
 		const root = document.querySelector<HTMLElement>(':root')!;
-		const componentContainerElement = document.createElement('div');
+		componentContainerElement = document.createElement('div');
 		const stylesId = 'ttu-whispersync-styles';
 		const sandboxId = 'ttu-whispersync-sandbox';
 		const [r, g, b] = (bookContentElement.style.color.match(/rgb[a]{0,1}\((.+)\)/)?.[1] || '0,0,0,1')
@@ -76,7 +82,7 @@ async function observerCallback() {
 
 		let sandboxElement = document.getElementById(sandboxId) as HTMLIFrameElement;
 		let pageStylesElement = document.getElementById(stylesId);
-		let backgroundColor = '';
+		const backgroundColor = document.body.style.backgroundColor || getComputedStyle(document.body).backgroundColor;
 
 		if (!pageStylesElement) {
 			pageStylesElement = document.createElement('style');
@@ -92,12 +98,39 @@ async function observerCallback() {
 			sandboxElement.style.display = 'none';
 			sandboxElement.src = chrome.runtime.getURL('src/sandbox/sandbox.html');
 
-			await new Promise((resolve) => {
-				sandboxElement.addEventListener('load', resolve, false);
-
+			await new Promise<void>((resolve, reject) => {
+				const cleanup = () => {
+					clearTimeout(timer);
+					sandboxElement.removeEventListener('load', onLoad);
+					controller.signal.removeEventListener('abort', onAbort);
+				};
+				const onLoad = () => {
+					cleanup();
+					resolve();
+				};
+				const onAbort = () => {
+					cleanup();
+					sandboxElement.remove();
+					reject(new Error('Mount canceled'));
+				};
+				const timer = setTimeout(() => {
+					cleanup();
+					sandboxElement.remove();
+					reject(new Error('Sandbox failed to load'));
+				}, 10000);
+				sandboxElement.addEventListener('load', onLoad, { once: true });
+				controller.signal.addEventListener('abort', onAbort, { once: true });
 				document.body.appendChild(sandboxElement);
 			});
 		}
+
+		if (
+			controller.signal.aborted ||
+			getReaderBookId() !== bookId ||
+			!bookContentElement.isConnected ||
+			!footerElm.isConnected
+		)
+			return;
 
 		componentContainerElement.classList.add(
 			'flex',
@@ -110,18 +143,7 @@ async function observerCallback() {
 		componentContainerElement.addEventListener('click', stopEventPropagation, false);
 
 		footerElm.classList.remove('justify-between');
-		footerElm.firstElementChild.insertAdjacentElement('beforebegin', componentContainerElement);
-
-		await new Promise<void>((resolve) => {
-			const waitForBodyStyleInterval = setInterval(() => {
-				backgroundColor = document.body.style.backgroundColor;
-
-				if (backgroundColor) {
-					clearInterval(waitForBodyStyleInterval);
-					resolve();
-				}
-			}, 500);
-		});
+		footerElm.firstElementChild!.insertAdjacentElement('beforebegin', componentContainerElement);
 
 		root.style.setProperty('--ttu-whispersync-background-color', backgroundColor);
 		root.style.setProperty('--ttu-whispersync-color', `rgb(${r},${g},${b})`);
@@ -132,17 +154,16 @@ async function observerCallback() {
 				componentContainerElement,
 				bookContentElement,
 				sandboxElement,
-				currentBookId,
+				currentBookId: bookId,
 			},
 		});
-	} else if (!isOnReader) {
-		componentMenu?.$destroy();
-
-		clearTimeout(observerTimer);
-
-		currentBookId = 0;
-		wasOnReader = false;
-		observerTimer = undefined;
+	} catch (error) {
+		if (!controller.signal.aborted) {
+			componentContainerElement?.remove();
+			console.error('Failed to initialize ttu-whispersync', error);
+		}
+	} finally {
+		if (pendingMount === controller) pendingMount = undefined;
 	}
 }
 
@@ -150,8 +171,8 @@ function stopEventPropagation(event: Event) {
 	event.stopPropagation();
 }
 
-const observer = new MutationObserver(observerCallback);
-
-observer.observe(document.body, { attributes: true });
-
-observerCallback();
+const observer = new MutationObserver(scheduleUpdate);
+observer.observe(document.body, { attributes: true, childList: true, subtree: true });
+window.addEventListener('popstate', scheduleUpdate);
+window.addEventListener('hashchange', scheduleUpdate);
+void reconcileReader();

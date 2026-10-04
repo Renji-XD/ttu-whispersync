@@ -11,7 +11,7 @@
 		type SubtitleChange,
 		type EventWithElement,
 	} from '../lib/general';
-	import { startRecording, stopRecording } from '../lib/recorder';
+	import { releaseRecordingAudio, startRecording, stopRecording } from '../lib/recorder';
 	import { AutoPauseMode, ReaderMenuOpenMode } from '../lib/settings';
 	import {
 		activeSubtitle$,
@@ -154,6 +154,7 @@
 	let skipNextCue = false;
 	let originalMuted: boolean | undefined;
 	let displayedPlaybackrate = $playbackRate$;
+	let removeRecordingAbortListener: (() => void) | undefined;
 	let recorderSuccess: undefined | ((audioBuffer: ArrayBuffer | undefined) => void);
 	let recorderFailure: undefined | ((error: any) => void);
 
@@ -434,21 +435,9 @@
 	}
 
 	async function onCurrentTimeChange() {
-		if ($exportCancelController$?.signal.aborted) {
-			await stopRecording($exportAudioBitrate$, true).catch(() => {
-				// no-op
-			});
-
-			recorderFailure?.(new AbortError('user aborted'));
-
-			actionStartTimes = [];
-			actionEndTimes = [];
-			actionTimeIndex = -1;
-			isLoopAction = false;
-			$paused$ = true;
-
-			return resetRecorderContext();
-		} else if (actionTimeIndex > -1 && $currentTime$ > actionEndTimes[actionTimeIndex]) {
+		if ($exportCancelController$?.signal.aborted && recorderFailure) {
+			return cancelRecording();
+		} else if (actionTimeIndex > -1 && ($currentTime$ >= actionEndTimes[actionTimeIndex] || audioElement.ended)) {
 			const endReached = actionTimeIndex === actionEndTimes.length - 1;
 			const restartLoop = isLoopAction && endReached;
 			const executeAction = restartLoop || !endReached;
@@ -459,7 +448,9 @@
 			if (executeAction) {
 				actionTimeIndex = restartLoop ? 0 : oldActionTimeIndex + 1;
 
-				return setTime(actionStartTimes[actionTimeIndex]);
+				setTime(actionStartTimes[actionTimeIndex]);
+				$paused$ = false;
+				return;
 			}
 
 			actionStartTimes = [];
@@ -468,14 +459,14 @@
 			$paused$ = true;
 
 			if (recorderSuccess) {
-				const audioBuffer = await stopRecording($exportAudioBitrate$).catch((error) => {
-					recorderFailure?.(error);
-					resetRecorderContext();
-
-					return undefined;
-				});
-
-				recorderSuccess(audioBuffer);
+				const success = recorderSuccess;
+				const failure = recorderFailure;
+				try {
+					const audioBuffer = await stopRecording($exportAudioBitrate$);
+					if (!$exportCancelController$?.signal.aborted) success(audioBuffer);
+				} catch (error) {
+					failure?.(error);
+				}
 			}
 
 			return resetRecorderContext();
@@ -548,6 +539,8 @@
 	}
 
 	function resetRecorderContext() {
+		removeRecordingAbortListener?.();
+		removeRecordingAbortListener = undefined;
 		recorderSuccess = undefined;
 		recorderFailure = undefined;
 
@@ -567,6 +560,24 @@
 		originalCurrentTime = -1;
 		originalPlaybackRate = -1;
 		originalMuted = undefined;
+	}
+
+	async function cancelRecording() {
+		const failure = recorderFailure;
+		recorderFailure = undefined;
+		recorderSuccess = undefined;
+		actionStartTimes = [];
+		actionEndTimes = [];
+		actionTimeIndex = -1;
+		isLoopAction = false;
+		$paused$ = true;
+		await stopRecording($exportAudioBitrate$, true).catch(() => {});
+		failure?.(new AbortError('user aborted'));
+		resetRecorderContext();
+	}
+
+	function recordingAudio(node: HTMLAudioElement) {
+		return { destroy: () => releaseRecordingAudio(node) };
 	}
 
 	function calculateTime(event: PointerEventWithElement<Element>) {
@@ -603,7 +614,7 @@
 	}
 
 	async function onPlayLine(data: PlayLineData) {
-		if (!$currentAudioLoaded$ || !data.subtitles.length) {
+		if (!$currentAudioLoaded$ || !data?.subtitles.length) {
 			return;
 		}
 
@@ -659,13 +670,20 @@
 		setTime(startSeconds);
 
 		if (recorderSuccess && recorderFailure) {
-			return startRecording(audioElement)
+			const signal = $exportCancelController$?.signal;
+			const onAbort = () => { void cancelRecording(); };
+			signal?.addEventListener('abort', onAbort, { once: true });
+			removeRecordingAbortListener = () => signal?.removeEventListener('abort', onAbort);
+			return startRecording(audioElement, signal)
 				.then(() => {
+					if (recorderSuccess !== data.recorderSuccess) return;
+					if (signal?.aborted) return cancelRecording();
 					$playbackRate$ = 1;
 					$muted$ = false;
 					$paused$ = false;
 				})
 				.catch((error) => {
+					if (recorderFailure !== data.recorderFailure) return;
 					recorderFailure?.(error);
 					resetRecorderContext();
 				});
@@ -899,9 +917,11 @@
 		bind:paused={$paused$}
 		bind:playbackRate={$playbackRate$}
 		bind:this={audioElement}
+		use:recordingAudio
 		on:loadstart
 		on:loadedmetadata={onLoadedMetadata}
 		on:timeupdate={onCurrentTimeChange}
+		on:ended={onCurrentTimeChange}
 		on:pause={onCurrentTimeChange}
 		on:playing={requestWakeLock}
 		on:error

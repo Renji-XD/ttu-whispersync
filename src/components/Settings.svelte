@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Icon from './Icon.svelte';
 	import { Action, persistSubtitles } from '../lib/actions';
-	import { getDecksAndModels, getFields, resetAnkiSettings, setApiKey } from '../lib/anki';
+	import { getDecksAndModels, getFields, setApiKey } from '../lib/anki';
 	import { getChapterData, initializeFFMPEG, putAudioFileInFFMPEG, terminateFFMPEG } from '../lib/ffmpeg';
 	import { updateAudio } from '../lib/files';
 	import { type Subtitle, type Context, type EventWithElement } from '../lib/general';
@@ -390,16 +390,17 @@
 		$isLoading$ = true;
 		$lastError$ = '';
 
-		let nextAudioProcessor = AudioProcessor.RECORDER;
+		const nextAudioProcessor = $exportAudioProcessor$;
 
 		if ($exportAudioProcessor$ === AudioProcessor.FFMPEG) {
 			try {
 				await initializeFFMPEG();
 				await putAudioFileInFFMPEG($currentAudioFile$);
 
-				nextAudioProcessor = AudioProcessor.FFMPEG;
 			} catch ({ message }: any) {
 				$lastError$ = `Update to FFMPEG failed: ${message}`;
+				$isLoading$ = false;
+				return;
 			}
 		}
 
@@ -501,8 +502,6 @@
 	}
 
 	function resetAnkiData() {
-		resetAnkiSettings(!showAnkiCreateSettings);
-
 		ankiModelFields.clear();
 
 		ankiDecks = [];
@@ -987,38 +986,38 @@
 				helpText="If enabled and no subtitle is currently active the current time is used as fallback to search for the closest subtitle"
 				targetStore$={settings$.keybindingsEnableTimeFallback$}
 			/>
-			<SettingsKeybind key="Cmd + Space" description={Action.TOGGLE_PLAYBACK} extendDescription={false} />
+			<SettingsKeybind key="Ctrl / Cmd + Space" description={Action.TOGGLE_PLAYBACK} extendDescription={false} />
 			<SettingsKeybind key="Alt + j" description={Action.TOGGLE_PLAYBACK} extendDescription={false} />
-			<SettingsKeybind key="Cmd + d" description={Action.RESTART_PLAYBACK} />
+			<SettingsKeybind key="Ctrl / Cmd + d" description={Action.RESTART_PLAYBACK} />
 			<SettingsKeybind key="Alt + d" description={Action.TOGGLE_PLAY_PAUSE} />
-			<SettingsKeybind key="Cmd + l" description={Action.TOGGLE_PLAYBACK_LOOP} />
-			<SettingsKeybind key="Cmd + b" description={Action.TOGGLE_BOOKMARK} />
-			<SettingsKeybind key="Cmd + m" description={Action.TOGGLE_MERGE} />
-			<SettingsKeybind key="Cmd + e" description={Action.EXPORT_NEW} />
+			<SettingsKeybind key="Ctrl / Cmd + l" description={Action.TOGGLE_PLAYBACK_LOOP} />
+			<SettingsKeybind key="Ctrl / Cmd + b" description={Action.TOGGLE_BOOKMARK} />
+			<SettingsKeybind key="Ctrl / Cmd + m" description={Action.TOGGLE_MERGE} />
+			<SettingsKeybind key="Ctrl / Cmd + e" description={Action.EXPORT_NEW} />
 			<SettingsKeybind key="Alt + e" description={Action.EXPORT_UPDATE} />
 			<SettingsKeybind key="Alt + g" description={Action.EDIT_SUBTITLE} extendDescription={false} />
 			<SettingsKeybind key="Alt + z" description={Action.COPY_SUBTITLE} extendDescription={false} />
-			<SettingsKeybind key="Cmd + q" description={Action.PREVIOUS_SUBTITLE} extendDescription={false} />
+			<SettingsKeybind key="Ctrl / Cmd + q" description={Action.PREVIOUS_SUBTITLE} extendDescription={false} />
 			<SettingsKeybind key="Alt + q" description={Action.NEXT_SUBTITLE} extendDescription={false} />
-			<SettingsKeybind key="Cmd + k" description={`Decrease playbackrate`} extendDescription={false} />
+			<SettingsKeybind key="Ctrl / Cmd + k" description={`Decrease playbackrate`} extendDescription={false} />
 			<SettingsKeybind key="Alt + k" description={`Increase playbackrate`} extendDescription={false} />
 			<SettingsKeybind
-				key="Cmd + Arrow Left"
+				key="Ctrl / Cmd + Arrow Left"
 				description={`Rewind ${$playerRewindTime$} seconds`}
 				extendDescription={false}
 			/>
 			<SettingsKeybind
-				key="Cmd + Arrow Down"
+				key="Ctrl / Cmd + Arrow Down"
 				description={`Rewind ${$playerAltRewindTime$} seconds`}
 				extendDescription={false}
 			/>
 			<SettingsKeybind
-				key="Cmd + Arrow Right"
+				key="Ctrl / Cmd + Arrow Right"
 				description={`Fast-Forward ${$playerFastForwardTime$} seconds`}
 				extendDescription={false}
 			/>
 			<SettingsKeybind
-				key="Cmd + Arrow Up"
+				key="Ctrl / Cmd + Arrow Up"
 				description={`Fast-Forward ${$playerAltFastForwardTime$} seconds`}
 				extendDescription={false}
 			/>

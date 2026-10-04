@@ -66,6 +66,7 @@
 		getSubtitleIdFromElement,
 		parseHTML,
 		toTimeStamp,
+		waitForReaderEvent,
 		between,
 	} from '../lib/util';
 	import Match from './Match.svelte';
@@ -450,14 +451,7 @@
 				await setBooksDB(dbVersion);
 			}
 
-			await new Promise((resolve) => {
-				document.addEventListener('ttsu:synced', resolve, {
-					once: true,
-					capture: false,
-				});
-
-				document.dispatchEvent(new CustomEvent('ttu-action', { detail: { type: 'waitForSync' } }));
-			});
+			await waitForReaderEvent(document, 'ttsu:synced', 'waitForSync');
 
 			const book = await $booksDB$.get('data', currentBookId);
 
@@ -491,9 +485,14 @@
 			$bookData$ = book;
 			$extensionData$ = {
 				title: book.title,
-				lastAudio: audioHandle?.handle instanceof FileSystemFileHandle ? audioHandle.handle : undefined,
+				lastAudio:
+					typeof FileSystemFileHandle !== 'undefined' && audioHandle?.handle instanceof FileSystemFileHandle
+						? audioHandle.handle
+						: undefined,
 				lastSubtitle:
-					subtitleHandle?.handle instanceof FileSystemFileHandle ? subtitleHandle.handle : undefined,
+					typeof FileSystemFileHandle !== 'undefined' && subtitleHandle?.handle instanceof FileSystemFileHandle
+						? subtitleHandle.handle
+						: undefined,
 				playbackPosition: audioBook?.playbackPosition || 0,
 				subtitleData: subtitle?.subtitleData,
 			};

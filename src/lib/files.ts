@@ -15,7 +15,7 @@ import {
 	subtitleChange$,
 	subtitlesForMerge$,
 } from './stores';
-import { between, interactWithSandbox, toTimeStamp, toTimeString } from './util';
+import { between, getFileExtension, interactWithSandbox, toTimeStamp, toTimeString } from './util';
 import { getAudioMetadata, getMediaInfoCover } from './mediaInfo';
 import { getChapterData, initializeFFMPEG, putAudioFileInFFMPEG } from './ffmpeg';
 
@@ -111,21 +111,29 @@ export async function updateSubtitles(file: File, document: Document, updateCont
 		const subtitlesGlobalEndPadding = get(settings$.subtitlesGlobalEndPadding$) / 1000;
 		const duration = get(duration$);
 
-		if (file.name.endsWith('.srt') || file.name.endsWith('.txt')) {
+		if (getFileExtension(file.name) === '.srt' || getFileExtension(file.name) === '.txt') {
 			const parser = new srtParser2();
 			const fileContent = await readFile(file);
 			const parsingResults = [...parser.fromSrt(fileContent)];
+			const reservedIds = new Set(parsingResults.map((entry) => entry.id));
+			let nextId = 1;
 
 			for (let index = 0, { length } = parsingResults; index < length; index += 1) {
 				const parsingResult = parsingResults[index];
+				let id = parsingResult.id;
+				if (subtitles.has(id)) {
+					while (reservedIds.has(`${nextId}`)) nextId += 1;
+					id = `${nextId++}`;
+					reservedIds.add(id);
+				}
 				const startSeconds = Math.max(0, parsingResult.startSeconds + subtitlesGlobalStartPadding);
 				const endSeconds = duration
 					? between(0, duration, parsingResult.endSeconds + subtitlesGlobalEndPadding)
 					: Math.max(0, parsingResult.endSeconds + subtitlesGlobalEndPadding);
 				const text = parsingResult.text.trim();
 
-				subtitles.set(parsingResult.id, {
-					id: parsingResult.id,
+				subtitles.set(id, {
+					id,
 					originalStartSeconds: parsingResult.startSeconds,
 					startSeconds,
 					startTime: toTimeStamp(startSeconds),
@@ -137,7 +145,7 @@ export async function updateSubtitles(file: File, document: Document, updateCont
 					subIndex: index,
 				});
 			}
-		} else if (file.name.endsWith('.vtt')) {
+		} else if (getFileExtension(file.name) === '.vtt') {
 			subUrl = URL.createObjectURL(file);
 
 			const cues = await getVTTCues(subUrl, document);
@@ -199,7 +207,7 @@ export async function updateAudio(
 ) {
 	const enableCover = get(settings$.playerEnableCover$);
 	const enableChapters = get(settings$.playerEnableChapters$);
-	const fileExtension = file.name.split('.').pop();
+	const fileExtension = getFileExtension(file.name).slice(1);
 	const errors: string[] = [];
 
 	let coverUrl = '';
@@ -212,7 +220,7 @@ export async function updateAudio(
 		paused$.set(true);
 
 		if (get(settings$.exportAudioProcessor$) === AudioProcessor.FFMPEG) {
-			await initializeFFMPEG().catch(({ message }) => errors.push(`FFMEPG failure: ${message}`));
+			await initializeFFMPEG();
 		}
 	}
 

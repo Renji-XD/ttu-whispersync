@@ -55,13 +55,9 @@ export const baseLineCSSClass = `ttu-whispersync-line-highlight-`;
 export const allIgnoredElements = new Set(['rp', 'rt']);
 
 export function parseHTML(domParser: DOMParser, hmtl: string) {
-	let { body } = domParser.parseFromString(hmtl, 'text/html');
+	const { body } = domParser.parseFromString(hmtl, 'text/html');
 
-	if (!body.childNodes.length) {
-		({ body } = domParser.parseFromString(hmtl, 'text/xml'));
-	}
-
-	if (!body.childNodes.length) {
+	if (!body?.childNodes.length) {
 		throw new Error(`Failed to parse html`);
 	}
 
@@ -97,14 +93,40 @@ export function interactWithSandbox<T>(sandboxElement: HTMLIFrameElement, payloa
 }
 
 export function getTimeParts(s: number) {
-	const hours = Math.floor(s / 3600);
-	const hoursDiff = s - hours * 3600;
-	const minutes = Math.floor(hoursDiff / 60);
-	const minutesDiff = hoursDiff - minutes * 60;
-	const seconds = Math.floor(minutesDiff);
-	const ms = Math.round((minutesDiff - seconds) * 1000);
+	const totalMilliseconds = Math.max(0, Math.round(s * 1000));
+	const hours = Math.floor(totalMilliseconds / 3600000);
+	const minutes = Math.floor(totalMilliseconds / 60000) % 60;
+	const seconds = Math.floor(totalMilliseconds / 1000) % 60;
+	const ms = totalMilliseconds % 1000;
 
 	return [hours, minutes, seconds, ms];
+}
+
+export function getFileExtension(name: string): FileExtension {
+	return `.${name.split('.').pop()?.toLowerCase() || ''}`;
+}
+
+export function normalizeAnkiTag(value: string) {
+	return value.trim().replace(/\s+/gu, '_');
+}
+
+export function waitForReaderEvent<T>(document: Document, eventName: string, action: string, timeoutMs = 30000) {
+	return new Promise<T>((resolve, reject) => {
+		const cleanup = () => {
+			clearTimeout(timer);
+			document.removeEventListener(eventName, onEvent);
+		};
+		const onEvent = (event: Event) => {
+			cleanup();
+			resolve((event as CustomEvent<T>).detail);
+		};
+		const timer = setTimeout(() => {
+			cleanup();
+			reject(new Error(`Reader did not respond to ${action}; please reload and try again`));
+		}, timeoutMs);
+		document.addEventListener(eventName, onEvent, { once: true });
+		document.dispatchEvent(new CustomEvent('ttu-action', { detail: { type: action } }));
+	});
 }
 
 export function toTimeStamp(s: number) {

@@ -96,11 +96,11 @@
 	<button title="Select all" class="m-r-s" on:click={() => onToggle(true)}>
 		<Icon path={mdiCheckAll} />
 	</button>
-	<button title="Remove all" class="m-r-s">
-		<Icon path={mdiDeleteOutline} on:click={() => onToggle(false)} />
+	<button title="Remove all" class="m-r-s" on:click={() => onToggle(false)}>
+		<Icon path={mdiDeleteOutline} />
 	</button>
-	<button title="Restore defaults">
-		<Icon path={mdiRestore} on:click={onRestoreDefaults} />
+	<button title="Restore defaults" on:click={onRestoreDefaults}>
+		<Icon path={mdiRestore} />
 	</button>
 </div>
 <div class="sortable-list-container" bind:this={listContainer}>

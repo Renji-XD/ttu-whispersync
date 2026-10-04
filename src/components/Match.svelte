@@ -130,7 +130,7 @@
 			let passedStartNode = hasHint ? false : true;
 			let { currentSubtitle, currentSubtitleLength } = getSubtitleData(subtitles, currentSubtitleIndex);
 
-			bookHTML = parseHTML(new DOMParser(), $bookData$.elementHtml);
+			bookHTML = parseHTML(new DOMParser(), $bookData$.htmlBackup || $bookData$.elementHtml);
 
 			const bookTextWalker = document.createTreeWalker(bookHTML, NodeFilter.SHOW_TEXT, {
 				acceptNode(node) {
@@ -446,21 +446,10 @@
 				}
 			}
 
-			const lastSubtitle = subtitles[subtitles.length - 1];
-
-			if (currentText) {
-				unmatchedSubtitles.push(lastSubtitle);
-
-				console.log(
-					`End of Text before max attempt for ${lastSubtitle.text} (${lastSubtitle.id}) reached - reset`,
-				);
-			}
-
-			if (
-				subtitlesForDownload.length &&
-				subtitlesForDownload[subtitlesForDownload.length - 1].id !== lastSubtitle.id
-			) {
-				updateSubtitlesForDownload(lastSubtitle, textInScope);
+			for (; currentSubtitleIndex < subtitles.length; currentSubtitleIndex += 1) {
+				const subtitle = subtitles[currentSubtitleIndex];
+				unmatchedSubtitles.push(subtitle);
+				updateSubtitlesForDownload(subtitle, '');
 			}
 
 			lineMatchRate = `${matchedSubtitles} / ${
@@ -533,7 +522,7 @@
 		try {
 			const newData = {
 				...$bookData$,
-				htmlBackup: $bookData$.elementHtml,
+				htmlBackup: $bookData$.htmlBackup || $bookData$.elementHtml,
 				elementHtml: bookHTML!.innerHTML,
 				lastBookModified: Date.now(),
 			};
@@ -562,7 +551,7 @@
 		for (let index = 0, { length } = node.childNodes; index < length; index += 1) {
 			const childNode = node.childNodes[index];
 
-			if (childNode.nodeType === Node.TEXT_NODE && normalizeString(node.textContent)) {
+			if (childNode.nodeType === Node.TEXT_NODE && normalizeString(childNode.textContent)) {
 				textNode = childNode;
 			} else {
 				textNode = getTextNode(childNode);
