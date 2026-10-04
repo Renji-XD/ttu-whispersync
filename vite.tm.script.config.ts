@@ -12,7 +12,7 @@ const outName = 'ttu-whispersync.tm.user.js';
 const header = `// ==UserScript==
 // @name        ttu-whispersync
 // @namespace   https://github.com/Renji-XD
-// @version     1.0.13
+// @version     1.0.14
 // @description Listen to audiobooks with ttu ebook-reader
 // @icon https://raw.githubusercontent.com/Renji-XD/ttu-whispersync/main/src/assets/icons/icon64.png
 // @grant       GM_getResourceURL

@@ -115,6 +115,7 @@ function matcher(lines, html) {
 		'addNodeContentToMap',
 		'getTextForComparison',
 		'getSimilarity',
+		'getSimilarityRanges',
 		'findBestSimilarity',
 		'updateSubtitlesForDownload',
 		'throwMatchError',
@@ -133,7 +134,6 @@ function matcher(lines, html) {
 		hasHint: false,
 		ignoredTagsSelector: 'rt,rp',
 		allIgnoredElements: new Set(['rt', 'rp']),
-		normalizeRegex: /[\p{punct}\s]/u,
 		cancelToken: token,
 		cancelSignal: token.signal,
 		currentProgress: 0,
@@ -187,4 +187,97 @@ test('match hint ignores leading whitespace text nodes', () => {
 	const parent = ctx.document.createElement('div');
 	parent.innerHTML = '  <span>word</span>';
 	assert.equal(ctx.getTextNode(parent).textContent, 'word');
+});
+
+test('incremental candidate scores agree with direct Dice comparisons for Unicode text', () => {
+	const { ctx } = matcher([], '<div/>');
+	const examples = [
+		['hello', 'xx Hello, world!'],
+		['a', '  a a '],
+		['', ' \t'],
+		['𠮷野家で食べる', '　𠮷野家で食べる。次の文'],
+		['İstanbul', ' İstanbul, '],
+		['ΟΣ', ' ΟΣ ΑΣ '],
+		['banana', 'bananana'],
+		['café', 'café\nCAFÉ'],
+	];
+	let seed = 42;
+	const alphabet = [...'ab 𠮷日İ!?'];
+	for (let i = 0; i < 80; i++) {
+		const randomString = () =>
+			Array.from({ length: 15 }, () => {
+				seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+				return alphabet[seed % alphabet.length];
+			}).join('');
+		examples.push([randomString(), randomString()]);
+	}
+	for (const [target, candidate] of examples) {
+		const characters = [...candidate];
+		for (const trimStart of [false, true]) {
+			for (const start of [0, 1]) {
+				const end = characters.length;
+				for (const [index, score] of ctx.getSimilarityRanges(target, characters, start, end, trimStart)) {
+					const text = characters.slice(trimStart ? index : start, trimStart ? end : index).join('');
+					assert.equal(score, ctx.getSimilarity(target, text), JSON.stringify({ target, text, index }));
+				}
+			}
+		}
+	}
+});
+
+test('a 22000-character cue can scan every prefix and suffix within a bounded process', () => {
+	const { execFileSync } = require('node:child_process');
+	execFileSync(
+		process.execPath,
+		[
+			'-e',
+			`
+		const assert = require('node:assert/strict');
+		const { load } = require('./tests/helpers.cjs');
+		const { ctx } = load('src/components/Match.svelte', ['normalizeString', 'getSimilarity', 'getSimilarityRanges']);
+		const text = 'a long subtitle sentence. '.repeat(900);
+		const candidate = [...('missing introduction ' + text + ' extra ending')];
+		for (const trimStart of [true, false]) {
+			const scores = [...ctx.getSimilarityRanges(text, candidate, 0, candidate.length, trimStart)];
+			assert.equal(scores.length, candidate.length);
+			assert.ok(Math.max(...scores.map(s => s[1])) > 0.99);
+		}
+	`,
+		],
+		{ cwd: require('node:path').resolve(__dirname, '..'), timeout: 5000 },
+	);
+});
+
+test('a long exact cue across inline elements preserves book text and subtitle timing', async () => {
+	const text = 'A long passage with Unicode 𠮷. '.repeat(800);
+	const { ctx } = matcher(
+		[sub(1, text, 5, 10), sub(2, 'Next sentence.', 10, 12)],
+		`<div id="ttu-1"><p><em>${text.slice(0, 500)}</em>${text.slice(500)}Next sentence.</p></div>`,
+	);
+	await ctx.onMatchSubtitles();
+	assert.equal(ctx.$lastError$, '');
+	assert.equal(ctx.unmatchedSubtitles.length, 0);
+	assert.equal(ctx.bookHTML.textContent, text + 'Next sentence.');
+	assert.equal(ctx.subtitlesForDownload[0].startSeconds, 5);
+	assert.equal(ctx.subtitlesForDownload[0].endSeconds, 10);
+});
+
+test('cancel is handled during many failed attempts before progress reaches one percent', async () => {
+	const lines = Array.from({ length: 10000 }, (_, i) => sub(i + 1, 'subtitle absent from the book'));
+	const { ctx } = matcher(
+		lines,
+		'<div id="ttu-1">' + '<p>Entirely different passage with enough characters.</p>'.repeat(100) + '</div>',
+	);
+	ctx.console = { log: () => {} };
+	const token = ctx.cancelToken;
+	let progressAtCancel;
+	setTimeout(() => {
+		progressAtCancel = ctx.currentProgress;
+		token.abort();
+	}, 0);
+	await ctx.onMatchSubtitles();
+	assert.equal(progressAtCancel, 0);
+	assert.equal(ctx.$isLoading$, false);
+	assert.equal(ctx.$lastError$, '');
+	assert.equal(ctx.bookHTML, undefined);
 });

@@ -2,7 +2,7 @@
 	"name": "ttu-whispersync",
 	"description": "Listen to audiobooks with ttu ebook-reader",
 	"private": true,
-	"version": "1.0.13",
+	"version": "1.0.14",
 	"type": "module",
 	"scripts": {
 		"dev:tm": "vite -w -c vite.tm.script.config.ts build -m devevlopment",

@@ -30,7 +30,6 @@
 	import { createEventDispatcher, getContext } from 'svelte';
 
 	const singleIgnoredElements = new Set(['rt']);
-	const normalizeRegex = /[\p{punct}\s]/u;
 	const { isIOS } = getContext<Context>('context');
 	const { matchLineIgnoreRp$, matchLineSimilarityThreshold$, matchLineMaxAttempts$ } = settings$;
 	const dispatch = createEventDispatcher<{ selectHint: void; hintSelected: void }>();
@@ -164,6 +163,7 @@
 			let currentTextNodeIndex = 0;
 			let textNodeIndexAfterLastMatch = 0;
 			let textNodeCount = textNodes.length;
+			let lastYield = Date.now();
 
 			while (currentTextNodeIndex < textNodeCount && currentSubtitleIndex < subtitles.length) {
 				throwIfAborted(cancelSignal);
@@ -173,10 +173,12 @@
 				let node = textNodes[currentTextNodeIndex];
 				let nodeParent = node.parentElement!;
 
-				if (newProgress !== currentProgress) {
+				if (newProgress !== currentProgress || Date.now() - lastYield >= 16) {
 					currentProgress = newProgress;
 
 					await new Promise((resolve) => setTimeout(resolve));
+					throwIfAborted(cancelSignal);
+					lastYield = Date.now();
 				}
 
 				if (!nodeParent.closest(ignoredTagsSelector)) {
@@ -571,7 +573,7 @@
 
 	function getSubtitleData(subtitles: Subtitle[], index: number) {
 		const currentSubtitle = subtitles[index].text;
-		const currentSubtitleLength = [...currentSubtitle].length;
+		const currentSubtitleLength = getNormalizedLength(currentSubtitle);
 
 		return { currentSubtitle, currentSubtitleLength };
 	}
@@ -613,7 +615,7 @@
 
 			const trimmedCharacter = character.trim();
 
-			if (trimmedCharacter && !normalizeRegex.test(trimmedCharacter)) {
+			if (trimmedCharacter) {
 				textForComparisonLength += 1;
 			}
 
@@ -628,8 +630,10 @@
 	function getSimilarity(str1: string, str2: string) {
 		const string1 = normalizeString(str1, true);
 		const string2 = normalizeString(str2, true);
-		const string1Length = [...string1].length;
-		const string2Length = [...string2].length;
+		const characters1 = [...string1];
+		const characters2 = [...string2];
+		const string1Length = characters1.length;
+		const string2Length = characters2.length;
 		const substringLength = string1Length < 5 ? 1 : 2;
 
 		if (string1 === string2) {
@@ -643,7 +647,7 @@
 		const map = new Map();
 
 		for (let i = 0; i < string1Length - (substringLength - 1); i += 1) {
-			const substring1 = [...string1].slice(i, i + substringLength).join('');
+			const substring1 = characters1.slice(i, i + substringLength).join('');
 
 			map.set(substring1, map.has(substring1) ? map.get(substring1) + 1 : 1);
 		}
@@ -651,7 +655,7 @@
 		let match = 0;
 
 		for (let j = 0; j < string2Length - (substringLength - 1); j++) {
-			const substring2 = [...string2].slice(j, j + substringLength).join('');
+			const substring2 = characters2.slice(j, j + substringLength).join('');
 			const count = map.has(substring2) ? map.get(substring2) : 0;
 
 			if (count > 0) {
@@ -662,6 +666,75 @@
 		}
 
 		return (match * 2) / (string1Length + string2Length - (substringLength - 1) * 2);
+	}
+
+	// Update the Dice overlap as a candidate loses one character. Rebuilding
+	// both n-gram maps for every prefix/suffix makes long cues quadratic (or
+	// cubic when repeatedly spreading the strings inside getSimilarity).
+	function* getSimilarityRanges(
+		subtitle: string,
+		characters: string[],
+		start: number,
+		end: number,
+		trimStart: boolean,
+	): Generator<[number, number]> {
+		const target = [...normalizeString(subtitle, true)];
+		const width = target.length < 5 ? 1 : 2;
+		const source = characters.slice(start, end);
+
+		// Greek capital sigma has contextual lowercase forms at word boundaries.
+		// Preserve substring normalization for that uncommon case.
+		if (source.includes('Σ')) {
+			while (start < end) {
+				yield [trimStart ? start : end, getSimilarity(subtitle, characters.slice(start, end).join(''))];
+				if (trimStart) start += 1;
+				else end -= 1;
+			}
+			return;
+		}
+
+		const chunks = source.map((character) => [...normalizeString(character, true)]);
+		const candidate = chunks.flat();
+		const targetCounts = new Map<string, number>();
+		const candidateCounts = new Map<string, number>();
+		const grams: string[] = [];
+		for (let i = 0; i <= target.length - width; i += 1) {
+			const gram = target.slice(i, i + width).join('');
+			targetCounts.set(gram, (targetCounts.get(gram) || 0) + 1);
+		}
+		let overlap = 0;
+		for (let i = 0; i <= candidate.length - width; i += 1) {
+			const gram = candidate.slice(i, i + width).join('');
+			grams.push(gram);
+			const count = (candidateCounts.get(gram) || 0) + 1;
+			candidateCounts.set(gram, count);
+			if (count <= (targetCounts.get(gram) || 0)) overlap += 1;
+		}
+		const removeGram = (index: number) => {
+			const gram = grams[index];
+			const count = candidateCounts.get(gram)!;
+			if (count <= (targetCounts.get(gram) || 0)) overlap -= 1;
+			candidateCounts.set(gram, count - 1);
+		};
+
+		let left = 0;
+		let right = candidate.length;
+		for (let removed = 0; removed < source.length; removed += 1) {
+			const length = right - left;
+			const score =
+				!target.length && !length
+					? 1
+					: target.length < width || length < width
+					  ? 0
+					  : (2 * overlap) / (target.length + length - 2 * (width - 1));
+			yield [trimStart ? start + removed : end - removed, score];
+			const chunk = chunks[trimStart ? removed : source.length - removed - 1];
+			for (let i = 0; i < chunk.length; i += 1) {
+				if (right - left >= width) removeGram(trimStart ? left : right - width);
+				if (trimStart) left += 1;
+				else right -= 1;
+			}
+		}
 	}
 
 	function findBestSimilarity(
@@ -679,31 +752,40 @@
 		let bestLineSimiliarityEndIndex = textForComparisonLength;
 		let bestLineSimiliarityValue = currentBestValue;
 
+		const characters = [...textForComparison];
+
 		if (bestLineSimiliarityValue !== 1) {
-			for (let index = bestLineSimiliarityEndIndex; index > currentBestStartIndex; index -= 1) {
-				if (
-					normalizeString(currentSubtitle) ===
-					normalizeString([...textForComparison].slice(currentBestStartIndex, index).join(''))
-				) {
-					bestLineSimiliarityStartIndex = currentBestStartIndex;
-					bestLineSimiliarityEndIndex = index;
-					bestLineSimiliarityValue = 1;
-					break;
+			// Find an exact prefix once, including trailing whitespace, instead of
+			// normalizing every progressively shorter prefix of a long subtitle.
+			const target = normalizeString(currentSubtitle);
+			const candidate = normalizeString(characters.slice(currentBestStartIndex).join(''));
+			if (target && candidate.startsWith(target)) {
+				let remaining = [...target].length;
+				let end = currentBestStartIndex;
+				while (end < characters.length) {
+					if (normalizeString(characters[end])) {
+						if (remaining === 0) break;
+						remaining -= 1;
+					}
+					end += 1;
 				}
+				bestLineSimiliarityEndIndex = end;
+				bestLineSimiliarityValue = 1;
 			}
 		}
 
 		if (bestLineSimiliarityValue !== 1) {
-			for (let index = currentBestStartIndex; index < bestLineSimiliarityEndIndex; index += 1) {
-				const lineSimiliarityToCompare = getSimilarity(
-					currentSubtitle,
-					[...textForComparison].slice(index, bestLineSimiliarityEndIndex).join(''),
-				);
-
-				if (lineSimiliarityToCompare > bestLineSimiliarityValue) {
+			for (const [index, score] of getSimilarityRanges(
+				currentSubtitle,
+				characters,
+				currentBestStartIndex,
+				bestLineSimiliarityEndIndex,
+				true,
+			)) {
+				if (score > bestLineSimiliarityValue) {
 					bestLineSimiliarityStartIndex = index;
 					bestLineSimiliarityEndIndex = textForComparisonLength;
-					bestLineSimiliarityValue = lineSimiliarityToCompare;
+					bestLineSimiliarityValue = score;
 				}
 			}
 		}
@@ -716,16 +798,17 @@
 			if (bestLineSimiliarityValue !== 1) {
 				bestLineSimiliarityValue = -1;
 
-				for (let index = bestLineSimiliarityEndIndex; index > currentBestStartIndex; index -= 1) {
-					const lineSimiliarityToCompare = getSimilarity(
-						currentSubtitle,
-						[...textForComparison].slice(currentBestStartIndex, index).join(''),
-					);
-
-					if (lineSimiliarityToCompare > bestLineSimiliarityValue) {
+				for (const [index, score] of getSimilarityRanges(
+					currentSubtitle,
+					characters,
+					currentBestStartIndex,
+					bestLineSimiliarityEndIndex,
+					false,
+				)) {
+					if (score > bestLineSimiliarityValue) {
 						bestLineSimiliarityStartIndex = currentBestStartIndex;
 						bestLineSimiliarityEndIndex = index;
-						bestLineSimiliarityValue = lineSimiliarityToCompare;
+						bestLineSimiliarityValue = score;
 					}
 				}
 			}

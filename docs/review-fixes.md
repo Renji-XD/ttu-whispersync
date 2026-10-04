@@ -1,4 +1,13 @@
-# Review fixes (1.0.13)
+# Long-book matching fixes (1.0.14)
+
+- Compare book and subtitle lengths using the same whitespace normalization. The previous comparison counted spaces in subtitles but not in book text, overran cue boundaries and could miss even an exact cue near the end of a book.
+- Convert Unicode strings to character arrays once when computing Dice similarity. Score candidate prefixes and suffixes incrementally by updating n-gram counts, and locate exact prefixes in one pass. This removes the repeated scans that made long cues extremely expensive. Preserve direct substring scoring for contextual Greek sigma lowercasing.
+- Yield to the browser after approximately 16 ms of work between matching steps, as well as at percentage changes. Check cancellation immediately after yielding. Large subtitle files no longer have to process hundreds of cues before letting the cancel button respond. Individual DOM operations and comparisons still run synchronously.
+- Preserve cue IDs/timestamps and book text. Matching does not repair implausible timestamps in source SRT files.
+
+Validation: 39 regression tests, including long cues, Unicode candidate-score equivalence, exact matches across inline elements, and cancellation before 1% progress. On a local English EPUB with 38,726 and 38,046 cues, both complete matching runs finished in about 12 seconds at the default 0.9 threshold and 50 attempts. Match rates were 95.62% and 94.10%. These measurements execute the actual matcher in jsdom with EPUB spine bodies in reader-style containers; they are not timings from the user's installed reader. Book contents and subtitle fixtures are not included in this repository.
+
+## Earlier review fixes (1.0.13)
 
 Base: Renji-XD/ttu-whispersync commit `cfca4f69543d032f4807c39b3c38736d1475b2c0`.
 
